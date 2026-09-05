@@ -5,8 +5,10 @@
 
 Names your terminal workspaces after what you are actually doing in them.
 
-A [herdr](https://herdr.dev) plugin. Documentation at
-[namesync.dev](https://namesync.dev).
+A [herdr](https://herdr.dev) plugin. Full documentation lives in
+[`site/src/content/docs`](site/src/content/docs) — start with
+[Install](site/src/content/docs/install.md), then
+[How it decides](site/src/content/docs/deciding.md).
 
 A herdr plugin that keeps workspace labels, tab labels and agent names in sync
 with the intent of the coding agent running inside them — continuously, without

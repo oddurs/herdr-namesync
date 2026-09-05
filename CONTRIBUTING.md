@@ -47,7 +47,7 @@ read your real config — use `cfg({ ... })`, which builds from defaults.
 ## Two things worth knowing before you touch the socket
 
 Both cost real debugging time, and both are documented at greater length in
-[the internals page](https://namesync.dev/docs/internals):
+[the internals page](site/src/content/docs/internals.md):
 
 - **Requests are one per connection.** herdr answers and then closes. Sending a
   second request down the same socket gets you an `EPIPE`.

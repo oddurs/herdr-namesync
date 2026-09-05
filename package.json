@@ -15,7 +15,6 @@
   },
   "license": "MIT",
   "author": "Oddur Sigurdsson",
-  "homepage": "https://namesync.dev",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/oddurs/namesync.git"
