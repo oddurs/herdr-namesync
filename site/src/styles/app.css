@@ -1,0 +1,36 @@
+/* ---------------------------------------------------------------------------
+   App frame — masthead and colophon.
+   Sans throughout: this is orientation, not reading.
+   --------------------------------------------------------------------------- */
+
+.masthead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  padding: var(--space-4) var(--gutter);
+  border-bottom: 1px solid var(--border);
+}
+
+.masthead__nav {
+  margin-left: auto;
+  display: flex;
+  gap: var(--space-5);
+}
+
+.masthead__nav a {
+  color: var(--fg-muted);
+  text-decoration: none;
+  transition: color var(--dur-fast) var(--ease);
+}
+
+.masthead__nav a:hover,
+.masthead__nav a[aria-current='page'] {
+  color: var(--fg-strong);
+}
+
+.colophon {
+  border-top: 1px solid var(--border);
+  padding: var(--space-6) var(--gutter) var(--space-7);
+  color: var(--fg-subtle);
+  line-height: 1.9;
+}

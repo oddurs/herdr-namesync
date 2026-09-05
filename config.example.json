@@ -1,0 +1,28 @@
+{
+  "enabled": true,
+
+  "debounceMs": 2500,
+  "minRenameIntervalMs": 30000,
+  "similarityThreshold": 0.6,
+
+  "respectManualNames": true,
+  "skipWhileBlocked": true,
+
+  "targets": { "workspace": true, "tab": false, "agent": true },
+
+  "templates": {
+    "workspace": "{intent}",
+    "tab": "{intent}",
+    "agent": "{intent-slug}"
+  },
+
+  "multiAgent": "tab",
+
+  "sinks": {
+    "herdr": { "enabled": true },
+    "tmux": { "enabled": false, "target": null },
+    "osc": { "enabled": false, "device": null }
+  },
+
+  "logLevel": "info"
+}

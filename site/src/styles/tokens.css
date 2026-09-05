@@ -1,0 +1,152 @@
+/* ---------------------------------------------------------------------------
+   Tokens
+
+   Three layers, and the rule between them:
+
+     1. Primitives  raw values with no opinion about use. Never referenced
+                    outside this file.
+     2. Semantic    what a value is FOR. Everything else references only these,
+                    so retheming happens here and nowhere else.
+     3. Scales      type, space, layout and motion.
+
+   Dark only, by design. There is no light palette to fall back to.
+   --------------------------------------------------------------------------- */
+
+:root {
+  /* --- 1. Primitives ------------------------------------------------------
+     Andrew Wong's Gotham, as configured in the author's herdr config.toml,
+     extended with the fuller base ramp. Two values are lifted one step for
+     text contrast on base00 and are marked as such. */
+
+  --gotham-base00: #070d12;
+  --gotham-base0:  #0a0f14;
+  --gotham-base1:  #0c141b;
+  --gotham-base2:  #091f2e;
+  --gotham-base3:  #14303f;
+  --gotham-base4:  #245361;
+  --gotham-base5:  #599caa;
+  --gotham-base6:  #99d1ce;
+  --gotham-base7:  #d3ebe9;
+
+  --gotham-cyan:   #33859d;
+  --gotham-blue:   #195466;
+  --gotham-green:  #26a98b;
+  --gotham-yellow: #edb54b;
+  --gotham-orange: #d26939;
+  --gotham-red:    #c33027;
+  --gotham-mauve:  #888ba5;
+
+  /* Lifted for contrast: base5 and cyan are both under 4.5:1 on base0 at
+     text sizes. Used only where they carry words. */
+  --gotham-base5-lift: #82adb9;
+  --gotham-cyan-lift:  #66b6cf;
+  --gotham-base6-lift: #cbe4e2;
+  --gotham-base7-lift: #e7f3f2;
+
+  /* --- 2. Semantic -------------------------------------------------------- */
+
+  /* Surfaces, in stacking order */
+  --bg: var(--gotham-base0);
+  --bg-sunken: var(--gotham-base00);
+  --bg-panel: var(--gotham-base1);
+  --bg-raised: var(--gotham-base2);
+
+  /* Lines */
+  --border: var(--gotham-base3);
+  --border-strong: var(--gotham-base4);
+
+  /* Text, by prominence */
+  --fg-strong: var(--gotham-base7-lift);
+  --fg: var(--gotham-base6-lift);
+  --fg-muted: var(--gotham-base5-lift);
+  --fg-subtle: #5b8391;
+
+  /* Interaction */
+  --accent: var(--gotham-cyan);
+  --accent-text: var(--gotham-cyan-lift);
+  --accent-hover: #8fd0e4;
+  --selection: #093748;
+
+  /* State. These carry meaning in the product, so they are never used as
+     decoration: green means a name changed, mauve means one was held. */
+  --state-renamed: var(--gotham-green);
+  --state-held: var(--gotham-mauve);
+
+  /* Code, mapped onto the palette so Shiki cannot introduce a foreign hue */
+  --astro-code-foreground: var(--fg);
+  --astro-code-background: transparent;
+  --astro-code-token-comment: #4d7180;
+  --astro-code-token-punctuation: var(--fg-subtle);
+  --astro-code-token-string: var(--gotham-green);
+  --astro-code-token-string-expression: var(--gotham-green);
+  --astro-code-token-constant: var(--gotham-yellow);
+  --astro-code-token-keyword: var(--accent-text);
+  --astro-code-token-function: var(--gotham-base6);
+  --astro-code-token-parameter: var(--fg);
+  --astro-code-token-link: var(--accent-text);
+
+  /* --- 3a. Type ----------------------------------------------------------
+
+     IBM Plex, sans and mono. One superfamily, drawn together on shared
+     skeletons and metrics, so the code in a paragraph sits on the same
+     rhythm as the words around it.
+
+     Chosen to age well rather than to look current: Plex is a neo-grotesque
+     in the Univers line with humanist corrections, drawn as a corporate face
+     meant to last decades. No condensed widths, no display face.
+
+     The named styles that use these live in type.css. */
+
+  --font-sans: 'IBM Plex Sans', ui-sans-serif, -apple-system, 'Segoe UI',
+    Helvetica, Arial, sans-serif;
+  --font-code: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semi: 600;
+
+  /* Modular scale, ratio 1.25. 1rem is 20px via the 125% root in base.css,
+     so step-0 is the 20px reading size. */
+  --step--2: 0.7rem;
+  --step--1: 0.8rem;
+  --step-0: 1rem;
+  --step-1: 1.25rem;
+  --step-2: 1.5625rem;
+  --step-3: 1.953rem;
+  --step-4: 2.441rem;
+
+  /* One fluid step, for the landing headline only. */
+  --step-display: clamp(2.05rem, 4.6vw, 2.9rem);
+
+  --leading-prose: 1.62;
+
+  /* --- 3b. Space ---------------------------------------------------------- */
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+  --space-9: 6rem;
+
+  /* --- 3c. Layout --------------------------------------------------------- */
+
+  /* ~66 characters of IBM Plex Sans at 20px. */
+  --measure: 32rem;
+  --measure-ui: 25rem;
+  --page-max: 66rem;
+  --page-wide: 68rem;
+  --gutter: clamp(1.5rem, 5vw, 4rem);
+
+  --radius-sm: 3px;
+  --radius: 5px;
+
+  /* --- 3d. Motion --------------------------------------------------------- */
+
+  --ease: cubic-bezier(0.2, 0, 0.2, 1);
+  --dur-fast: 120ms;
+  --dur: 320ms;
+}

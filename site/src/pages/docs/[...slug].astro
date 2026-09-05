@@ -1,0 +1,166 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+
+export async function getStaticPaths() {
+  const docs = (await getCollection('docs')).sort((a, b) => a.data.order - b.data.order);
+
+  return docs.map((entry, i) => ({
+    params: { slug: entry.id },
+    props: {
+      entry,
+      nav: docs.map((d) => ({ slug: d.id, title: d.data.title })),
+      prev: i > 0 ? docs[i - 1] : null,
+      next: i < docs.length - 1 ? docs[i + 1] : null,
+    },
+  }));
+}
+
+const { entry, nav, prev, next } = Astro.props;
+const { Content } = await render(entry);
+---
+
+<Base title={`${entry.data.title} — namesync`} description={entry.data.summary} section="docs">
+  <div class="shell">
+    <nav class="toc" aria-label="Documentation">
+      <ol class="t-ui">
+        {
+          nav.map((item) => (
+            <li>
+              <a
+                href={`/docs/${item.slug}`}
+                aria-current={item.slug === entry.id ? 'page' : undefined}
+              >
+                {item.title}
+              </a>
+            </li>
+          ))
+        }
+      </ol>
+    </nav>
+
+    <main class="reader">
+      <article class="prose">
+        <h1>{entry.data.title}</h1>
+        <p class="summary t-lead">{entry.data.summary}</p>
+        <Content />
+      </article>
+
+      <nav class="pager" aria-label="Pagination">
+        {
+          prev ? (
+            <a class="pager__link" href={`/docs/${prev.id}`}>
+              <span class="pager__dir t-label">Previous</span>
+              <span class="pager__title t-ui">{prev.data.title}</span>
+            </a>
+          ) : (
+            <span />
+          )
+        }
+        {
+          next && (
+            <a class="pager__link pager__link--next" href={`/docs/${next.id}`}>
+              <span class="pager__dir t-label">Next</span>
+              <span class="pager__title t-ui">{next.data.title}</span>
+            </a>
+          )
+        }
+      </nav>
+    </main>
+  </div>
+</Base>
+
+<style>
+  .shell {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: clamp(2rem, 5vw, 4.5rem);
+    max-width: var(--page-max);
+    margin: 0 auto;
+    padding: clamp(2rem, 5vw, 3.5rem) var(--gutter) var(--space-8);
+  }
+
+  /* A grid item defaults to min-width:auto, so a wide code block would force
+     the column — and the page — past the viewport. */
+  .reader { min-width: 0; }
+
+  @media (min-width: 52rem) {
+    .shell { grid-template-columns: 12rem minmax(0, 1fr); align-items: start; }
+    .toc { position: sticky; top: var(--space-6); }
+  }
+
+  /* Navigation is orientation, so it is sans, not mono. */
+  .toc ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    line-height: 1.45;
+  }
+
+  .toc li { margin-bottom: var(--space-3); }
+
+  .toc a {
+    display: block;
+    color: var(--fg-subtle);
+    text-decoration: none;
+    border-left: 1px solid transparent;
+    padding-left: var(--space-3);
+    margin-left: calc(var(--space-3) * -1);
+    transition: color var(--dur-fast) var(--ease);
+  }
+
+  .toc a:hover { color: var(--fg-muted); }
+
+  .toc a[aria-current='page'] {
+    color: var(--fg-strong);
+    border-left-color: var(--accent);
+  }
+
+  @media (max-width: 52rem) {
+    .toc {
+      padding-bottom: var(--space-5);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .toc ol { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); }
+    .toc li { margin-bottom: 0; }
+    .toc a { border-left: 0; padding-left: 0; margin-left: 0; }
+  }
+
+  /* The page summary is orientation too: it tells you whether to read on. */
+  .summary {
+    margin: -0.15em 0 1.7em;
+    max-width: 30rem;
+  }
+
+  .pager {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-6);
+    margin-top: var(--space-8);
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--border);
+  }
+
+  .pager__link {
+    display: grid;
+    gap: 0.15rem;
+    text-decoration: none;
+    max-width: 18rem;
+  }
+
+  .pager__link--next { text-align: right; margin-left: auto; }
+
+  .pager__dir {
+    color: var(--fg-subtle);
+  }
+
+  .pager__title {
+    font-weight: var(--weight-medium);
+    color: var(--accent-text);
+    line-height: 1.4;
+    transition: color var(--dur-fast) var(--ease);
+  }
+
+  .pager__link:hover .pager__title { color: var(--accent-hover); }
+</style>

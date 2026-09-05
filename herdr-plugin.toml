@@ -1,0 +1,47 @@
+id = "namesync"
+name = "Namesync"
+version = "0.1.0"
+min_herdr_version = "0.8.0"
+description = "Renames workspaces, tabs and agents from the coding agent's own intent. Event-driven, no LLM calls, no API keys."
+platforms = ["linux", "macos", "windows"]
+
+# One-shot per the plugin contract: it re-seeds names after a session restore,
+# makes sure the watcher is alive, and exits.
+[[startup]]
+command = ["node", "src/cli.js", "startup"]
+
+[[actions]]
+id = "rename-now"
+title = "Rename this workspace now"
+contexts = ["workspace"]
+command = ["node", "src/cli.js", "rename-now"]
+
+[[actions]]
+id = "rename-all"
+title = "Rename every workspace"
+contexts = ["workspace"]
+command = ["node", "src/cli.js", "rename-all"]
+
+[[actions]]
+id = "lock"
+title = "Lock this workspace name"
+contexts = ["workspace"]
+command = ["node", "src/cli.js", "lock"]
+
+[[actions]]
+id = "unlock"
+title = "Unlock this workspace name"
+contexts = ["workspace"]
+command = ["node", "src/cli.js", "unlock"]
+
+[[actions]]
+id = "status"
+title = "Namesync status"
+contexts = ["workspace"]
+command = ["node", "src/cli.js", "status"]
+
+[[actions]]
+id = "restart"
+title = "Restart the namer watcher"
+contexts = ["workspace"]
+command = ["node", "src/cli.js", "restart"]

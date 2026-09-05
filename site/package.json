@@ -1,0 +1,16 @@
+{
+  "name": "namesync-site",
+  "version": "1.0.0",
+  "description": "Landing page and documentation for namesync.",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check"
+  },
+  "type": "module",
+  "dependencies": {
+    "astro": "^7.3.1"
+  },
+  "private": true
+}

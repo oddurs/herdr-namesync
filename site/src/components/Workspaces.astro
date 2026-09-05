@@ -1,0 +1,186 @@
+---
+/**
+ * The hero: a herdr sidebar that performs one rename pass on load.
+ *
+ * The rows are the author's real workspaces. Three of them were named by hand
+ * and stay exactly as they are — that is the whole argument for the plugin, so
+ * it is shown rather than claimed.
+ */
+
+type Row =
+  | { id: string; name: string; held: true }
+  | { id: string; before: string; after: string; held?: false };
+
+const rows: Row[] = [
+  { id: 'w1', name: 'testing', held: true },
+  { id: 'w2', name: 'm5', held: true },
+  { id: 'w4', name: 'cairn', held: true },
+  { id: 'w5', before: 'perfect', after: 'ptop-adopt-remaining-lessons' },
+  { id: 'w6', before: 'bedreader', after: 'Open source wifi e-reader' },
+  { id: 'w8', before: 'milky-xl', after: 'Apple Notes-style Obsidian app' },
+];
+---
+
+<figure class="ws">
+  <div class="ws__chrome t-label">
+    <span class="ws__title">herdr</span>
+    <span class="ws__count">{rows.length} spaces</span>
+  </div>
+
+  <ul class="ws__list">
+    {
+      rows.map((row, i) => (
+        <li class="ws__row t-code" style={`--i:${i}`} data-held={row.held ? 'true' : 'false'}>
+          <span class="ws__id">{row.id}</span>
+          {row.held ? (
+            <span class="ws__name ws__name--held">
+              {row.name}
+              <span class="ws__flag">held</span>
+            </span>
+          ) : (
+            <span class="ws__swap">
+              <span class="ws__name ws__name--before">{row.before}</span>
+              <span class="ws__name ws__name--after">{row.after}</span>
+            </span>
+          )}
+        </li>
+      ))
+    }
+  </ul>
+
+  <figcaption class="ws__caption t-label">
+    Three of these were named by hand. namesync leaves them alone.
+  </figcaption>
+</figure>
+
+<style>
+  .ws {
+    margin: 0;
+    border: 1px solid var(--border-strong);
+    border-radius: 5px;
+    background: linear-gradient(180deg, var(--bg-panel), var(--bg));
+    overflow: hidden;
+  }
+
+  .ws__chrome {
+    display: flex;
+    align-items: baseline;
+    gap: 0.8rem;
+    padding: 0.7rem 1.1rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-sunken);
+    color: var(--fg-subtle);
+  }
+
+  .ws__title { color: var(--fg-muted); }
+  .ws__count { margin-left: auto; }
+
+  .ws__list {
+    list-style: none;
+    margin: 0;
+    padding: 0.5rem 0;
+  }
+
+  .ws__row {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    padding: 0.5rem 1.1rem;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.5;
+  }
+
+  .ws__id {
+    color: var(--fg-subtle);
+    flex: none;
+    width: 2ch;
+  }
+
+  .ws__name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .ws__name--held {
+    color: var(--state-held);
+    display: flex;
+    align-items: baseline;
+    gap: 0.7rem;
+  }
+
+  .ws__flag {
+    font-family: var(--font-sans);
+    font-size: var(--step--2);
+    letter-spacing: 0.008em;
+    color: var(--fg-subtle);
+  }
+
+  /* The swap: both labels occupy one grid cell, so nothing reflows when the
+     name changes. Final state is the default; the animation only reveals it. */
+  .ws__swap {
+    display: grid;
+    min-width: 0;
+  }
+
+  .ws__swap > .ws__name {
+    grid-area: 1 / 1;
+  }
+
+  .ws__name--before {
+    color: var(--fg-subtle);
+    opacity: 0;
+  }
+
+  .ws__name--after {
+    color: var(--state-renamed);
+    opacity: 1;
+  }
+
+  .ws__caption {
+    padding: 0.85rem 1.1rem;
+    border-top: 1px solid var(--border);
+    color: var(--fg-subtle);
+    line-height: 1.6;
+  }
+
+  /* One orchestrated pass on load: rows start at their old names, then each
+     resolves in turn. Held rows never move. */
+  @media (prefers-reduced-motion: no-preference) {
+    .ws__name--before {
+      opacity: 1;
+      animation: fade-out 320ms ease forwards;
+      animation-delay: calc(700ms + var(--i) * 180ms);
+    }
+
+    .ws__name--after {
+      opacity: 0;
+      animation: fade-in 320ms ease forwards;
+      animation-delay: calc(760ms + var(--i) * 180ms);
+    }
+
+    .ws__row[data-held='true'] .ws__name--held {
+      animation: pulse-held 400ms ease;
+      animation-delay: calc(700ms + var(--i) * 180ms);
+    }
+  }
+
+  @keyframes fade-out {
+    to { opacity: 0; }
+  }
+
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(0.25em); }
+    to { opacity: 1; transform: none; }
+  }
+
+  @keyframes pulse-held {
+    50% { color: var(--fg-muted); }
+  }
+
+  @media (max-width: 32rem) {
+    .ws__row { font-size: var(--step--2); }
+  }
+
+</style>

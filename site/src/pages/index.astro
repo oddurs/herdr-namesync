@@ -1,0 +1,224 @@
+---
+import Base from '../layouts/Base.astro';
+import Workspaces from '../components/Workspaces.astro';
+---
+
+<Base
+  title="namesync — terminal workspaces named after what you’re doing"
+  description="A herdr plugin that keeps workspace, tab and agent names in sync with the intent of the coding agent running inside them. No LLM call, no API key, no polling."
+  section="home"
+>
+  <main>
+    <section class="hero">
+      <div class="hero__copy">
+        <h1 class="hero__title t-display">
+          The agent knows what it is working on.
+          <em>Your sidebar doesn’t.</em>
+        </h1>
+        <p class="hero__lede t-lead">
+          Spaces get named after directories, because that is all herdr knew when you
+          opened them. Meanwhile the agent inside each one has been describing its own
+          work the entire time. namesync moves that name onto the space, and leaves the
+          ones you named yourself alone.
+        </p>
+      </div>
+
+      <div class="hero__demo">
+        <Workspaces />
+      </div>
+    </section>
+
+    <section class="band">
+      <div class="band__inner prose">
+        <h2 class="band__heading">Nothing generates the name</h2>
+        <p>
+          Every other renamer calls a model: your first prompt goes to an on-device
+          summariser, or to Codex, or to whatever your <code>OPENAI_API_KEY</code> points at.
+        </p>
+        <p>
+          That work is already done. Claude Code, Codex and the rest publish a running
+          summary of the current task as their terminal title, and herdr already captures
+          it. Ask it yourself:
+        </p>
+        <pre><code>$ herdr agent list | jq -r '.result.agents[].terminal_title_stripped'
+Astro docs site GNU style
+Richard Stallman perspective
+Open source wifi e-reader</code></pre>
+        <p>
+          So namesync spends its complexity somewhere else: on deciding <em>when</em> a
+          name should change, and on getting it onto every surface that shows one.
+          No API key, no token cost, no polling loop.
+        </p>
+      </div>
+    </section>
+
+    <section class="band band--rule">
+      <div class="band__inner prose">
+        <h2 class="band__heading">When it renames</h2>
+        <p>
+          herdr emits an event when a pane’s title changes, and deliberately not when
+          only the spinner moved. That event is the trigger. Everything after it is the
+          part that decides whether to act.
+        </p>
+
+        <dl class="rules">
+          <div class="rules__row">
+            <dt>Your names win</dt>
+            <dd>
+              A label that isn’t the one namesync last wrote was written by you. It gets
+              locked and is never touched again.
+            </dd>
+          </div>
+          <div class="rules__row">
+            <dt>Defaults are fair game</dt>
+            <dd>
+              <code>bedreader</code>, <code>w3</code>, <code>tab 2</code>, empty. Nobody
+              chose these, so namesync claims them.
+            </dd>
+          </div>
+          <div class="rules__row">
+            <dt>Rewording isn’t new intent</dt>
+            <dd>
+              “naming plugin” to “naming plugins” scores 1.00 on a stemmed token overlap
+              and is skipped, so the sidebar doesn’t flicker.
+            </dd>
+          </div>
+          <div class="rules__row">
+            <dt>It waits for you to settle</dt>
+            <dd>
+              Titles churn early in a turn. A rename holds for a debounce window, then
+              at most once per workspace per interval.
+            </dd>
+          </div>
+          <div class="rules__row">
+            <dt>It stays quiet when you’re stuck</dt>
+            <dd>
+              While an agent waits on an approval dialog its title describes the
+              question, not the work. namesync sits that out and retries.
+            </dd>
+          </div>
+          <div class="rules__row">
+            <dt>It won’t guess</dt>
+            <dd>
+              A workspace holding two agents has no single intent, so its tabs get named
+              instead and the space is left alone.
+            </dd>
+          </div>
+        </dl>
+
+        <p>
+          <code>namesync dry-run</code> prints every decision and the reason behind it,
+          and changes nothing. It is the right place to start.
+        </p>
+      </div>
+    </section>
+
+    <section class="band band--rule">
+      <div class="band__inner prose">
+        <h2 class="band__heading">Install</h2>
+        <pre><code>herdr plugin install oddurs/namesync
+herdr integration install claude</code></pre>
+        <p>
+          herdr 0.8 or newer, Node 18 or newer, no npm dependencies. The startup hook
+          launches a watcher that holds one event subscription and reconnects on its own
+          across herdr restarts.
+        </p>
+        <p><a href="/docs/install">Read the docs</a></p>
+      </div>
+    </section>
+  </main>
+</Base>
+
+<style>
+  main { padding: 0 var(--gutter); }
+
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: clamp(2.5rem, 6vw, 4.5rem);
+    align-items: center;
+    max-width: var(--page-wide);
+    margin: 0 auto;
+    padding: clamp(3rem, 7vw, 5.5rem) 0 clamp(3rem, 7vw, 5rem);
+  }
+
+  @media (min-width: 60rem) {
+    .hero { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); }
+  }
+
+  /* The italic is the rhetorical turn of the sentence, not an accent on a
+     word: the first clause states, the second undercuts it. */
+  /* Type comes from .t-display; this only positions it. The negative margin
+     pulls the cap of the T back to the optical margin so the headline aligns
+     with the lede below it. */
+  .hero__title {
+    margin: 0 0 0.62em -0.028em;
+  }
+
+  /* The turn in the sentence. IBM Plex Sans has a true italic — drawn, not
+     slanted — so it reads as a change of voice rather than a tilt. */
+  .hero__title em {
+    display: block;
+    font-style: italic;
+    font-weight: var(--weight-regular);
+    letter-spacing: -0.019em;
+    color: var(--fg-strong);
+  }
+
+  .hero__lede {
+    max-width: 27rem;
+  }
+
+  .band { padding: clamp(3rem, 7vw, 4.75rem) 0; }
+  .band--rule { border-top: 1px solid var(--border); }
+
+  /* One left spine for the whole page: the reading column starts at the same
+     edge as the headline instead of being centred, so the eye never has to
+     re-find where the text begins. */
+  .band__inner {
+    max-width: var(--page-wide);
+    margin: 0 auto;
+  }
+
+  .band__inner > * {
+    max-width: min(var(--measure), 100%);
+  }
+
+  /* These sections already sit behind a full-width rule, so the heading drops
+     the one the prose styles add. */
+  .band__heading {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  .rules { margin: 1.8em 0; }
+
+  .rules__row {
+    padding: 1.05em 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .rules__row:last-child { border-bottom: 0; }
+
+  /* Label in sans, description in serif: the same split as the rest of the
+     site, at the scale of one row. */
+  .rules dt {
+    font-weight: var(--weight-semi);
+    color: var(--fg-strong);
+    margin-bottom: 0.3em;
+  }
+
+  .rules dd { color: var(--fg-muted); }
+
+  @media (min-width: 44rem) {
+    .rules__row {
+      display: grid;
+      grid-template-columns: 12rem minmax(0, 1fr);
+      gap: var(--space-5);
+      align-items: baseline;
+    }
+
+    .rules dt { margin-bottom: 0; }
+  }
+</style>

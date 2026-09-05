@@ -1,0 +1,141 @@
+/* ---------------------------------------------------------------------------
+   Typographic system
+
+   Nine named styles. Each is defined exactly once, and each rule lists both
+   the utility class and the elements that should get it — so markdown and
+   components resolve to the same definition instead of drifting apart.
+
+   This file owns type: family, size, weight, leading, tracking.
+   prose.css owns rhythm: margins, rules, indents.
+
+   Everything else applies a style by class rather than restating one. Four
+   deliberate exceptions: the root size in base.css, relative sizes inside
+   prose (inline code), the lockup which scales as a unit, and one nested
+   label in the terminal mock.
+
+   Hierarchy comes from size, weight and tracking only. No condensed widths,
+   no second family — those date a page faster than anything else.
+
+   Tracking follows one rule: negative as size grows, positive as it shrinks.
+   IBM Plex Sans is drawn fairly open, so display sizes need pulling in and
+   14px labels need letting out.
+   --------------------------------------------------------------------------- */
+
+/* Display — the landing headline, and nothing else. */
+.t-display {
+  font-family: var(--font-sans);
+  font-size: var(--step-display);
+  font-weight: var(--weight-semi);
+  line-height: 1.06;
+  letter-spacing: -0.023em;
+  color: var(--fg-strong);
+  text-wrap: balance;
+}
+
+/* Title — one per page. */
+.t-title,
+.prose h1 {
+  font-family: var(--font-sans);
+  font-size: var(--step-3);
+  font-weight: var(--weight-semi);
+  line-height: 1.15;
+  letter-spacing: -0.019em;
+  color: var(--fg-strong);
+  text-wrap: balance;
+}
+
+/* Heading — a major section. */
+.t-heading,
+.prose h2 {
+  font-family: var(--font-sans);
+  font-size: var(--step-2);
+  font-weight: var(--weight-semi);
+  line-height: 1.25;
+  letter-spacing: -0.014em;
+  color: var(--fg-strong);
+  text-wrap: balance;
+}
+
+/* Subheading — a step inside a section. */
+.t-subheading,
+.prose h3 {
+  font-family: var(--font-sans);
+  font-size: var(--step-1);
+  font-weight: var(--weight-semi);
+  line-height: 1.34;
+  letter-spacing: -0.009em;
+  color: var(--fg-strong);
+  text-wrap: balance;
+}
+
+/* Run-in — the smallest heading, at body size. */
+.t-runin,
+.prose h4 {
+  font-family: var(--font-sans);
+  font-size: var(--step-0);
+  font-weight: var(--weight-semi);
+  line-height: 1.45;
+  letter-spacing: -0.004em;
+  color: var(--fg-strong);
+}
+
+/* Lead — the sentence under a title that says whether to read on. */
+.t-lead {
+  font-family: var(--font-sans);
+  font-size: var(--step-1);
+  font-weight: var(--weight-regular);
+  line-height: 1.48;
+  letter-spacing: -0.008em;
+  color: var(--fg-muted);
+  text-wrap: pretty;
+}
+
+/* Body — the reading size. */
+.t-body,
+.prose p,
+.prose li,
+.prose dd,
+.prose blockquote {
+  font-family: var(--font-sans);
+  font-size: var(--step-0);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-prose);
+  letter-spacing: -0.002em;
+}
+
+/* UI — navigation and controls. */
+.t-ui {
+  font-family: var(--font-sans);
+  font-size: var(--step--1);
+  font-weight: var(--weight-regular);
+  line-height: 1.5;
+  letter-spacing: 0;
+}
+
+/* Label — captions, table headers, meta. Smallest size, so it opens up. */
+.t-label,
+.prose thead th {
+  font-family: var(--font-sans);
+  font-size: var(--step--2);
+  font-weight: var(--weight-medium);
+  line-height: 1.45;
+  letter-spacing: 0.008em;
+}
+
+/* Code — the one place mono appears, plus the terminal mock. */
+.t-code,
+.prose pre,
+.prose table {
+  font-family: var(--font-code);
+  font-size: var(--step--1);
+  font-weight: var(--weight-regular);
+  line-height: 1.7;
+  letter-spacing: 0;
+}
+
+/* Tables use mono figures for alignment but sans for their prose. */
+.prose table {
+  font-family: var(--font-sans);
+  line-height: 1.55;
+  font-variant-numeric: tabular-nums;
+}

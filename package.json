@@ -1,0 +1,36 @@
+{
+  "name": "namesync",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Names herdr workspaces, tabs and agents from the intent the coding agent already publishes.",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=18"
+  },
+  "bin": {
+    "namesync": "src/cli.js"
+  },
+  "scripts": {
+    "test": "node test/run.js"
+  },
+  "license": "MIT",
+  "author": "Oddur Sigurdsson",
+  "homepage": "https://namesync.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oddurs/namesync.git"
+  },
+  "bugs": {
+    "url": "https://github.com/oddurs/namesync/issues"
+  },
+  "keywords": [
+    "herdr",
+    "herdr-plugin",
+    "terminal",
+    "multiplexer",
+    "claude-code",
+    "codex",
+    "agents",
+    "tmux"
+  ]
+}
