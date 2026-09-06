@@ -2,7 +2,7 @@
 id: 9
 title: Decide whether smali becomes a repo
 type: chore
-status: backlog
+status: dropped
 milestone: later
 created: 2026-09-06
 updated: 2026-09-06

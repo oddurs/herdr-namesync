@@ -214,45 +214,28 @@ namesync has nothing newer to propagate — it is mirroring faithfully. Lowering
 This is the main argument for `$project` and `$branch`: they stay true whether
 or not the title has moved.
 
-## Other multiplexers
+## Terminal tabs
 
-The intent source is an OSC terminal title, which is universal. Sinks are
-pluggable — one module each in `src/sinks/`, resolved at runtime by what is
-available:
+Mostly nothing to do. Ghostty, WezTerm, kitty and iTerm2 take their tab title
+from the OSC title the program inside sets, and a coding agent sets that itself
+— so a tab running Claude Code is already named after the work, with namesync
+uninvolved.
 
-- **herdr** — workspace, tab and agent names. On by default.
-- **tmux** — window names. tmux's own `automatic-rename` follows the running
-  command rather than the title, so this sink writes the name explicitly.
-  Enable it under `sinks.tmux`.
-- **Ghostty, WezTerm, kitty, iTerm2** — nothing to do, for two separate
-  reasons. An agent running directly in a tab already sets that tab's title
-  itself, via OSC. And when herdr is in between, herdr's own `window_title`
-  template drives the host terminal, so a renamed workspace reaches the tab
-  anyway:
+With herdr in between, herdr owns the host window's title and sets it from its
+own template:
 
-  ```toml
-  # ~/.config/herdr/config.toml
-  window_title = "{workspace} — herdr"
-  ```
-
-  The `osc` sink exists only for the remaining case: pushing a name onto a
-  terminal that is *not* running an agent, by pointing `device` at its tty.
-
-Adding a backend means adding a module to `src/sinks/` that exports
-`{ name, available(), apply({ kind, id, label }) }`. Nothing else changes.
-
-Pure Node with no native deps, so macOS, Linux and Windows all work; the socket
-client uses `net.connect({ path })`, which covers both Unix sockets and Windows
-named pipes.
-
-## Tests
-
-```bash
-node test/run.js
+```toml
+# ~/.config/herdr/config.toml
+window_title = "{workspace} — herdr"
 ```
 
-Covers slug rules, the stemmed similarity gate, every policy branch, and the
-multi-agent fallback.
+`{workspace}` is the label namesync renames, so the host tab follows the
+focused workspace without configuring anything.
+
+tmux is the exception and namesync does not handle it — its `automatic-rename`
+follows the running command rather than the title. A tmux sink shipped briefly
+and was removed rather than fixed: tmux has no workspace, no agent and no
+metadata tokens, so every rename landed on one window and the last one won.
 
 ## Contributing
 
