@@ -42,17 +42,23 @@ herdr plugin link /path/to/namesync
 Both register the plugin globally for your user, so it is available in every
 herdr session.
 
-## Install the Claude Code integration
+## Install the integration for your agent
 
 ```bash
-herdr integration install claude
+herdr integration install claude    # or codex, copilot, cursor, droid, …
 ```
 
-This is herdr's own integration, not part of namesync, and it is worth having
-either way. It tells herdr which session each pane holds, which sharpens the
-`idle` / `working` / `blocked` states that namesync reads before deciding
-whether to rename. Without it, herdr falls back to screen detection and reports
-`unknown` more often.
+namesync never asks which agent it is talking to. It reads the title herdr
+reports for a pane, so it works with every kind herdr recognises — seventeen at
+0.8.2, including Codex, Copilot, Cursor, Devin, Droid, Kimi, OpenCode, Qwen and
+Grok. Run `herdr integration status` for the current list.
+
+The integration is herdr's own, not part of namesync, and it is worth having
+whichever agent you use. It tells herdr which session each pane holds, which
+sharpens the `idle` / `working` / `blocked` states namesync reads before
+deciding whether to rename. Without it herdr falls back to screen detection and
+reports `unknown` more often — and `unknown` is the one state the policy cannot
+act on confidently.
 
 ## Look before you leap
 

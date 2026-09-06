@@ -103,7 +103,8 @@ name itself, because namesync does not write one — it moves the title the agen
 already publishes.
 
 Coding agents tend to set that title early in a session and not revise it as the
-work drifts. A workspace can therefore sit on a name that was accurate an hour
+work drifts, and how often they revise it varies by agent — namesync is at the
+mercy of whichever one is running. A workspace can therefore sit on a name that was accurate an hour
 ago while the agent has moved on. namesync is mirroring correctly; the source is
 stale. Lowering `similarityThreshold` will not help, because nothing changed
 upstream to compare against.
