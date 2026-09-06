@@ -6,24 +6,45 @@ Notable changes to namesync. The format follows
 
 ## [Unreleased]
 
-## [0.1.0]
+## [0.1.0] — 2026-09-06
 
-First release.
+First release. A herdr plugin that names workspaces, tabs and agents from the
+title the coding agent already publishes, with no model call and no API key.
 
 ### Added
 
-- Names herdr workspaces, tabs and agents from the terminal title the coding
-  agent already publishes, with no model call and no API key.
-- A policy that decides *when* a name should change: hand-written names are
-  locked permanently, herdr's own defaults are adoptable, rewordings are
-  ignored via a stemmed token overlap, renames are debounced and rate limited,
-  and a blocked agent is left alone.
-- Sidebar metadata: `$project`, `$branch`, `$worktree`, `$intent`, `$since`,
-  `$n`, `$agent`, `$agents`. `$project` resolves the repository's identity —
-  origin remote, then the project's own manifest, then the folder — because a
-  checkout is often named something other than the project it holds.
-- `namesync group`, which gathers a project's workspaces together. Idempotent,
-  minimal-movement, and preview-by-default because herdr numbers workspaces by
-  position and those numbers are jump keys.
-- Pluggable sinks: herdr, tmux, and raw OSC titles.
-- `dry-run`, `status`, `reformat`, `lock`, `unlock`.
+- **Naming from intent.** Reads the terminal title herdr reports for a pane and
+  applies it to the workspace, tab or agent. Works with every agent kind herdr
+  detects, not just Claude Code.
+- **A policy that decides when to act.** Hand-written names are locked
+  permanently; herdr's own defaults are adoptable; rewordings are ignored via a
+  stemmed token overlap; renames are debounced and rate limited; a blocked
+  agent is left alone; shells, paths and typed commands are never names. Every
+  decision prints its reason under `namesync dry-run`.
+- **Sidebar metadata** herdr has no tokens for: `$project`, `$branch`,
+  `$worktree`, `$intent`, `$since`, `$n`, `$agent`, `$agents`. `$project`
+  resolves the repository's identity — origin remote, then any other remote,
+  then the project's own manifest, then the folder — because a checkout is
+  often named something other than the project it holds.
+- **`namesync setup`**, which prints the sidebar rows herdr needs and writes
+  them on request. Without this the plugin publishes into a sidebar that never
+  renders it.
+- **`namesync group`**, which gathers a project's workspaces together.
+  Idempotent, minimal-movement, and preview-by-default because herdr numbers
+  workspaces by position and those numbers are jump keys.
+- **Interop.** A workspace another plugin has claimed with a `role` token is
+  never renamed, never written over, and pinned in place when grouping. herdr's
+  metadata is one flat map where the last writer wins, so this is the only thing
+  standing between two plugins and a silent conflict. See `TOKENS.md`.
+- `dry-run`, `status`, `reformat`, `lock`, `unlock`, `restart` — all registered
+  as herdr actions.
+
+### Notes
+
+- No dependencies. The plugin is dependency-free Node; only the documentation
+  site has packages.
+- One timer, and only because herdr reports state transitions with a sequence
+  number rather than a timestamp. `showDuration: false` removes it.
+- Known ceiling: namesync moves a name, it does not write one. An agent that
+  sets its title early and never revises it leaves a stale workspace name, and
+  no setting here can fix that. `$project` and `$branch` stay true regardless.
