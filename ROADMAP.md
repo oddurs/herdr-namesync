@@ -4,13 +4,12 @@
 
 ## v0.1 — First usable version
 
-`##········` 14% · 1 of 7 done · due 2026-12-01
+`###·······` 29% · 2 of 7 done · due 2026-12-01
 
 Enough to dogfood in a real project.
 
 ### backlog
 
-- [ ] `0003` Keep the terminal-tab explanation, drop the promise <sup>docs · p1</sup>
 - [ ] `0004` Make the sidebar work on install without hand-editing config <sup>feature · p0</sup>
 - [ ] `0005` Show the thing in the README <sup>docs · p0</sup>
 - [ ] `0006` Say which agents it works with <sup>docs · p1</sup>
@@ -18,11 +17,12 @@ Enough to dogfood in a real project.
 
 ### in progress
 
-- [ ] `0002` Cut the tmux and osc sinks <sup>chore · p0</sup>
+- [ ] `0003` Keep the terminal-tab explanation, drop the promise <sup>docs · p1</sup>
 
 ### done
 
 - [x] `0001` Adopt cairn for the roadmap <sup>feature</sup>
+- [x] `0002` Cut the tmux and osc sinks <sup>chore · p0</sup>
 
 ## v1.0 — Stable release
 
@@ -36,12 +36,11 @@ Documented, tested, and safe to depend on.
 
 ## later — Someday
 
-`··········` 0% · 0 of 2 done
+`··········` 0% · 0 of 1 done
 
 Good ideas without a date yet.
 
 ### backlog
 
-- [ ] `0009` Decide whether smali becomes a repo <sup>chore · p2</sup>
 - [ ] `0010` Ask herdr for state_changed_at <sup>chore · p2</sup>
 
