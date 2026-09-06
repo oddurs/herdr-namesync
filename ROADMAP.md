@@ -24,13 +24,13 @@ Enough to dogfood in a real project.
 
 ## v1.0 — Stable release
 
-`··········` 0% · 0 of 1 done · due 2027-03-01
+`##########` 100% · 1 of 1 done · due 2027-03-01
 
 Documented, tested, and safe to depend on.
 
-### in progress
+### done
 
-- [ ] `0007` Publish the docs site <sup>chore · p2</sup>
+- [x] `0007` Publish the docs site <sup>chore · p2</sup>
 
 ## later — Someday
 
@@ -38,7 +38,7 @@ Documented, tested, and safe to depend on.
 
 Good ideas without a date yet.
 
-### backlog
+### in progress
 
 - [ ] `0010` Ask herdr for state_changed_at <sup>chore · p2</sup>
 

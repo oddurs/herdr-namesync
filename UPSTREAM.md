@@ -1,8 +1,9 @@
 # Upstream notes for herdr
 
-Two things namesync works around that would be better solved in herdr, and two
-it works around fine. Written up so they can be filed as issues; all four were
-found while building against herdr 0.8.2.
+Five things namesync ran into. Two would be better solved in herdr, one is a
+gap any metadata plugin will hit, and two it works around fine. Written up so
+they can be filed as issues; all five were found while building against herdr
+0.8.2.
 
 ---
 
@@ -37,7 +38,7 @@ identifies the parent repo, so an already-open workspace on that repo can adopt
 it into the existing group. This is a few milliseconds per workspace open and
 reuses UI that already ships.
 
-**Why it matters.** This is the single highest-value change of the four: no new
+**Why it matters.** This is the single highest-value change of the five: no new
 concept, no new configuration, and it makes an existing feature work for people
 who create worktrees with `git worktree add` rather than through herdr.
 
@@ -65,7 +66,37 @@ is enough — the rest can live in plugins.
 
 ---
 
-## 3. No index token for the sidebar (worked around)
+## 3. A plugin cannot configure the surface it publishes into
+
+`herdr config` offers `check` and `reset-keys`. There is no `set`, and no
+socket method that writes config, so a plugin has no way to add the sidebar
+rows that would render what it publishes.
+
+The effect is that installing a metadata plugin changes nothing visible.
+namesync publishes `$project`, `$branch`, `$since` and `$n`; herdr draws none
+of them until someone hand-edits `[ui.sidebar.agents]` and
+`[ui.sidebar.spaces]`. A new user installs the plugin, sees an unchanged
+sidebar, and concludes it does not work.
+
+namesync now ships `namesync setup --write`, which appends the blocks to
+`config.toml` after backing it up and then calls `server.reload_config`. That
+works — `herdr config check` validates the result — but every metadata plugin
+will have to write its own TOML appender, and each one is a chance to corrupt
+a config file that is not theirs.
+
+**Suggested fix**, in rough order of how much would be needed:
+
+- a documented way for a plugin to *suggest* rows, which herdr merges at render
+  time and the user can accept or ignore; or
+- `herdr config set <key> <value>` with the same validation `config check`
+  already performs, so plugins do not each reimplement TOML editing.
+
+Neither is urgent. But the current state means the value of a metadata plugin
+is invisible on install, which is the worst moment for it to be invisible.
+
+---
+
+## 4. No index token for the sidebar (worked around)
 
 The Space panel cannot show a workspace's own number, so it cannot show what
 `prefix+shift+N` jumps to. `workspace.number` is in the snapshot; the sidebar
@@ -81,7 +112,7 @@ Agent rows) would mean plugins did not have to.
 
 ---
 
-## 4. Agent rows cannot read workspace metadata (worked around, and correct)
+## 5. Agent rows cannot read workspace metadata (worked around, and correct)
 
 Space rows resolve `$name` from workspace metadata; Agent rows resolve it from
 pane metadata. This follows from the model — an agent is a recognition of a
@@ -109,3 +140,25 @@ container and the observation collapse onto each other.
 They diverge as soon as the cardinality does — several agents in a workspace, a
 workspace with no agent, or several workspaces on the same repo. The split is
 right; it just is not visible in the simple case.
+
+---
+
+## Filing
+
+Ready to go as two issues, in this order:
+
+```bash
+gh issue create --repo herdrdev/herdr \
+  --title "Detect worktrees herdr did not create, so they group like the ones it did"
+
+gh issue create --repo herdrdev/herdr \
+  --title "Expose state_changed_at alongside state_change_seq"
+```
+
+The worktree one is the stronger of the two: the grouping UI already ships, and
+the detection is a `--git-dir` versus `--git-common-dir` comparison. The
+timestamp one is smaller in scope but removes a timer from every client that
+wants to show how long an agent has been stuck.
+
+Section 3 is worth raising too, though it is a design question rather than a
+missing field, and is better asked than proposed.
