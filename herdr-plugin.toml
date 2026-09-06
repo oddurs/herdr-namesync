@@ -23,6 +23,12 @@ contexts = ["workspace"]
 command = ["node", "src/cli.js", "rename-all"]
 
 [[actions]]
+id = "setup"
+title = "Show the sidebar rows to add"
+contexts = ["workspace"]
+command = ["node", "src/cli.js", "setup"]
+
+[[actions]]
 id = "dry-run"
 title = "Preview what would be renamed"
 contexts = ["workspace"]

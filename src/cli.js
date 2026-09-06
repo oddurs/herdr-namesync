@@ -10,6 +10,7 @@ const { Namer } = require('./namer');
 const { resolveSinks } = require('./sinks');
 const { Daemon } = require('./daemon');
 const { planOrder, applyOrder } = require('./grouping');
+const setup = require('./setup');
 
 const PID_FILE = path.join(stateDir(), 'daemon.pid');
 const LOG_FILE = path.join(stateDir(), 'daemon.log');
@@ -195,6 +196,45 @@ const COMMANDS = {
   // be skipped as "same intent, only reworded". Locks are still respected.
   async reformat() { await runRename(null, true); },
 
+  /* herdr renders none of namesync's tokens until the sidebar asks for them,
+     and `herdr config` has no `set` for a plugin to do it. So: print the
+     blocks, and write them only when asked. */
+  async setup() {
+    const apply = process.argv.includes('--write');
+    const { file, action, sections, text } = setup.plan();
+
+    if (action === 'missing') {
+      process.stdout.write('no herdr config at ' + file + '\n\n'
+        + 'Create it, then add:\n\n' + text);
+      return;
+    }
+
+    if (action === 'present') {
+      process.stdout.write('sidebar rows are already configured in ' + file + '\n'
+        + '  found: ' + sections.join(', ') + '\n\n'
+        + 'Left alone — an existing layout is yours. For reference, namesync\n'
+        + 'publishes $n, $project, $worktree, $branch, $since, $intent,\n'
+        + '$agent and $agents. This is what it would have added:\n\n' + text);
+      return;
+    }
+
+    if (!apply) {
+      process.stdout.write('would append to ' + file + ':\n\n' + text
+        + '\nnothing changed. re-run with --write to apply.\n');
+      return;
+    }
+
+    const backup = setup.write(file, text);
+    process.stdout.write('appended to ' + file + '\n  backup: ' + backup + '\n');
+    try {
+      await withClient((client) => client.request('server.reload_config', {}));
+      process.stdout.write('  herdr reloaded its config\n');
+    } catch (err) {
+      process.stdout.write('  reload it yourself: herdr server reload-config'
+        + '  (' + err.message + ')\n');
+    }
+  },
+
   // Preview by default. Grouping rewrites prefix+shift+N, so it should never
   // happen because someone typed the wrong thing.
   async group() {
@@ -259,6 +299,7 @@ const COMMANDS = {
       '  startup       start the watcher if it is not running (herdr startup hook)',
       '  daemon        run the watcher in the foreground',
       '  start|stop|restart',
+      '  setup         show the sidebar rows to add to herdr (--write applies)',
       '  status        show watcher, config and sink state',
       '  dry-run       print what would be renamed, change nothing',
       '  rename-now    rename the current workspace immediately',

@@ -11,6 +11,7 @@ const { Namer, leadAgent, gitInfo, gitCache, detectProject,
   repoNameFromUrl, manifestName } = require('../src/namer');
 const { planOrder, isClaimed } = require('../src/grouping');
 const { isUselessCwd } = require('../src/namer');
+const setup = require('../src/setup');
 const config = require('../src/config');
 
 let passed = 0;
@@ -628,6 +629,63 @@ testAsync('the guard can be turned off', async () => {
   const n = new Namer({ cfg: cfg({ respectPluginRoles: false }), store: freshStore(), sinks: [] });
   const plans = await n.buildPlans({ ...snapshot([agent()]), workspaces: claimed });
   assert.ok(plans.length > 0, 'opting out should restore normal behaviour');
+});
+
+process.stdout.write('\nsetup\n');
+
+function tmpConfig(body) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ns-cfg-'));
+  const file = path.join(dir, 'config.toml');
+  fs.writeFileSync(file, body);
+  return file;
+}
+
+test('the blocks reference only tokens namesync publishes', () => {
+  const text = setup.blocks();
+  for (const t of ['$n', '$project', '$worktree', '$since']) {
+    assert.ok(text.includes(t), 'missing ' + t);
+  }
+  // branch and git_status are herdr built-ins for Space rows; $branch is the
+  // metadata one, needed because Agent rows have no built-in for it.
+  assert.ok(text.includes('{ token = "$branch"') || text.includes('"$since"'));
+  assert.ok(!/\$(state_age|role|foo)/.test(text), 'references a token we do not publish');
+});
+
+test('an existing layout is never overwritten', () => {
+  const file = tmpConfig('[ui]\nsidebar_width = 30\n\n[ui.sidebar.agents]\nrows = [["state_icon"]]\n');
+  const p = setup.plan(file);
+  assert.strictEqual(p.action, 'present');
+  assert.deepStrictEqual(p.sections, ['ui.sidebar.agents']);
+});
+
+test('a config without sidebar rows is appendable', () => {
+  const file = tmpConfig('[ui]\nsidebar_width = 30\n');
+  assert.strictEqual(setup.plan(file).action, 'append');
+});
+
+test('a missing config is reported, not created', () => {
+  const p = setup.plan(path.join(os.tmpdir(), 'ns-does-not-exist', 'config.toml'));
+  assert.strictEqual(p.action, 'missing');
+});
+
+test('writing backs up first and appends valid TOML', () => {
+  const before = '[ui]\nsidebar_width = 30\n';
+  const file = tmpConfig(before);
+  const backup = setup.write(file, setup.blocks());
+
+  assert.strictEqual(fs.readFileSync(backup, 'utf8'), before, 'backup must be the original');
+  const after = fs.readFileSync(file, 'utf8');
+  assert.ok(after.startsWith(before), 'existing config must be preserved');
+  assert.ok(after.includes('[ui.sidebar.agents]'));
+  assert.ok(after.includes('[ui.sidebar.spaces]'));
+  // and the result is now recognised as configured, so a second run declines
+  assert.strictEqual(setup.plan(file).action, 'present');
+});
+
+test('sections are matched as headers, not as substrings', () => {
+  // A comment mentioning the section must not count as having configured it.
+  const file = tmpConfig('# see [ui.sidebar.agents] in the docs\n[ui]\n');
+  assert.strictEqual(setup.plan(file).action, 'append');
 });
 
 Promise.all(pending).then(() => {
