@@ -31,7 +31,7 @@ Good ideas without a date yet.
 
 ## v0.2 — Make the policy legible
 
-`#####·····` 50% · 2 of 4 done · due 2027-01-15
+`######····` 60% · 3 of 5 done · due 2027-01-15
 
 ### backlog
 
@@ -39,12 +39,13 @@ Good ideas without a date yet.
 
 ### in progress
 
-- [ ] `0015` Clearing a name should hand it back <sup>bug · p0</sup>
+- [ ] `0016` namesync wakes itself up by publishing metadata <sup>bug · p0</sup>
 
 ### done
 
 - [x] `0012` Make locks visible and reconsiderable <sup>feature · p0</sup>
 - [x] `0013` Detect and surface a stale title <sup>feature · p1</sup>
+- [x] `0015` Clearing a name should hand it back <sup>bug · p0</sup>
 
 ## v1.0 — Stable release
 

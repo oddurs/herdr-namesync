@@ -60,6 +60,25 @@ schedules a resync; the decision to lock is made by comparing the **live**
 label against recorded authorship. That is correct no matter when an event
 arrives, and it deleted the timing-sensitive code rather than tuning it.
 
+## Not waking yourself up
+
+`pane.updated` fires for scroll position, working directory, agent detection —
+and token changes. namesync's own metadata writes are token changes, so
+publishing woke the watcher, which synced, which published again.
+
+It was measurable before it was visible: 81 publishes in twenty minutes against
+40 possible ticks, arriving in pairs three seconds apart, which is the debounce
+interval. The visible symptom was a sidebar that flickered.
+
+The watcher now remembers the last title it saw for each pane and ignores a
+`pane.updated` whose title has not changed. That is the only part of that event
+it ever cared about.
+
+A related cost is worth knowing about when adding a token: every value that
+changes is a write and a redraw, multiplied by the number of agents. `$since`
+steps rather than ticking for exactly this reason — a minute counter across ten
+agents is ten redraws a minute for a number nobody reads that precisely.
+
 ## Exactly one watcher
 
 The pid file is ownership, not just a record. A watcher re-reads it on every

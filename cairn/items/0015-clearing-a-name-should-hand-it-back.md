@@ -2,7 +2,7 @@
 id: 15
 title: Clearing a name should hand it back
 type: bug
-status: doing
+status: done
 milestone: v0.2
 created: 2026-09-06
 updated: 2026-09-06

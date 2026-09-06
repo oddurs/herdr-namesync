@@ -148,7 +148,14 @@ function stripProject(text, project) {
 function formatSince(ms) {
   if (!Number.isFinite(ms) || ms < 45000) return 'now';
   const minutes = Math.round(ms / 60000);
-  if (minutes < 60) return minutes + 'm';
+
+  // Minute precision only while it is worth watching. After that the value
+  // steps, because every step is a metadata write and a sidebar redraw for
+  // every agent -- ten agents ticking over a minute counter is ten rewrites a
+  // minute for a number nobody reads that closely.
+  if (minutes < 10) return minutes + 'm';
+  if (minutes < 60) return (Math.floor(minutes / 5) * 5) + 'm';
+
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return hours + 'h';
   return Math.floor(hours / 24) + 'd';
