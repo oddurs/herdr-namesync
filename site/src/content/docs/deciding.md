@@ -19,11 +19,19 @@ namesync records every name it writes. When it next looks at a label, it
 compares the live value against that record. If they differ, someone else
 changed it — so it locks that workspace and never touches the name again.
 
-The lock is permanent until you clear it:
+There are two ways back.
+
+**Clear the name.** An empty label is not a name — it is the clearest possible
+statement that you did not want the one that was there. namesync takes the
+workspace back and fills it from the agent's current intent on the next sync.
+
+**Or release it explicitly:**
 
 ```bash
 namesync unlock    # in the workspace you want managed again
 ```
+
+Anything else you type is a name you wrote, and it goes on winning.
 
 Permanent is a strong promise, so namesync makes it visible rather than
 silent. A held workspace publishes `$locked`, which the sidebar can mark, and
