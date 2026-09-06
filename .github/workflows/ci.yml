@@ -49,3 +49,36 @@ jobs:
         working-directory: site
       - run: npm run build
         working-directory: site
+
+  # Publish the built site. Only from main, and only after the site job has
+  # proved it builds — a deploy that races the tests is a deploy that ships
+  # whatever happened to compile.
+  pages:
+    name: pages
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [test, syntax, site]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+      - run: npm ci
+        working-directory: site
+      - run: npm run build
+        working-directory: site
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site/dist
+      - id: deploy
+        uses: actions/deploy-pages@v4

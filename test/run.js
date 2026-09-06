@@ -565,8 +565,8 @@ test('an npm scope is stripped', () => {
 
 test('Cargo and pyproject names are read', () => {
   assert.strictEqual(
-    manifestName(tmpProject({ 'Cargo.toml': '[package]\nname = "smali"\nversion = "0.1.0"\n' })),
-    'smali');
+    manifestName(tmpProject({ 'Cargo.toml': '[package]\nname = "ferris"\nversion = "0.1.0"\n' })),
+    'ferris');
   assert.strictEqual(
     manifestName(tmpProject({ 'pyproject.toml': '[project]\nname = "hoover"\n' })), 'hoover');
 });
@@ -580,7 +580,7 @@ test('directories that identify nothing are rejected', () => {
   assert.strictEqual(isUselessCwd('/'), true, 'panes report / while a command starts');
   assert.strictEqual(isUselessCwd(''), true);
   assert.strictEqual(isUselessCwd(process.env.HOME), true);
-  assert.strictEqual(isUselessCwd('/Users/oddurs/Code/smali'), false);
+  assert.strictEqual(isUselessCwd(path.join(os.tmpdir(), 'a-project')), false);
 });
 
 test('a known project is not downgraded by a transient directory', () => {
