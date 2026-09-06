@@ -51,7 +51,20 @@ class Store {
   }
 
   isLocked(id) { return Boolean(this.data.locked[id]); }
-  lock(id, reason = 'manual') { this.data.locked[id] = { reason, at: Date.now() }; return this; }
+  lockInfo(id) { return this.data.locked[id]; }
+
+  /* A lock records the label it was protecting, so `status` can say what is
+     frozen rather than printing a workspace id, and so drift against the
+     agent's current intent can be measured later. */
+  lock(id, reason = 'manual', label = '') {
+    const existing = this.data.locked[id];
+    this.data.locked[id] = {
+      reason,
+      at: existing ? existing.at : Date.now(),
+      label: existing && existing.label ? existing.label : label,
+    };
+    return this;
+  }
   unlock(id) { delete this.data.locked[id]; return this; }
 
   /* When a pane entered the agent state it is in now. Persisted so a watcher

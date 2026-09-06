@@ -35,9 +35,12 @@ Good ideas without a date yet.
 
 ### backlog
 
-- [ ] `0012` Make locks visible and reconsiderable <sup>feature · p0</sup>
 - [ ] `0013` Detect and surface a stale title <sup>feature · p1</sup>
 - [ ] `0014` Add $age, and say what $since actually measures <sup>feature · p1</sup>
+
+### in progress
+
+- [ ] `0012` Make locks visible and reconsiderable <sup>feature · p0</sup>
 
 ## v1.0 — Stable release
 
