@@ -28,6 +28,16 @@ function isWorktree(ws) {
   return Boolean(ws.tokens && ws.tokens.worktree);
 }
 
+/* A workspace another plugin has claimed for itself.
+   herdr's tokens are a single flat map with no per-source layering: two
+   sources writing one key overwrite each other, and either can clear it. A
+   plugin that brands a workspace through tokens -- smali's dashboard writes
+   `project` and `n` to draw its own row -- would be silently overwritten.
+   `role` is the marker such a plugin sets; it means hands off. */
+function isClaimed(ws) {
+  return Boolean(ws && ws.tokens && ws.tokens.role);
+}
+
 /**
  * @param {Array} workspaces herdr's ordered workspace list
  * @returns {{ordered: Array, moved: Array, changed: boolean}}
@@ -43,7 +53,7 @@ function planOrder(workspaces) {
     if (!rank.has(key)) rank.set(key, i);
   });
 
-  const ordered = [...workspaces].sort((a, b) => {
+  const byGroup = (a, b) => {
     const byProject = rank.get(groupKey(a)) - rank.get(groupKey(b));
     if (byProject !== 0) return byProject;
 
@@ -53,7 +63,26 @@ function planOrder(workspaces) {
     if (byWorktree !== 0) return byWorktree;
 
     return position.get(a.workspace_id) - position.get(b.workspace_id);
+  };
+
+  /* A claimed workspace holds its exact position. A dashboard is furniture:
+     you learn where it is and reach for it there, so sorting it around by
+     whatever project it happens to report would be worse than leaving the
+     spaces ungrouped. Only the remaining slots are reordered. */
+  const pinned = new Map();
+  const movable = [];
+  workspaces.forEach((w, i) => {
+    if (isClaimed(w)) pinned.set(i, w);
+    else movable.push(w);
   });
+
+  movable.sort(byGroup);
+
+  const ordered = [];
+  let next = 0;
+  for (let i = 0; i < workspaces.length; i += 1) {
+    ordered.push(pinned.has(i) ? pinned.get(i) : movable[next++]);
+  }
 
   const moved = ordered
     .map((w, i) => ({
@@ -77,4 +106,4 @@ async function applyOrder(client, ordered) {
   return ordered.length;
 }
 
-module.exports = { planOrder, applyOrder, groupKey, isWorktree };
+module.exports = { planOrder, applyOrder, groupKey, isWorktree, isClaimed };

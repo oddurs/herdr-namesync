@@ -5,6 +5,7 @@ const { execFile } = require('child_process');
 const { render, slugify, uniqueAgentName, normalize, stripProject, formatSince,
   AGENT_NAME_MAX } = require('./naming');
 const { decide } = require('./policy');
+const { isClaimed } = require('./grouping');
 
 function git(cwd, args) {
   return new Promise((resolve) => {
@@ -229,6 +230,7 @@ class Namer {
       if (only && only !== workspaceId) continue;
       const ws = idx.workspaces.get(workspaceId);
       if (!ws) continue;
+      if (cfg.respectPluginRoles && isClaimed(ws)) continue;
 
       const multi = agentsHere.length > 1;
       const lead = leadAgent(agentsHere, cfg.multiAgent);
@@ -388,6 +390,7 @@ class Namer {
     for (const [workspaceId, agentsHere] of idx.byWorkspace) {
       const ws = idx.workspaces.get(workspaceId);
       if (!ws) continue;
+      if (this.cfg.respectPluginRoles && isClaimed(ws)) continue;
 
       // Every agent gets pane tokens, so the Agents panel row is populated
       // even when a workspace holds several.
@@ -473,5 +476,6 @@ class Namer {
   }
 }
 
-module.exports = { Namer, index, leadAgent, gitBranch, detectProject, findProjectRoot,
-  repoNameFromUrl, manifestName, remoteName, isUselessCwd, gitInfo, gitCache };
+module.exports = { Namer, index, leadAgent, gitBranch, detectProject,
+  findProjectRoot, repoNameFromUrl, manifestName, remoteName, isUselessCwd,
+  gitInfo, gitCache };

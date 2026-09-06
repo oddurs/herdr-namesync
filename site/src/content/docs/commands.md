@@ -83,6 +83,9 @@ Within a project the main checkout leads and worktrees follow, mirroring how
 herdr nests worktrees it created itself. Spaces with no detected project are
 their own group and stay exactly where they are.
 
+A space another plugin has claimed with a `role` token — smali's dashboard, for
+instance — keeps its exact position. Furniture should stay where you left it.
+
 It is never automatic. Numbers changing under you while you work would be worse
 than the scattering it fixes.
 

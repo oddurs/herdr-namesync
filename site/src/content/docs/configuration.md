@@ -58,6 +58,7 @@ watcher.
 | `skipWhileBlocked` | Whether to hold off while an agent waits on a dialog. |
 | `targets` | Which surfaces get named at all. |
 | `multiAgent` | What to do with a workspace holding several agents: `tab`, `focused` or `skip`. |
+| `respectPluginRoles` | Leave workspaces alone when another plugin has claimed them with a `role` token. herdr's metadata is one flat map where the last writer wins, so naming a claimed space would overwrite that plugin's own labelling. |
 | `showDuration` | Publish `$since`. This is the only feature that needs a timer; turning it off removes the timer. |
 | `durationRefreshMs` | How often to re-check elapsed time. Coarse buckets plus metadata dedup mean a tick usually writes nothing. |
 | `stripProjectPrefix` | Drop a leading project name from the label, since the sidebar already shows the project. `ptop-adopt-remaining-lessons` becomes `Adopt-remaining-lessons`. Never strips the whole name. |
