@@ -1,28 +1,70 @@
 {
   "enabled": true,
-
   "debounceMs": 2500,
   "minRenameIntervalMs": 30000,
   "similarityThreshold": 0.6,
-
   "respectManualNames": true,
   "skipWhileBlocked": true,
-
-  "targets": { "workspace": true, "tab": false, "agent": true },
-
+  "showDuration": true,
+  "durationRefreshMs": 30000,
+  "stripProjectPrefix": true,
+  "targets": {
+    "workspace": true,
+    "tab": false,
+    "agent": true
+  },
   "templates": {
     "workspace": "{intent}",
     "tab": "{intent}",
     "agent": "{intent-slug}"
   },
-
   "multiAgent": "tab",
-
-  "sinks": {
-    "herdr": { "enabled": true },
-    "tmux": { "enabled": false, "target": null },
-    "osc": { "enabled": false, "device": null }
+  "metadata": {
+    "enabled": true
   },
-
+  "sinks": {
+    "herdr": {
+      "enabled": true
+    },
+    "tmux": {
+      "enabled": false,
+      "target": null
+    },
+    "osc": {
+      "enabled": false
+    }
+  },
+  "ignoreTitles": [
+    "claude",
+    "claude code",
+    "codex",
+    "pi",
+    "copilot",
+    "cursor",
+    "droid",
+    "bash",
+    "zsh",
+    "fish",
+    "sh",
+    "nu",
+    "pwsh",
+    "powershell",
+    "nvim",
+    "vim",
+    "nano",
+    "helix",
+    "hx",
+    "emacs",
+    "less",
+    "man",
+    "node",
+    "python",
+    "irb",
+    "psql",
+    "lazygit",
+    "htop",
+    "top",
+    "btop"
+  ],
   "logLevel": "info"
 }

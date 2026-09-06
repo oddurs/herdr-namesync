@@ -134,5 +134,10 @@ command = "namesync.rename-now"
 description = "rename workspace"
 ```
 
-The action ids are `rename-now`, `rename-all`, `lock`, `unlock`, `status` and
-`restart`, each qualified with the `namesync.` prefix.
+Every command that makes sense outside a terminal is registered as an action:
+`dry-run`, `rename-now`, `rename-all`, `reformat`, `group`, `lock`, `unlock`,
+`status` and `restart` — each qualified with the `namesync.` prefix.
+
+`start`, `stop` and `daemon` are deliberately not actions. Managing the watcher
+from inside a herdr menu, while the watcher is what feeds that menu, is a way
+to end up confused.

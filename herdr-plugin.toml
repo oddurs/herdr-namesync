@@ -23,6 +23,24 @@ contexts = ["workspace"]
 command = ["node", "src/cli.js", "rename-all"]
 
 [[actions]]
+id = "dry-run"
+title = "Preview what would be renamed"
+contexts = ["workspace"]
+command = ["node", "src/cli.js", "dry-run"]
+
+[[actions]]
+id = "reformat"
+title = "Re-render owned labels"
+contexts = ["workspace"]
+command = ["node", "src/cli.js", "reformat"]
+
+[[actions]]
+id = "group"
+title = "Preview grouping spaces by project"
+contexts = ["workspace"]
+command = ["node", "src/cli.js", "group"]
+
+[[actions]]
 id = "lock"
 title = "Lock this workspace name"
 contexts = ["workspace"]
