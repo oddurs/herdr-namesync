@@ -2,7 +2,7 @@
 id: 7
 title: Publish the docs site
 type: chore
-status: backlog
+status: doing
 milestone: v1.0
 created: 2026-09-06
 updated: 2026-09-06

@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import Workspaces from '../components/Workspaces.astro';
+import { url } from '../lib/url';
 ---
 
 <Base
@@ -123,7 +124,7 @@ herdr integration install claude</code></pre>
           launches a watcher that holds one event subscription and reconnects on its own
           across herdr restarts.
         </p>
-        <p><a href="/docs/install">Read the docs</a></p>
+        <p><a href={url("docs/install")}>Read the docs</a></p>
       </div>
     </section>
   </main>

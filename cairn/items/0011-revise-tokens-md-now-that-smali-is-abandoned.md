@@ -2,7 +2,7 @@
 id: 11
 title: Revise TOKENS.md now that smali is abandoned
 type: docs
-status: doing
+status: done
 milestone: v0.1
 created: 2026-09-06
 updated: 2026-09-06

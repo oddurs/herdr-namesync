@@ -1,6 +1,7 @@
 ---
 import { getCollection, render } from 'astro:content';
 import Base from '../../layouts/Base.astro';
+import { url } from '../../lib/url';
 
 export async function getStaticPaths() {
   const docs = (await getCollection('docs')).sort((a, b) => a.data.order - b.data.order);
@@ -28,7 +29,7 @@ const { Content } = await render(entry);
           nav.map((item) => (
             <li>
               <a
-                href={`/docs/${item.slug}`}
+                href={url(`docs/${item.slug}`)}
                 aria-current={item.slug === entry.id ? 'page' : undefined}
               >
                 {item.title}
@@ -49,7 +50,7 @@ const { Content } = await render(entry);
       <nav class="pager" aria-label="Pagination">
         {
           prev ? (
-            <a class="pager__link" href={`/docs/${prev.id}`}>
+            <a class="pager__link" href={url(`docs/${prev.id}`)}>
               <span class="pager__dir t-label">Previous</span>
               <span class="pager__title t-ui">{prev.data.title}</span>
             </a>
@@ -59,7 +60,7 @@ const { Content } = await render(entry);
         }
         {
           next && (
-            <a class="pager__link pager__link--next" href={`/docs/${next.id}`}>
+            <a class="pager__link pager__link--next" href={url(`docs/${next.id}`)}>
               <span class="pager__dir t-label">Next</span>
               <span class="pager__title t-ui">{next.data.title}</span>
             </a>
