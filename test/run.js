@@ -783,6 +783,45 @@ testAsync('stale detection can be turned off', async () => {
   assert.strictEqual(sent[sent.length - 1].stale, null);
 });
 
+process.stdout.write('\nclearing a name\n');
+
+test('clearing a held name hands the workspace back', () => {
+  const st = freshStore();
+  st.lock('w1', 'edited by hand', 'code quality');
+  const r = decide({
+    kind: 'workspace', id: 'w1', cfg: cfg(), store: st, agentStatus: 'working',
+    context: { repo: 'app' }, current: '',
+    desired: 'Fix auth middleware', intent: 'Fix auth middleware',
+  });
+  assert.strictEqual(r.rename, true, 'a cleared name must not stay held');
+  assert.strictEqual(r.shouldRelease, true);
+});
+
+test('a hold still stands against any other edit', () => {
+  const st = freshStore();
+  st.lock('w1', 'edited by hand', 'code quality');
+  const held = (current) => decide({
+    kind: 'workspace', id: 'w1', cfg: cfg(), store: st, agentStatus: 'working',
+    context: { repo: 'app' }, current,
+    desired: 'Fix auth middleware', intent: 'Fix auth middleware',
+  });
+  assert.strictEqual(held('code quality').reason, SKIP.LOCKED);
+  assert.strictEqual(held('something else').reason, SKIP.LOCKED);
+  // whitespace is still empty
+  assert.strictEqual(held('   ').shouldRelease, true);
+});
+
+testAsync('applying a release actually clears the hold, and persists it', async () => {
+  const store = freshStore();
+  store.lock('w1', 'edited by hand', 'code quality');
+  const n = new Namer({ cfg: cfg(), store, sinks: [{ name: 'herdr',
+    kinds: ['workspace', 'tab', 'agent'], apply: async () => true }] });
+  await n.apply([{ kind: 'workspace', id: 'w1', current: '', desired: 'Fix auth',
+    verdict: { rename: true, shouldRelease: true } }]);
+  assert.strictEqual(store.isLocked('w1'), false, 'hold survived the release');
+  assert.strictEqual(new Store(store.file).isLocked('w1'), false, 'release was not saved');
+});
+
 Promise.all(pending).then(() => {
   process.stdout.write('\n' + passed + ' passed, ' + failed + ' failed\n');
   process.exit(failed ? 1 : 0);

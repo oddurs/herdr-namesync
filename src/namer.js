@@ -466,6 +466,14 @@ class Namer {
         this.log('lock', plan.kind + ' ' + plan.id + ' -> keeping "' + plan.current + '"');
         continue;
       }
+      // A cleared name released its hold; record that before renaming so the
+      // workspace is managed again from here on.
+      if (plan.verdict.shouldRelease) {
+        this.store.unlock(plan.id);
+        dirty = true;
+        this.log('info', 'released ' + plan.kind + ' ' + plan.id + ' (name was cleared)');
+      }
+
       if (!plan.verdict.rename) continue;
 
       let ok = false;

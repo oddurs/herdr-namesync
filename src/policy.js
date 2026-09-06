@@ -31,7 +31,18 @@ function decide({ kind, id, current, desired, intent, cfg, store, now = Date.now
     return { rename: false, reason: SKIP.BLOCKED, retryInMs: 5000 };
   }
 
-  if (store.isLocked(id)) return { rename: false, reason: SKIP.LOCKED };
+  /* Clearing a name hands the workspace back.
+     A hold is permanent and deliberately hard to undo, but it protects a name
+     the user wrote -- and an empty label is not a name, it is the clearest
+     statement that the previous one was unwanted. Requiring `namesync unlock`
+     after clearing a field leaves the workspace blank for ever, because nobody
+     knows the command is what clearing was supposed to mean. */
+  if (store.isLocked(id)) {
+    if (normalize(current) !== '') {
+      return { rename: false, reason: SKIP.LOCKED };
+    }
+    return { rename: true, reason: 'cleared by hand, taking it back', shouldRelease: true };
+  }
 
   const cur = normalize(current);
   if (cur === normalize(desired)) return { rename: false, reason: SKIP.UNCHANGED };

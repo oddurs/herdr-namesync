@@ -2,7 +2,7 @@
 id: 13
 title: Detect and surface a stale title
 type: feature
-status: doing
+status: done
 milestone: v0.2
 created: 2026-09-06
 updated: 2026-09-06
