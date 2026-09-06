@@ -30,6 +30,7 @@ rows. All values are strings or absent — never empty strings.
 | `intent` | workspace | The agent's live title, before any template is applied. | stable |
 | `since` | both | How long the agent has held its current state: `now`, `20m`, `3h`, `2d`. | stable |
 | `locked` | both | The literal string `held` when namesync has been told to leave this name alone. Absent otherwise. | stable |
+| `stale` | both | The literal string `stale` when the agent has not revised its title across several state transitions. A signal, never acted on. | stable |
 | `agent` | both | Agent kind, such as `claude`. | stable |
 | `agents` | workspace | Count, only when a workspace holds more than one. Absent otherwise. | stable |
 

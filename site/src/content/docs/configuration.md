@@ -55,6 +55,8 @@ watcher.
 | `targets` | Which surfaces get named at all. |
 | `multiAgent` | What to do with a workspace holding several agents: `tab`, `focused` or `skip`. |
 | `respectPluginRoles` | Leave workspaces alone when another plugin has claimed them with a `role` token. herdr's metadata is one flat map where the last writer wins, so naming a claimed space would overwrite that plugin's own labelling. |
+| `showStale` | Publish `$stale`. |
+| `staleAfterTurns` | How many agent state transitions a title may survive unchanged before it is flagged. A working-to-idle cycle is two, so the default of 6 is roughly three completed turns. |
 | `showDuration` | Publish `$since`. This is the only feature that needs a timer; turning it off removes the timer. |
 | `durationRefreshMs` | How often to re-check elapsed time. Coarse buckets plus metadata dedup mean a tick usually writes nothing. |
 | `stripProjectPrefix` | Drop a leading project name from the label, since the sidebar already shows the project. `ptop-adopt-remaining-lessons` becomes `Adopt-remaining-lessons`. Never strips the whole name. |
@@ -99,6 +101,7 @@ workspace label, so a two-line row can carry two different things:
 | `$worktree` | The word `worktree` when the agent sits in a linked worktree. Three rows reading `fontina · main` are otherwise identical. |
 | `$since` | How long the agent has been in its current state: `now`, `20m`, `3h`, `2d`. Bucketed coarsely so the token changes a handful of times an hour rather than every second. |
 | `$locked` | `held` when namesync has been told to leave a name alone. A held name behaves completely differently from a live one, so the sidebar should be able to say which it is looking at. |
+| `$stale` | `stale` when the agent has not revised its title across several state transitions — it has finished and started work repeatedly without changing its description of it. |
 | `$agent` | Agent kind, such as `claude`. |
 | `$agents` | Number of agents in the workspace, when more than one. |
 
