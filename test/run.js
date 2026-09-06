@@ -313,13 +313,13 @@ testAsync('multiAgent "skip" still names the agents', async () => {
 
 testAsync('a sink is never credited for a kind it cannot apply', async () => {
   const calls = [];
-  const windowOnly = { name: 'tmux', kinds: ['workspace', 'tab'],
+  const windowOnly = { name: 'window-only', kinds: ['workspace', 'tab'],
     apply: async ({ kind }) => { calls.push(kind); return true; } };
   const store = freshStore();
   const n = new Namer({ cfg: cfg(), store, sinks: [windowOnly] });
   await n.apply([{ kind: 'agent', id: 'w1:p1', current: '', desired: 'fix-auth',
     verdict: { rename: true } }]);
-  assert.strictEqual(calls.length, 0, 'tmux was asked to rename an agent');
+  assert.strictEqual(calls.length, 0, 'a window-only sink was asked to rename an agent');
   assert.strictEqual(store.authored('agent', 'w1:p1'), undefined,
     'authorship recorded for a rename that never happened');
 });

@@ -2,7 +2,7 @@
 id: 2
 title: Cut the tmux and osc sinks
 type: chore
-status: backlog
+status: doing
 milestone: v0.1
 created: 2026-09-06
 updated: 2026-09-06

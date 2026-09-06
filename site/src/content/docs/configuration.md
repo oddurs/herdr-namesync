@@ -36,11 +36,7 @@ watcher.
 
   "multiAgent": "tab",
 
-  "sinks": {
-    "herdr": { "enabled": true },
-    "tmux": { "enabled": false, "target": null },
-    "osc": { "enabled": false, "device": null }
-  },
+  "sinks": { "herdr": { "enabled": true } },
 
   "logLevel": "info"
 }
