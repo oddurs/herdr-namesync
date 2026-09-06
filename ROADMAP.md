@@ -8,7 +8,7 @@
 
 Enough to dogfood in a real project.
 
-### backlog
+### in progress
 
 - [ ] `0008` Tag v0.1.0 and write the release notes <sup>chore · p1</sup>
 
@@ -34,11 +34,11 @@ Documented, tested, and safe to depend on.
 
 ## later — Someday
 
-`··········` 0% · 0 of 1 done
+`##########` 100% · 1 of 1 done
 
 Good ideas without a date yet.
 
-### in progress
+### done
 
-- [ ] `0010` Ask herdr for state_changed_at <sup>chore · p2</sup>
+- [x] `0010` Ask herdr for state_changed_at <sup>chore · p2</sup>
 
