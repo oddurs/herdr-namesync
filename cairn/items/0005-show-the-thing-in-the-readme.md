@@ -2,7 +2,7 @@
 id: 5
 title: Show the thing in the README
 type: docs
-status: doing
+status: done
 milestone: v0.1
 created: 2026-09-06
 updated: 2026-09-06

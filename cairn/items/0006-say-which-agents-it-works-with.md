@@ -2,7 +2,7 @@
 id: 6
 title: Say which agents it works with
 type: docs
-status: backlog
+status: doing
 milestone: v0.1
 created: 2026-09-06
 updated: 2026-09-06

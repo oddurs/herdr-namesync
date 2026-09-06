@@ -14,6 +14,11 @@ A herdr plugin that keeps workspace labels, tab labels and agent names in sync
 with the intent of the coding agent running inside them — continuously, without
 an LLM call or an API key.
 
+It never asks which agent it is talking to. herdr recognises seventeen kinds —
+Claude Code, Codex, Copilot, Cursor, Droid, OpenCode, Qwen and the rest — and
+namesync reads whatever herdr reports, so it works with all of them and with
+whatever ships next.
+
 Six agents running. herdr on its own names each space after the directory it
 was opened in, which is how three of these end up identical:
 
