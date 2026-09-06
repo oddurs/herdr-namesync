@@ -2,7 +2,7 @@
 id: 4
 title: Make the sidebar work on install without hand-editing config
 type: feature
-status: doing
+status: done
 milestone: v0.1
 created: 2026-09-06
 updated: 2026-09-06

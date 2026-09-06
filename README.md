@@ -14,13 +14,38 @@ A herdr plugin that keeps workspace labels, tab labels and agent names in sync
 with the intent of the coding agent running inside them — continuously, without
 an LLM call or an API key.
 
+Six agents running. herdr on its own names each space after the directory it
+was opened in, which is how three of these end up identical:
+
 ```
-before                          after
-────────────────────────        ─────────────────────────────────
-w4  cairn                       w4  Open source project roadmap CLI
-w5  perfect                     w5  ptop-adopt-remaining-lessons
-w6  bedreader                   w6  Open source wifi e-reader
+  unifont          unifont          unifont
+  astralia         perfect          bedreader
 ```
+
+The same sidebar with namesync publishing into it:
+
+```
+ ✓ 1  fontina · main  10m
+   Astro docs site GNU style
+ ✓ 2  fontina · worktree · feat/packaging-manifests  1d
+   Richard Stallman perspective
+ ✓ 3  fontina · main  2h
+   Claude Code settings configuration
+ ◑ 4  cairn · docs/the-rules  8m
+   Open source project roadmap CLI
+ ◑ 5  ptop · item-0014-persist-history  45m
+   ptop-adopt-remaining-lessons
+ ◑ 6  bedreader · feat/prepare  3m
+   Open source wifi e-reader
+```
+
+Three of those directories are lying: `unifont/` holds **fontina**, `astralia/`
+holds **cairn**, `perfect/` holds **ptop**. The number is the key that jumps
+there, the second row shows it is a worktree rather than a fourth clone, and
+the duration is how long that agent has been sitting in its current state.
+
+The bottom line of each pair is the agent's own title — namesync never wrote
+it, it only moved it somewhere useful.
 
 ## Why this exists
 
