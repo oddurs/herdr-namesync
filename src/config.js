@@ -39,6 +39,12 @@ const DEFAULTS = {
   // already shows the project on its own line.
   stripProjectPrefix: true,
 
+  // herdr's metadata is one flat map per workspace: last writer wins, and any
+  // source can clear another's key. A workspace another plugin has claimed
+  // with a `role` token is therefore left alone entirely — naming it would
+  // overwrite that plugin's own labelling.
+  respectPluginRoles: true,
+
   // Publish $n, $project, $worktree, $branch, $intent, $agent and $agents to the herdr
   // sidebar as display-only tokens, so a two-line row can show the project on
   // one line and the live intent on the other.

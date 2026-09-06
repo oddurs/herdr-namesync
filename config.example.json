@@ -5,13 +5,17 @@
   "similarityThreshold": 0.6,
   "respectManualNames": true,
   "skipWhileBlocked": true,
-  "showDuration": true,
-  "durationRefreshMs": 30000,
-  "stripProjectPrefix": true,
   "targets": {
     "workspace": true,
     "tab": false,
     "agent": true
+  },
+  "showDuration": true,
+  "durationRefreshMs": 30000,
+  "stripProjectPrefix": true,
+  "respectPluginRoles": true,
+  "metadata": {
+    "enabled": true
   },
   "templates": {
     "workspace": "{intent}",
@@ -19,9 +23,6 @@
     "agent": "{intent-slug}"
   },
   "multiAgent": "tab",
-  "metadata": {
-    "enabled": true
-  },
   "sinks": {
     "herdr": {
       "enabled": true

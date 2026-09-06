@@ -10,7 +10,7 @@ const { Store } = require('../src/state');
 const { Namer, leadAgent, gitInfo, gitCache, detectProject,
   repoNameFromUrl, manifestName } = require('../src/namer');
 const { planOrder } = require('../src/grouping');
-const { isUselessCwd } = require('../src/namer');
+const { isUselessCwd, isClaimed } = require('../src/namer');
 const config = require('../src/config');
 
 let passed = 0;
@@ -560,6 +560,45 @@ test('a known project is not downgraded by a transient directory', () => {
   // and it is cleared with the rest of the pane's state
   st.forget('w1:p1');
   assert.strictEqual(st.lastProject('w1:p1'), undefined);
+});
+
+process.stdout.write('\ninterop\n');
+
+test('isClaimed recognises another plugin\'s marker', () => {
+  assert.strictEqual(isClaimed({ tokens: { role: 'dashboard' } }), true);
+  assert.strictEqual(isClaimed({ tokens: { project: 'fontina' } }), false);
+  assert.strictEqual(isClaimed({ tokens: {} }), false);
+  assert.strictEqual(isClaimed({}), false);
+  assert.strictEqual(isClaimed(undefined), false);
+});
+
+testAsync('a claimed workspace is never renamed', async () => {
+  // herdr's tokens are one flat map, so naming this would overwrite the
+  // claiming plugin's own project/n and erase its sidebar row.
+  const claimed = [{ workspace_id: 'w1', number: 1, label: 'OddOS',
+    tokens: { role: 'dashboard', project: 'OddOS', n: '\u25c6' } }];
+  const n = new Namer({ cfg: cfg(), store: freshStore(), sinks: [] });
+  const plans = await n.buildPlans({ ...snapshot([agent()]), workspaces: claimed });
+  assert.strictEqual(plans.length, 0, 'claimed workspace must be left alone');
+});
+
+testAsync('a claimed workspace gets no metadata written over it', async () => {
+  const sent = [];
+  const sink = { name: 'herdr', kinds: ['workspace', 'tab', 'agent'], apply: async () => true,
+    reportMetadata: async (kind, id, tokens) => { sent.push({ kind, id, tokens }); return true; } };
+  const claimed = [{ workspace_id: 'w1', number: 1, label: 'OddOS',
+    tokens: { role: 'dashboard', project: 'OddOS' } }];
+  const n = new Namer({ cfg: cfg(), store: freshStore(), sinks: [sink] });
+  await n.publishMetadata({ ...snapshot([agent()]), workspaces: claimed });
+  assert.strictEqual(sent.length, 0, 'would have overwritten the claiming plugin');
+});
+
+testAsync('the guard can be turned off', async () => {
+  const claimed = [{ workspace_id: 'w1', number: 1, label: 'OddOS',
+    tokens: { role: 'dashboard' } }];
+  const n = new Namer({ cfg: cfg({ respectPluginRoles: false }), store: freshStore(), sinks: [] });
+  const plans = await n.buildPlans({ ...snapshot([agent()]), workspaces: claimed });
+  assert.ok(plans.length > 0, 'opting out should restore normal behaviour');
 });
 
 Promise.all(pending).then(() => {

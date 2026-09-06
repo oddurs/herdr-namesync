@@ -76,6 +76,34 @@ need arithmetic you need a timestamp, and herdr does not expose one yet — see
 **Treat `n` as display, not identity.** It is positional and changes when
 spaces are reordered. `workspace_id` is the stable handle.
 
+### The namespace is flat, and last writer wins
+
+`source` is required when publishing, but it is bookkeeping for TTL, sequencing
+and clearing — **not** a namespace. Reads return one merged map with no
+attribution. Verified against herdr 0.8.2:
+
+```
+alpha writes zz_probe=from-alpha   ->  "from-alpha"
+beta  writes the same key          ->  "from-beta"     (overwrote it)
+beta  clears the key               ->  undefined       (alpha's value gone too)
+```
+
+So two plugins writing the same key overwrite each other, and either can clear
+the other's value. There is no layering to fall back to.
+
+This is live in this ecosystem: smali brands its dashboard workspace by writing
+`project` and `n` — the same two keys namesync publishes everywhere else. They
+have not collided so far only because the dashboard holds panels rather than
+agents, and namesync only touches workspaces that contain an agent. That is an
+accident, not a design.
+
+**A workspace carrying a `role` token is claimed.** namesync leaves it alone
+entirely — no rename, no metadata — because `role` is how a plugin says "this
+space is mine". Set `respectPluginRoles: false` to opt out.
+
+If you are writing a plugin that brands a workspace, set `role`. If you are
+writing one that names workspaces, honour it.
+
 ### Rules for producers
 
 **Namespace by meaning, not by tool.** These names are generic on purpose:

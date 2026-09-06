@@ -203,6 +203,17 @@ function index(snapshot) {
   return { workspaces, tabs, agents, byWorkspace, liveAgentNames };
 }
 
+/* A workspace another plugin has claimed for itself.
+   herdr's tokens are a single flat map with no per-source layering -- verified:
+   two sources writing one key overwrite each other, and either can clear it.
+   So a plugin that brands a workspace through tokens (smali's dashboard writes
+   project and n to render its own row) would be silently overwritten the
+   moment an agent happened to be running there. `role` is the marker such a
+   plugin sets; namesync treats it as "hands off". */
+function isClaimed(ws) {
+  return Boolean(ws && ws.tokens && ws.tokens.role);
+}
+
 // Picks the one agent whose intent should name a workspace, or null when the
 // workspace is genuinely ambiguous.
 function leadAgent(agentsInWorkspace, mode) {
@@ -229,6 +240,7 @@ class Namer {
       if (only && only !== workspaceId) continue;
       const ws = idx.workspaces.get(workspaceId);
       if (!ws) continue;
+      if (cfg.respectPluginRoles && isClaimed(ws)) continue;
 
       const multi = agentsHere.length > 1;
       const lead = leadAgent(agentsHere, cfg.multiAgent);
@@ -388,6 +400,7 @@ class Namer {
     for (const [workspaceId, agentsHere] of idx.byWorkspace) {
       const ws = idx.workspaces.get(workspaceId);
       if (!ws) continue;
+      if (this.cfg.respectPluginRoles && isClaimed(ws)) continue;
 
       // Every agent gets pane tokens, so the Agents panel row is populated
       // even when a workspace holds several.
@@ -473,5 +486,6 @@ class Namer {
   }
 }
 
-module.exports = { Namer, index, leadAgent, gitBranch, detectProject, findProjectRoot,
-  repoNameFromUrl, manifestName, remoteName, isUselessCwd, gitInfo, gitCache };
+module.exports = { Namer, index, leadAgent, isClaimed, gitBranch, detectProject,
+  findProjectRoot, repoNameFromUrl, manifestName, remoteName, isUselessCwd,
+  gitInfo, gitCache };
