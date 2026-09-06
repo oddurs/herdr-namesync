@@ -11,7 +11,29 @@ dependencies and nothing to build.
 herdr plugin install oddurs/namesync
 ```
 
-For local development, link a working copy instead:
+## Show it in the sidebar
+
+This step is not optional, and it is the one that catches people out. namesync
+publishes `$project`, `$branch`, `$since` and `$n`, but **herdr renders none of
+them until the sidebar asks for them.** Install the plugin and nothing visible
+changes.
+
+herdr has no `config set` — only `check` and `reset-keys` — so a plugin cannot
+make the edit for you. This prints the rows to add:
+
+```bash
+namesync setup            # print them
+namesync setup --write    # append them, after backing the file up
+```
+
+`--write` refuses if you already have `[ui.sidebar.agents]` or
+`[ui.sidebar.spaces]`: an existing layout is yours, and it prints what it would
+have added instead. On success it backs up `config.toml`, appends, and asks
+herdr to reload.
+
+## Local development
+
+For a working copy, link it instead:
 
 ```bash
 herdr plugin link /path/to/namesync

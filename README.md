@@ -65,10 +65,15 @@ anything. Start there.
 ## Install
 
 ```bash
-herdr plugin install <owner>/namesync     # or, for local development:
-herdr plugin link /path/to/namesync
-herdr integration install claude                 # sharper agent state detection
+herdr plugin install oddurs/namesync
+namesync setup --write            # add the sidebar rows herdr needs
+herdr integration install claude  # sharper agent state detection
 ```
+
+The middle step matters: namesync publishes `$project`, `$branch`, `$since` and
+`$n`, but herdr renders none of them until the sidebar asks. `setup` prints the
+rows, and `--write` appends them after backing up your config. It refuses if
+you already have a sidebar layout — that one is yours.
 
 Requires herdr ≥ 0.8 and Node ≥ 18. No npm dependencies.
 

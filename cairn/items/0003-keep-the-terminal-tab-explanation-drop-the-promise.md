@@ -2,7 +2,7 @@
 id: 3
 title: Keep the terminal-tab explanation, drop the promise
 type: docs
-status: doing
+status: done
 milestone: v0.1
 created: 2026-09-06
 updated: 2026-09-06
