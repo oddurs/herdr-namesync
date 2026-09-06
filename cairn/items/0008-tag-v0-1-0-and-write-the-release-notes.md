@@ -2,7 +2,7 @@
 id: 8
 title: Tag v0.1.0 and write the release notes
 type: chore
-status: doing
+status: done
 milestone: v0.1
 created: 2026-09-06
 updated: 2026-09-06
