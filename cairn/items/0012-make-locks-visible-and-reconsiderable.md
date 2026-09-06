@@ -2,7 +2,7 @@
 id: 12
 title: Make locks visible and reconsiderable
 type: feature
-status: doing
+status: done
 milestone: v0.2
 created: 2026-09-06
 updated: 2026-09-06

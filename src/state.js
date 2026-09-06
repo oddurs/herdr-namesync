@@ -18,14 +18,14 @@ function stateDir() {
 class Store {
   constructor(file = path.join(stateDir(), 'state.json')) {
     this.file = file;
-    this.data = { authored: {}, locked: {}, lastRenameAt: {}, metadata: {}, stateAt: {}, lastProject: {} };
+    this.data = { authored: {}, locked: {}, lastRenameAt: {}, metadata: {}, stateAt: {}, lastProject: {}, titleAt: {} };
     this.load();
   }
 
   load() {
     try {
       const parsed = JSON.parse(fs.readFileSync(this.file, 'utf8'));
-      this.data = { authored: {}, locked: {}, lastRenameAt: {}, metadata: {}, stateAt: {}, lastProject: {}, ...parsed };
+      this.data = { authored: {}, locked: {}, lastRenameAt: {}, metadata: {}, stateAt: {}, lastProject: {}, titleAt: {}, ...parsed };
     } catch { /* first run, or unreadable: defaults stand */ }
     return this;
   }
@@ -83,6 +83,19 @@ class Store {
   lastProject(paneId) { return this.data.lastProject[paneId]; }
   setLastProject(paneId, project) { this.data.lastProject[paneId] = project; return this; }
 
+  /* When a pane's title last changed, and how many agent state transitions
+     herdr had recorded at that moment. The gap between that number and the
+     current one is how many turns the agent has worked without revising its
+     description of the work. */
+  titleSeen(paneId, title, seq, now = Date.now()) {
+    const prev = this.data.titleAt[paneId];
+    if (!prev || prev.title !== title) {
+      this.data.titleAt[paneId] = { title, at: now, seq };
+      return { at: now, turns: 0, changed: true };
+    }
+    return { at: prev.at, turns: Math.max(0, (seq || 0) - (prev.seq || 0)), changed: false };
+  }
+
   metadata(id) { return this.data.metadata[id]; }
   setMetadata(id, value) { this.data.metadata[id] = value; return this; }
 
@@ -96,7 +109,7 @@ class Store {
   forget(id) {
     const owns = (candidate) => candidate === id || candidate.startsWith(id + ':');
 
-    for (const bucket of ['locked', 'lastRenameAt', 'stateAt', 'lastProject']) {
+    for (const bucket of ['locked', 'lastRenameAt', 'stateAt', 'lastProject', 'titleAt']) {
       for (const key of Object.keys(this.data[bucket])) {
         if (owns(key)) delete this.data[bucket][key];
       }

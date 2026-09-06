@@ -31,16 +31,19 @@ Good ideas without a date yet.
 
 ## v0.2 — Make the policy legible
 
-`··········` 0% · 0 of 3 done · due 2027-01-15
+`####······` 33% · 1 of 3 done · due 2027-01-15
 
 ### backlog
 
-- [ ] `0013` Detect and surface a stale title <sup>feature · p1</sup>
 - [ ] `0014` Add $age, and say what $since actually measures <sup>feature · p1</sup>
 
 ### in progress
 
-- [ ] `0012` Make locks visible and reconsiderable <sup>feature · p0</sup>
+- [ ] `0013` Detect and surface a stale title <sup>feature · p1</sup>
+
+### done
+
+- [x] `0012` Make locks visible and reconsiderable <sup>feature · p0</sup>
 
 ## v1.0 — Stable release
 

@@ -216,6 +216,27 @@ const COMMANDS = {
       }
     }
 
+    /* A title the agent stopped maintaining. namesync cannot fix this -- it
+       moves a name it does not write -- but it can stop the staleness being
+       invisible. */
+    try {
+      await withClient(async (client) => {
+        const snap = (await client.snapshot()).snapshot;
+        const stale = snap.panes.filter((p) => p.tokens && p.tokens.stale === 'stale');
+        if (!stale.length) return;
+        out.push('');
+        out.push(stale.length + ' agent(s) have not revised their title in a while:');
+        for (const p of stale) {
+          const ws = snap.workspaces.find((w) => w.workspace_id === p.workspace_id);
+          out.push('  ' + ((ws && ws.label) || p.workspace_id).slice(0, 34).padEnd(36)
+            + (p.tokens.project || ''));
+        }
+        out.push('');
+        out.push('The name is whatever the agent last published. namesync has nothing');
+        out.push('newer to move, so these stay until the agent updates its own title.');
+      });
+    } catch { /* herdr unreachable; already reported above */ }
+
     process.stdout.write(out.join('\n') + '\n');
   },
 

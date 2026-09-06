@@ -387,6 +387,16 @@ class Namer {
       return formatSince(now - at);
     };
 
+    /* A title the agent has stopped maintaining. Reported, never acted on:
+       there is nothing better to rename to, and guessing would be worse than
+       showing a name that is merely old. */
+    const stale = (a) => {
+      if (!this.cfg.showStale) return null;
+      const title = normalize(a.terminal_title_stripped || '');
+      const { turns } = this.store.titleSeen(a.pane_id, title, a.state_change_seq || 0, now);
+      return turns >= this.cfg.staleAfterTurns ? 'stale' : null;
+    };
+
     for (const [workspaceId, agentsHere] of idx.byWorkspace) {
       const ws = idx.workspaces.get(workspaceId);
       if (!ws) continue;
@@ -405,6 +415,7 @@ class Namer {
           // The one state that changes namesync's behaviour completely, and
           // the one it used not to show at all.
           locked: this.store.isLocked(workspaceId) ? 'held' : null,
+          stale: stale(a),
           project: v.project || null,
           worktree: v.worktree || null,
           branch: v.branch || null,
@@ -423,6 +434,7 @@ class Namer {
       await send('workspace', workspaceId, {
         n: v.n || null,
         locked: this.store.isLocked(workspaceId) ? 'held' : null,
+        stale: stale(lead),
         project: v.project || null,
         worktree: v.worktree || null,
         branch: v.branch || null,

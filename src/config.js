@@ -28,6 +28,14 @@ const DEFAULTS = {
 
   targets: { workspace: true, tab: false, agent: true },
 
+  /* Flag a title the agent appears to have stopped maintaining. namesync moves
+     a name it does not write, so it inherits whatever the agent publishes --
+     and agents tend to set a title early and not revise it. A title unchanged
+     across this many state transitions is probably describing work that
+     finished a while ago. Never acted on, only reported. */
+  showStale: true,
+  staleAfterTurns: 6,
+
   // Publish $since: how long an agent has been in its current state. This is
   // the one thing here that needs a clock — herdr reports state changes with a
   // sequence number, not a timestamp, so elapsed time has to be observed. The

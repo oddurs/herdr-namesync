@@ -131,3 +131,18 @@ upstream to compare against.
 `$project` and `$branch` exist partly for this reason. They stay true whether or
 not the title has moved, which is why the recommended sidebar layout puts them
 on their own line.
+
+What namesync can do is stop the staleness being invisible. It tracks how many
+agent state transitions a title survives unchanged: an agent that has finished
+and restarted work several times without revising its description is probably
+describing something it stopped doing. That publishes `$stale`, and `status`
+lists them:
+
+```
+2 agent(s) have not revised their title in a while:
+  Astro docs site GNU style           fontina
+  Richard Stallman perspective        fontina
+```
+
+It is a signal and never an action. There is nothing better to rename to, and
+guessing would be worse than showing a name that is merely old.

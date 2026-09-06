@@ -642,7 +642,7 @@ function tmpConfig(body) {
 
 test('the blocks reference only tokens namesync publishes', () => {
   const text = setup.blocks();
-  for (const t of ['$n', '$project', '$worktree', '$locked', '$since']) {
+  for (const t of ['$n', '$project', '$worktree', '$locked', '$stale', '$since']) {
     assert.ok(text.includes(t), 'missing ' + t);
   }
   // branch and git_status are herdr built-ins for Space rows; $branch is the
@@ -730,6 +730,57 @@ testAsync('an unheld workspace carries no marker', async () => {
   const n = new Namer({ cfg: cfg(), store: freshStore(), sinks: [sink] });
   await n.publishMetadata(snapshot([agent()]));
   assert.strictEqual(sent[0].locked, null);
+});
+
+process.stdout.write('\nstale titles\n');
+
+test('titleSeen counts transitions since the title last changed', () => {
+  const st = freshStore();
+  assert.deepStrictEqual(st.titleSeen('w1:p1', 'Fix auth', 10, 1000),
+    { at: 1000, turns: 0, changed: true });
+  // Same title, four transitions later.
+  assert.deepStrictEqual(st.titleSeen('w1:p1', 'Fix auth', 14, 2000),
+    { at: 1000, turns: 4, changed: false });
+  // A new title resets both the clock and the transition baseline.
+  assert.deepStrictEqual(st.titleSeen('w1:p1', 'Postgres tuning', 20, 3000),
+    { at: 3000, turns: 0, changed: true });
+});
+
+test('a sequence going backwards never yields negative turns', () => {
+  // herdr restarts reset the counter; that must not read as fresh.
+  const st = freshStore();
+  st.titleSeen('w1:p1', 'Fix auth', 100, 1000);
+  assert.strictEqual(st.titleSeen('w1:p1', 'Fix auth', 3, 2000).turns, 0);
+});
+
+testAsync('a title held across many turns is flagged, and only then', async () => {
+  const mk = async (seqs) => {
+    const sent = [];
+    const sink = { name: 'herdr', kinds: ['workspace', 'tab', 'agent'], apply: async () => true,
+      reportMetadata: async (kind, id, tokens) => { sent.push({ kind, tokens }); return true; } };
+    const store = freshStore();
+    const n = new Namer({ cfg: cfg(), store, sinks: [sink] });
+    for (const seq of seqs) {
+      store.setMetadata('pane:w1:p1', ''); // force a republish each round
+      store.setMetadata('workspace:w1', '');
+      await n.publishMetadata(snapshot([agent({ state_change_seq: seq })]));
+    }
+    return sent[sent.length - 1].tokens.stale;
+  };
+  assert.strictEqual(await mk([1, 3]), null, 'two turns is not stale');
+  assert.strictEqual(await mk([1, 9]), 'stale', 'eight turns is');
+});
+
+testAsync('stale detection can be turned off', async () => {
+  const sent = [];
+  const sink = { name: 'herdr', kinds: ['workspace', 'tab', 'agent'], apply: async () => true,
+    reportMetadata: async (kind, id, tokens) => { sent.push(tokens); return true; } };
+  const store = freshStore();
+  const n = new Namer({ cfg: cfg({ showStale: false }), store, sinks: [sink] });
+  await n.publishMetadata(snapshot([agent({ state_change_seq: 1 })]));
+  store.setMetadata('pane:w1:p1', ''); store.setMetadata('workspace:w1', '');
+  await n.publishMetadata(snapshot([agent({ state_change_seq: 99 })]));
+  assert.strictEqual(sent[sent.length - 1].stale, null);
 });
 
 Promise.all(pending).then(() => {
