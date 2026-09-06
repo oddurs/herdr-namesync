@@ -31,9 +31,9 @@ function isWorktree(ws) {
 /* A workspace another plugin has claimed for itself.
    herdr's tokens are a single flat map with no per-source layering: two
    sources writing one key overwrite each other, and either can clear it. A
-   plugin that brands a workspace through tokens -- smali's dashboard writes
-   `project` and `n` to draw its own row -- would be silently overwritten.
-   `role` is the marker such a plugin sets; it means hands off. */
+   plugin that brands a workspace through tokens -- writing `project` and `n`
+   to draw its own row -- would be silently overwritten. `role` is the marker
+   such a plugin sets; it means hands off. See TOKENS.md. */
 function isClaimed(ws) {
   return Boolean(ws && ws.tokens && ws.tokens.role);
 }

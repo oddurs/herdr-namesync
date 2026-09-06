@@ -4,18 +4,17 @@
 
 ## v0.1 — First usable version
 
-`#######···` 63% · 5 of 8 done · due 2026-12-01
+`########··` 75% · 6 of 8 done · due 2026-12-01
 
 Enough to dogfood in a real project.
 
 ### backlog
 
 - [ ] `0008` Tag v0.1.0 and write the release notes <sup>chore · p1</sup>
-- [ ] `0011` Revise TOKENS.md now that smali is abandoned <sup>docs · p1</sup>
 
 ### in progress
 
-- [ ] `0006` Say which agents it works with <sup>docs · p1</sup>
+- [ ] `0011` Revise TOKENS.md now that smali is abandoned <sup>docs · p1</sup>
 
 ### done
 
@@ -24,6 +23,7 @@ Enough to dogfood in a real project.
 - [x] `0003` Keep the terminal-tab explanation, drop the promise <sup>docs · p1</sup>
 - [x] `0004` Make the sidebar work on install without hand-editing config <sup>feature · p0</sup>
 - [x] `0005` Show the thing in the README <sup>docs · p0</sup>
+- [x] `0006` Say which agents it works with <sup>docs · p1</sup>
 
 ## v1.0 — Stable release
 
