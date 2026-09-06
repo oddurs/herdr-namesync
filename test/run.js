@@ -380,10 +380,22 @@ test('formatSince buckets coarsely so metadata rarely churns', () => {
   assert.strictEqual(naming.formatSince(0), 'now');
   assert.strictEqual(naming.formatSince(44000), 'now');
   assert.strictEqual(naming.formatSince(46000), '1m');
-  assert.strictEqual(naming.formatSince(20 * 60000), '20m');
+  assert.strictEqual(naming.formatSince(9 * 60000), '9m', 'minutes matter early');
   assert.strictEqual(naming.formatSince(61 * 60000), '1h');
   assert.strictEqual(naming.formatSince(26 * 3600000), '1d');
   assert.strictEqual(naming.formatSince(NaN), 'now');
+});
+
+test('past ten minutes the value steps, so it stops rewriting every minute', () => {
+  // Each change is a metadata write and a redraw for every agent.
+  assert.strictEqual(naming.formatSince(12 * 60000), '10m');
+  assert.strictEqual(naming.formatSince(14 * 60000), '10m');
+  assert.strictEqual(naming.formatSince(15 * 60000), '15m');
+  assert.strictEqual(naming.formatSince(59 * 60000), '55m');
+  // An hour of minute-ticks would be 60 writes per agent; this is 10.
+  const steps = new Set();
+  for (let m = 10; m < 60; m += 1) steps.add(naming.formatSince(m * 60000));
+  assert.ok(steps.size <= 10, 'too many distinct values in the first hour: ' + steps.size);
 });
 
 test('stateAt restarts the clock only when the state actually changes', () => {

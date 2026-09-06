@@ -6,6 +6,7 @@ const { Store, stateDir } = require('./state');
 const { Namer } = require('./namer');
 const { resolveSinks } = require('./sinks');
 const config = require('./config');
+const { normalize } = require('./naming');
 
 // herdr emits pane.updated when a pane's terminal_title_stripped changes, and
 // explicitly NOT for spinner-only title churn. That is the intent signal;
@@ -50,6 +51,11 @@ class Daemon {
     // close() suppresses by design.
     this.wake = null;
     this.durationTimer = null;
+    /* The last stripped title seen per pane. pane.updated fires for scroll
+       position, cwd, agent detection and token changes -- and namesync's own
+       metadata writes are token changes, so publishing woke it up and it
+       published again. Only a title change is worth a sync. */
+    this.titles = new Map();
   }
 
   log(level, message) {
@@ -191,9 +197,21 @@ class Daemon {
     }
     if (type === 'pane.closed' || type === 'pane.exited') {
       const paneId = body.pane_id || body.pane?.pane_id;
-      if (paneId) this.store.forget(paneId).save();
+      if (paneId) { this.titles.delete(paneId); this.store.forget(paneId).save(); }
       return;
     }
+    /* Ignore a pane update that did not change the title. This is what stops
+       namesync waking itself: its own metadata writes emit pane.updated. */
+    if (type === 'pane.updated') {
+      const pane = body.pane || body;
+      const id = pane.pane_id;
+      const title = normalize(pane.terminal_title_stripped || '');
+      if (id) {
+        if (this.titles.get(id) === title) return;
+        this.titles.set(id, title);
+      }
+    }
+
     this.log('debug', 'event ' + type);
     this.schedule();
   }
