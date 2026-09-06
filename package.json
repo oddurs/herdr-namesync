@@ -29,7 +29,6 @@
     "multiplexer",
     "claude-code",
     "codex",
-    "agents",
-    "tmux"
+    "agents"
   ]
 }

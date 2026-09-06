@@ -1,22 +1,23 @@
 'use strict';
 const { createHerdrSink } = require('./herdr');
-const { createTmuxSink } = require('./tmux');
-const { createOscSink } = require('./osc');
 
-// Resolves the sinks enabled in config that are actually usable right now.
-// Adding a backend means adding a module here; nothing else changes.
+/* One sink today, and the seam is still worth keeping.
+ *
+ * It lets `Namer` decide what a thing should be called without knowing how a
+ * name is applied, and it carries the `kinds` guard: a sink declares which of
+ * workspace/tab/agent it can address, so the namer never records authorship
+ * for a rename that never happened.
+ *
+ * There were tmux and OSC sinks here. They were removed rather than fixed:
+ * most of namesync — metadata tokens, $project, $since, grouping, the
+ * workspace/tab/agent distinction — has no meaning outside herdr, and only
+ * bare renaming ported.
+ */
 async function resolveSinks(cfg, { client } = {}) {
-  const candidates = [];
-  if (cfg.sinks?.herdr?.enabled !== false && client) candidates.push(createHerdrSink(client));
-  if (cfg.sinks?.tmux?.enabled) candidates.push(createTmuxSink(cfg.sinks.tmux));
-  if (cfg.sinks?.osc?.enabled) candidates.push(createOscSink(cfg.sinks.osc));
-
-  const usable = [];
-  for (const sink of candidates) {
-    const ok = typeof sink.available === 'function' ? await sink.available() : true;
-    if (ok) usable.push(sink);
-  }
-  return usable;
+  if (cfg.sinks?.herdr?.enabled === false || !client) return [];
+  const sink = createHerdrSink(client);
+  const ok = typeof sink.available === 'function' ? await sink.available() : true;
+  return ok ? [sink] : [];
 }
 
-module.exports = { resolveSinks, createHerdrSink, createTmuxSink, createOscSink };
+module.exports = { resolveSinks, createHerdrSink };

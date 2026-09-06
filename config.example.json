@@ -26,13 +26,6 @@
   "sinks": {
     "herdr": {
       "enabled": true
-    },
-    "tmux": {
-      "enabled": false,
-      "target": null
-    },
-    "osc": {
-      "enabled": false
     }
   },
   "ignoreTitles": [

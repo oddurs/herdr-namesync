@@ -62,10 +62,10 @@ const DEFAULTS = {
   // "focused" uses whichever agent is focused.
   multiAgent: 'tab',
 
+  // herdr is the only sink; the multiplexer-agnostic framing was dropped
+  // rather than fixed, because only bare renaming ever ported.
   sinks: {
     herdr: { enabled: true },
-    tmux: { enabled: false, target: null },
-    osc: { enabled: false },
   },
 
   // Titles that carry no intent. Matched case-insensitively against the whole
