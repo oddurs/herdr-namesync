@@ -9,8 +9,8 @@ const { decide, SKIP } = require('../src/policy');
 const { Store } = require('../src/state');
 const { Namer, leadAgent, gitInfo, gitCache, detectProject,
   repoNameFromUrl, manifestName } = require('../src/namer');
-const { planOrder } = require('../src/grouping');
-const { isUselessCwd, isClaimed } = require('../src/namer');
+const { planOrder, isClaimed } = require('../src/grouping');
+const { isUselessCwd } = require('../src/namer');
 const config = require('../src/config');
 
 let passed = 0;
@@ -500,6 +500,35 @@ test('movement is minimal — settled spaces are left alone', () => {
     ws('w1', 'fontina'), ws('w2', 'fontina'), ws('w3', 'cairn'), ws('w4', 'fontina'),
   ]);
   assert.deepStrictEqual(moved.map((m) => m.workspace_id).sort(), ['w3', 'w4']);
+});
+
+test('a claimed workspace holds its position while others regroup', () => {
+  // A dashboard is furniture. Sorting it around by whatever project it happens
+  // to report would be worse than leaving the spaces ungrouped.
+  const { ordered, moved } = planOrder([
+    ws('w1', 'fontina'),
+    { workspace_id: 'wG', label: 'OddOS', tokens: { role: 'dashboard', project: 'OddOS' } },
+    ws('w3', 'cairn'),
+    ws('w4', 'fontina'),
+  ]);
+  assert.strictEqual(ordered[1].workspace_id, 'wG', 'the claimed space moved');
+  assert.strictEqual(moved.some((m) => m.workspace_id === 'wG'), false);
+  // and the rest still group around it
+  assert.deepStrictEqual(ordered.map((w) => w.workspace_id), ['w1', 'wG', 'w4', 'w3']);
+});
+
+test('pinning stays idempotent', () => {
+  const input = [
+    ws('w1', 'fontina'),
+    { workspace_id: 'wG', label: 'OddOS', tokens: { role: 'dashboard' } },
+    ws('w3', 'cairn'),
+    ws('w4', 'fontina'),
+  ];
+  const once = planOrder(input).ordered;
+  const twice = planOrder(once);
+  assert.strictEqual(twice.changed, false);
+  assert.deepStrictEqual(twice.ordered.map((w) => w.workspace_id),
+    once.map((w) => w.workspace_id));
 });
 
 test('moved reports the jump keys that change', () => {

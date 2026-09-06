@@ -101,8 +101,13 @@ accident, not a design.
 entirely — no rename, no metadata — because `role` is how a plugin says "this
 space is mine". Set `respectPluginRoles: false` to opt out.
 
+A claimed workspace is also **pinned** when `namesync group` reorders spaces. A
+dashboard is furniture: you learn where it sits and reach for it there, so
+sorting it by whatever project it happens to report would be worse than leaving
+the spaces ungrouped.
+
 If you are writing a plugin that brands a workspace, set `role`. If you are
-writing one that names workspaces, honour it.
+writing one that names or reorders workspaces, honour it.
 
 ### Rules for producers
 

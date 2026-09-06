@@ -5,6 +5,7 @@ const { execFile } = require('child_process');
 const { render, slugify, uniqueAgentName, normalize, stripProject, formatSince,
   AGENT_NAME_MAX } = require('./naming');
 const { decide } = require('./policy');
+const { isClaimed } = require('./grouping');
 
 function git(cwd, args) {
   return new Promise((resolve) => {
@@ -201,17 +202,6 @@ function index(snapshot) {
   }
   const liveAgentNames = new Set(agents.map((a) => a.name).filter(Boolean));
   return { workspaces, tabs, agents, byWorkspace, liveAgentNames };
-}
-
-/* A workspace another plugin has claimed for itself.
-   herdr's tokens are a single flat map with no per-source layering -- verified:
-   two sources writing one key overwrite each other, and either can clear it.
-   So a plugin that brands a workspace through tokens (smali's dashboard writes
-   project and n to render its own row) would be silently overwritten the
-   moment an agent happened to be running there. `role` is the marker such a
-   plugin sets; namesync treats it as "hands off". */
-function isClaimed(ws) {
-  return Boolean(ws && ws.tokens && ws.tokens.role);
 }
 
 // Picks the one agent whose intent should name a workspace, or null when the
@@ -486,6 +476,6 @@ class Namer {
   }
 }
 
-module.exports = { Namer, index, leadAgent, isClaimed, gitBranch, detectProject,
+module.exports = { Namer, index, leadAgent, gitBranch, detectProject,
   findProjectRoot, repoNameFromUrl, manifestName, remoteName, isUselessCwd,
   gitInfo, gitCache };
