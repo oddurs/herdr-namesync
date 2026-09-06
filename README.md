@@ -178,6 +178,9 @@ Resolved in this order, first answer wins:
    and friends, stopping at `$HOME`.
 5. **The folder name.** Last resort.
 
+These names are a contract — smali reads five of them by name, so a rename
+here breaks a panel there. [TOKENS.md](TOKENS.md) is the list.
+
 The two lines age differently. Project and branch are stable identity; the
 title underneath is whatever the agent is describing right now. Putting the
 workspace label on both wastes one of them, since namesync sets that label from

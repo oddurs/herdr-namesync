@@ -122,6 +122,10 @@ Resolved in this order, first answer wins:
    and friends, stopping at `$HOME`.
 5. **The folder name.** Last resort.
 
+Other tools read these. smali's dashboard consumes `project`, `branch`,
+`intent`, `since` and `n` by name, so renaming one degrades it silently — the
+contract is written down in `TOKENS.md` at the repository root.
+
 Herdr resolves `$name` from two different places, which is easy to get wrong:
 
 | Panel | `$name` comes from |
