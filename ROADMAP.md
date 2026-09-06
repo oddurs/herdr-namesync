@@ -19,16 +19,6 @@ Enough to dogfood in a real project.
 - [x] `0008` Tag v0.1.0 and write the release notes <sup>chore · p1</sup>
 - [x] `0011` Revise TOKENS.md now that smali is abandoned <sup>docs · p1</sup>
 
-## v1.0 — Stable release
-
-`##########` 100% · 1 of 1 done · due 2027-03-01
-
-Documented, tested, and safe to depend on.
-
-### done
-
-- [x] `0007` Publish the docs site <sup>chore · p2</sup>
-
 ## later — Someday
 
 `##########` 100% · 1 of 1 done
@@ -38,4 +28,24 @@ Good ideas without a date yet.
 ### done
 
 - [x] `0010` Ask herdr for state_changed_at <sup>chore · p2</sup>
+
+## v0.2 — Make the policy legible
+
+`··········` 0% · 0 of 3 done · due 2027-01-15
+
+### backlog
+
+- [ ] `0012` Make locks visible and reconsiderable <sup>feature · p0</sup>
+- [ ] `0013` Detect and surface a stale title <sup>feature · p1</sup>
+- [ ] `0014` Add $age, and say what $since actually measures <sup>feature · p1</sup>
+
+## v1.0 — Stable release
+
+`##########` 100% · 1 of 1 done · due 2027-03-01
+
+Documented, tested, and safe to depend on.
+
+### done
+
+- [x] `0007` Publish the docs site <sup>chore · p2</sup>
 

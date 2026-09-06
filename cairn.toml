@@ -145,6 +145,11 @@ name = "later"
 title = "Someday"
 description = "Good ideas without a date yet."
 
+[[milestone]]
+name = "v0.2"
+title = "Make the policy legible"
+due = "2027-01-15"
+
 # ─── Saved views ─────────────────────────────────────────────────────────────
 # `cairn list --view next`, `cairn board --view triage`
 
