@@ -25,6 +25,25 @@ The lock is permanent until you clear it:
 namesync unlock    # in the workspace you want managed again
 ```
 
+Permanent is a strong promise, so namesync makes it visible rather than
+silent. A held workspace publishes `$locked`, which the sidebar can mark, and
+`namesync status` lists what is held, for how long, and how far the agent has
+drifted from the frozen name:
+
+```
+held names (namesync will not rename these)
+  m5                            held 1d   overlap 0.00
+  site                          held 1d   overlap 0.00
+
+2 of these no longer describe what the agent is doing:
+  m5                        -> Richard Stallman perspective
+  site                      -> Claude Code settings configuration
+```
+
+Zero overlap means not a single significant word is shared. They still stay
+held — a name you wrote wins, and it goes on winning — but you can now see the
+cost of that and decide.
+
 ## herdr's own defaults are fair game
 
 A label nobody chose is not a name worth protecting. namesync treats these as

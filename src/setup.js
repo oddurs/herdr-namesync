@@ -27,18 +27,19 @@ function configPath() {
  * Colour carries the hierarchy rather than repeating it — brightest for the
  * project, muted for the branch, and the accent for what is happening now. */
 function blocks({ accent = '#33859d', bright = '#d3ebe9', muted = '#888ba5',
-  live = '#599caa', warn = '#edb54b' } = {}) {
-  return `# Added by namesync. $project, $branch, $worktree, $since and $n are
+  live = '#599caa', warn = '#edb54b', held = '#d26939' } = {}) {
+  return `# Added by namesync. $project, $branch, $worktree, $locked, $since and $n are
 # published by the plugin; herdr has no built-in token for any of them.
+# $locked marks a name namesync has been told to leave alone.
 [ui.sidebar.agents]
 rows = [
-  ["state_icon", { token = "$n", fg = "${accent}", bold = true }, { token = "$project", fg = "${bright}", bold = true }, { token = "$worktree", fg = "#d26939" }, { token = "$since", fg = "${muted}" }],
+  ["state_icon", { token = "$n", fg = "${accent}", bold = true }, { token = "$project", fg = "${bright}", bold = true }, { token = "$worktree", fg = "${held}" }, { token = "$locked", fg = "${held}" }, { token = "$since", fg = "${muted}" }],
   [{ token = "terminal_title_stripped", fg = "${live}" }],
 ]
 
 [ui.sidebar.spaces]
 rows = [
-  ["state_icon", { token = "$n", fg = "${accent}", bold = true }, { token = "$project", fg = "${bright}", bold = true }, { token = "$worktree", fg = "#d26939" }, { token = "branch", fg = "${muted}" }, { token = "git_status", fg = "${warn}" }],
+  ["state_icon", { token = "$n", fg = "${accent}", bold = true }, { token = "$project", fg = "${bright}", bold = true }, { token = "$worktree", fg = "${held}" }, { token = "$locked", fg = "${held}" }, { token = "branch", fg = "${muted}" }, { token = "git_status", fg = "${warn}" }],
   [{ token = "workspace", fg = "${live}" }],
 ]
 `;

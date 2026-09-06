@@ -11,6 +11,7 @@ const { resolveSinks } = require('./sinks');
 const { Daemon } = require('./daemon');
 const { planOrder, applyOrder } = require('./grouping');
 const setup = require('./setup');
+const { similarity, formatSince } = require('./naming');
 
 const PID_FILE = path.join(stateDir(), 'daemon.pid');
 const LOG_FILE = path.join(stateDir(), 'daemon.log');
@@ -159,7 +160,7 @@ const COMMANDS = {
     out.push('  config      ' + config.configPath());
     out.push('  log         ' + LOG_FILE);
     const locked = Object.keys(store.data.locked);
-    out.push('  locked      ' + (locked.length ? locked.join(', ') : 'none'));
+    out.push('  locked      ' + (locked.length ? locked.length + ' workspace(s)' : 'none'));
     // The herdr sink's availability check does no I/O, so listing it proves
     // nothing. status is exactly when someone wants to know if herdr answers.
     try {
@@ -171,6 +172,50 @@ const COMMANDS = {
     } catch (err) {
       out.push('  sinks       herdr unreachable (' + err.message + ')');
     }
+
+    /* A lock is the one state that changes what namesync does, and it used to
+       be reported as a bare workspace id. What a reader needs is which name is
+       frozen, how long it has been, and whether the agent has moved on. */
+    if (locked.length) {
+      out.push('');
+      out.push('held names (namesync will not rename these)');
+      try {
+        await withClient(async (client) => {
+          const snap = (await client.snapshot()).snapshot;
+          const drifted = [];
+          for (const id of locked) {
+            const info = store.lockInfo(id) || {};
+            const ws = snap.workspaces.find((w) => w.workspace_id === id);
+            const agent = snap.agents.find((a) => a.workspace_id === id);
+            const label = (ws && ws.label) || info.label || id;
+            const age = info.at ? formatSince(Date.now() - info.at) : '?';
+            const title = agent ? agent.terminal_title_stripped : '';
+            const overlap = title ? similarity(label, title) : null;
+
+            out.push('  ' + label.slice(0, 28).padEnd(30)
+              + 'held ' + age.padEnd(5)
+              + (overlap === null ? '' : 'overlap ' + overlap.toFixed(2)));
+            if (overlap !== null && overlap === 0) drifted.push({ label, title, id });
+          }
+          if (drifted.length) {
+            out.push('');
+            out.push(drifted.length + ' of these no longer describe what the agent is doing:');
+            for (const d of drifted) {
+              out.push('  ' + d.label.slice(0, 24).padEnd(26) + '-> ' + d.title.slice(0, 40));
+            }
+            out.push('');
+            out.push('These stay held until you say otherwise. `namesync unlock` in a');
+            out.push('space releases it, and the name follows the agent again.');
+          }
+        });
+      } catch {
+        for (const id of locked) {
+          const info = store.lockInfo(id) || {};
+          out.push('  ' + (info.label || id));
+        }
+      }
+    }
+
     process.stdout.write(out.join('\n') + '\n');
   },
 

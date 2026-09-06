@@ -642,7 +642,7 @@ function tmpConfig(body) {
 
 test('the blocks reference only tokens namesync publishes', () => {
   const text = setup.blocks();
-  for (const t of ['$n', '$project', '$worktree', '$since']) {
+  for (const t of ['$n', '$project', '$worktree', '$locked', '$since']) {
     assert.ok(text.includes(t), 'missing ' + t);
   }
   // branch and git_status are herdr built-ins for Space rows; $branch is the
@@ -686,6 +686,50 @@ test('sections are matched as headers, not as substrings', () => {
   // A comment mentioning the section must not count as having configured it.
   const file = tmpConfig('# see [ui.sidebar.agents] in the docs\n[ui]\n');
   assert.strictEqual(setup.plan(file).action, 'append');
+});
+
+process.stdout.write('\nvisible locks\n');
+
+test('a lock remembers the label it was protecting, and when', () => {
+  const st = freshStore();
+  st.lock('w1', 'edited by hand', 'code quality');
+  const info = st.lockInfo('w1');
+  assert.strictEqual(info.label, 'code quality');
+  assert.strictEqual(info.reason, 'edited by hand');
+  assert.ok(info.at > 0);
+});
+
+test('re-locking keeps the original label and timestamp', () => {
+  // Otherwise "held 1d" would reset to "held now" on every sync.
+  const st = freshStore();
+  st.lock('w1', 'edited by hand', 'code quality');
+  const first = st.lockInfo('w1').at;
+  st.lock('w1', 'edited by hand', 'something else');
+  assert.strictEqual(st.lockInfo('w1').label, 'code quality');
+  assert.strictEqual(st.lockInfo('w1').at, first);
+});
+
+testAsync('a held workspace is marked in its metadata', async () => {
+  const sent = [];
+  const sink = { name: 'herdr', kinds: ['workspace', 'tab', 'agent'], apply: async () => true,
+    reportMetadata: async (kind, id, tokens) => { sent.push({ kind, id, tokens }); return true; } };
+  const store = freshStore();
+  store.lock('w1', 'edited by hand', 'code quality');
+  const n = new Namer({ cfg: cfg(), store, sinks: [sink] });
+  await n.publishMetadata(snapshot([agent()]));
+  const ws = sent.find((x) => x.kind === 'workspace');
+  const pane = sent.find((x) => x.kind === 'pane');
+  assert.strictEqual(ws.tokens.locked, 'held', 'the sidebar could not show it');
+  assert.strictEqual(pane.tokens.locked, 'held');
+});
+
+testAsync('an unheld workspace carries no marker', async () => {
+  const sent = [];
+  const sink = { name: 'herdr', kinds: ['workspace', 'tab', 'agent'], apply: async () => true,
+    reportMetadata: async (kind, id, tokens) => { sent.push(tokens); return true; } };
+  const n = new Namer({ cfg: cfg(), store: freshStore(), sinks: [sink] });
+  await n.publishMetadata(snapshot([agent()]));
+  assert.strictEqual(sent[0].locked, null);
 });
 
 Promise.all(pending).then(() => {

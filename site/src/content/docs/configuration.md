@@ -98,6 +98,7 @@ workspace label, so a two-line row can carry two different things:
 | `$n` | The workspace's number — what `prefix+shift+N` jumps to. herdr has no built-in token for this, which is why the sidebar is otherwise not navigable. |
 | `$worktree` | The word `worktree` when the agent sits in a linked worktree. Three rows reading `fontina · main` are otherwise identical. |
 | `$since` | How long the agent has been in its current state: `now`, `20m`, `3h`, `2d`. Bucketed coarsely so the token changes a handful of times an hour rather than every second. |
+| `$locked` | `held` when namesync has been told to leave a name alone. A held name behaves completely differently from a live one, so the sidebar should be able to say which it is looking at. |
 | `$agent` | Agent kind, such as `claude`. |
 | `$agents` | Number of agents in the workspace, when more than one. |
 

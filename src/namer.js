@@ -402,6 +402,9 @@ class Namer {
           // token for. It is what prefix+shift+N jumps to, so showing it
           // turns the sidebar from a list into something navigable.
           n: v.n || null,
+          // The one state that changes namesync's behaviour completely, and
+          // the one it used not to show at all.
+          locked: this.store.isLocked(workspaceId) ? 'held' : null,
           project: v.project || null,
           worktree: v.worktree || null,
           branch: v.branch || null,
@@ -419,6 +422,7 @@ class Namer {
 
       await send('workspace', workspaceId, {
         n: v.n || null,
+        locked: this.store.isLocked(workspaceId) ? 'held' : null,
         project: v.project || null,
         worktree: v.worktree || null,
         branch: v.branch || null,
@@ -445,7 +449,7 @@ class Namer {
 
     for (const plan of plans) {
       if (plan.verdict.shouldLock) {
-        this.store.lock(plan.id, 'edited by hand');
+        this.store.lock(plan.id, 'edited by hand', plan.current);
         dirty = true;
         this.log('lock', plan.kind + ' ' + plan.id + ' -> keeping "' + plan.current + '"');
         continue;

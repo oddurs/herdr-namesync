@@ -29,6 +29,7 @@ rows. All values are strings or absent — never empty strings.
 | `n` | both | The workspace's number — what `prefix+shift+N` selects. | stable |
 | `intent` | workspace | The agent's live title, before any template is applied. | stable |
 | `since` | both | How long the agent has held its current state: `now`, `20m`, `3h`, `2d`. | stable |
+| `locked` | both | The literal string `held` when namesync has been told to leave this name alone. Absent otherwise. | stable |
 | `agent` | both | Agent kind, such as `claude`. | stable |
 | `agents` | workspace | Count, only when a workspace holds more than one. Absent otherwise. | stable |
 
