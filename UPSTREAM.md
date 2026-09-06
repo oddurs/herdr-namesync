@@ -1,8 +1,9 @@
 # Upstream notes for herdr
 
 Five things namesync ran into. Two would be better solved in herdr, one is a
-gap any metadata plugin will hit, and two it works around fine. Written up so they can be filed as issues; all four were
-found while building against herdr 0.8.2.
+gap any metadata plugin will hit, and two it works around fine. Written up so
+they can be filed as issues; all five were found while building against herdr
+0.8.2.
 
 ---
 
@@ -37,7 +38,7 @@ identifies the parent repo, so an already-open workspace on that repo can adopt
 it into the existing group. This is a few milliseconds per workspace open and
 reuses UI that already ships.
 
-**Why it matters.** This is the single highest-value change of the four: no new
+**Why it matters.** This is the single highest-value change of the five: no new
 concept, no new configuration, and it makes an existing feature work for people
 who create worktrees with `git worktree add` rather than through herdr.
 
@@ -92,6 +93,8 @@ a config file that is not theirs.
 
 Neither is urgent. But the current state means the value of a metadata plugin
 is invisible on install, which is the worst moment for it to be invisible.
+
+---
 
 ## 4. No index token for the sidebar (worked around)
 
