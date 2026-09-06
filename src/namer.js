@@ -23,7 +23,7 @@ const GIT_TTL_MS = 15000;
 const gitCache = new Map();
 
 async function gitInfo(cwd, now = Date.now()) {
-  if (!cwd) return { project: '', branch: '', worktree: false };
+  if (isUselessCwd(cwd)) return { project: '', branch: '', worktree: false };
   const hit = gitCache.get(cwd);
   if (hit && now - hit.at < GIT_TTL_MS) return hit.value;
 
@@ -121,7 +121,8 @@ function manifestName(root) {
   if (fs.existsSync(at('go.mod'))) {
     try {
       const m = fs.readFileSync(at('go.mod'), 'utf8').match(/^module\s+(\S+)/m);
-      if (m) return m[1].split('/').pop();
+      // "github.com/oddurs/widgets/v2" is the widgets project, not "v2".
+      if (m) return m[1].replace(/\/v\d+$/, '').split('/').pop();
     } catch { /* fall through */ }
   }
   return '';
@@ -133,11 +134,38 @@ function manifestName(root) {
 // holds fontina, perfect/ holds ptop, astralia/ holds cairn. The remote is the
 // project's identity, so it wins; then whatever the project declares about
 // itself; only then the folder.
-async function detectProject(cwd) {
-  if (!cwd) return '';
+// A directory that tells us nothing. Panes report "/" while a command is
+// starting, and naming a project after the filesystem root helps nobody.
+function isUselessCwd(dir) {
+  if (!dir || dir === '/' || dir === '.') return true;
+  const home = process.env.HOME || process.env.USERPROFILE;
+  return Boolean(home && dir === home);
+}
 
-  const remote = await git(cwd, ['remote', 'get-url', 'origin']);
-  const fromRemote = repoNameFromUrl(remote);
+// origin first, then upstream, then whatever exists. A clone with only an
+// "upstream" remote, or a fork whose canonical name lives there, would
+// otherwise fall through to the folder.
+async function remoteName(cwd) {
+  const direct = repoNameFromUrl(await git(cwd, ['remote', 'get-url', 'origin']));
+  if (direct) return direct;
+
+  const listed = (await git(cwd, ['remote'])) || '';
+  const remotes = listed.split('\n').map((r) => r.trim()).filter(Boolean);
+  const ordered = [
+    ...remotes.filter((r) => r === 'upstream'),
+    ...remotes.filter((r) => r !== 'upstream' && r !== 'origin'),
+  ];
+  for (const remote of ordered) {
+    const name = repoNameFromUrl(await git(cwd, ['remote', 'get-url', remote]));
+    if (name) return name;
+  }
+  return '';
+}
+
+async function detectProject(cwd) {
+  if (isUselessCwd(cwd)) return '';
+
+  const fromRemote = await remoteName(cwd);
   if (fromRemote) return fromRemote;
 
   // Worktree-aware: the common dir points back at the repo a linked worktree
@@ -272,11 +300,28 @@ class Namer {
   async #vars(agent, ws) {
     const intent = normalize(agent.terminal_title_stripped || agent.terminal_title || '');
     if (!intent) return null;
-    const cwd = agent.foreground_cwd || agent.cwd || '';
+    /* The foreground process's directory is the more accurate of the two — it
+       follows an agent into a worktree — but it is also transient: a pane
+       reports "/" while a command starts, and a stray `cd /tmp` would rename
+       the project to "tmp". So try it, fall back to the pane's own cwd, and
+       failing both keep the last project this pane resolved to. A project does
+       not stop being true because a shell wandered. */
+    const candidates = [agent.foreground_cwd, agent.cwd].filter((c) => !isUselessCwd(c));
+    let cwd = '';
+    let info = { project: '', branch: '', worktree: false };
+    for (const candidate of candidates) {
+      const resolved = await gitInfo(candidate);
+      if (resolved.project) { cwd = candidate; info = resolved; break; }
+      if (!cwd) { cwd = candidate; info = resolved; }
+    }
+
+    let { project, branch, worktree } = info;
+    if (project) {
+      this.store.setLastProject(agent.pane_id, project);
+    } else {
+      project = this.store.lastProject(agent.pane_id) || '';
+    }
     const repo = cwd ? path.basename(cwd) : '';
-    // Project and branch are published as sidebar tokens whether or not a
-    // template asks for them, so they are always resolved.
-    const { project, branch, worktree } = await gitInfo(cwd);
     return {
       intent,
       'intent-slug': slugify(intent, AGENT_NAME_MAX),
@@ -429,4 +474,4 @@ class Namer {
 }
 
 module.exports = { Namer, index, leadAgent, gitBranch, detectProject, findProjectRoot,
-  repoNameFromUrl, manifestName, gitInfo, gitCache };
+  repoNameFromUrl, manifestName, remoteName, isUselessCwd, gitInfo, gitCache };

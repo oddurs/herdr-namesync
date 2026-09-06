@@ -10,6 +10,7 @@ const { Store } = require('../src/state');
 const { Namer, leadAgent, gitInfo, gitCache, detectProject,
   repoNameFromUrl, manifestName } = require('../src/namer');
 const { planOrder } = require('../src/grouping');
+const { isUselessCwd } = require('../src/namer');
 const config = require('../src/config');
 
 let passed = 0;
@@ -506,6 +507,59 @@ test('moved reports the jump keys that change', () => {
   const m = moved.find((x) => x.workspace_id === 'w3');
   assert.strictEqual(m.from, 3);
   assert.strictEqual(m.to, 2);
+});
+
+process.stdout.write('\nproject reliability\n');
+
+function tmpProject(files) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ns-'));
+  for (const [name, body] of Object.entries(files)) {
+    fs.writeFileSync(path.join(dir, name), body);
+  }
+  return dir;
+}
+
+test('a go module major-version suffix is not the project name', () => {
+  assert.strictEqual(
+    manifestName(tmpProject({ 'go.mod': 'module github.com/oddurs/widgets/v2\n' })),
+    'widgets');
+  assert.strictEqual(
+    manifestName(tmpProject({ 'go.mod': 'module github.com/oddurs/widgets\n' })),
+    'widgets');
+});
+
+test('an npm scope is stripped', () => {
+  assert.strictEqual(
+    manifestName(tmpProject({ 'package.json': '{"name":"@acme/widget"}' })), 'widget');
+});
+
+test('Cargo and pyproject names are read', () => {
+  assert.strictEqual(
+    manifestName(tmpProject({ 'Cargo.toml': '[package]\nname = "smali"\nversion = "0.1.0"\n' })),
+    'smali');
+  assert.strictEqual(
+    manifestName(tmpProject({ 'pyproject.toml': '[project]\nname = "hoover"\n' })), 'hoover');
+});
+
+test('a Cargo workspace root with no [package] does not invent a name', () => {
+  assert.strictEqual(
+    manifestName(tmpProject({ 'Cargo.toml': '[workspace]\nmembers = ["a", "b"]\n' })), '');
+});
+
+test('directories that identify nothing are rejected', () => {
+  assert.strictEqual(isUselessCwd('/'), true, 'panes report / while a command starts');
+  assert.strictEqual(isUselessCwd(''), true);
+  assert.strictEqual(isUselessCwd(process.env.HOME), true);
+  assert.strictEqual(isUselessCwd('/Users/oddurs/Code/smali'), false);
+});
+
+test('a known project is not downgraded by a transient directory', () => {
+  const st = freshStore();
+  st.setLastProject('w1:p1', 'fontina');
+  assert.strictEqual(st.lastProject('w1:p1'), 'fontina');
+  // and it is cleared with the rest of the pane's state
+  st.forget('w1:p1');
+  assert.strictEqual(st.lastProject('w1:p1'), undefined);
 });
 
 Promise.all(pending).then(() => {

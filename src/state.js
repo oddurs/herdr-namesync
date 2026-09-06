@@ -18,14 +18,14 @@ function stateDir() {
 class Store {
   constructor(file = path.join(stateDir(), 'state.json')) {
     this.file = file;
-    this.data = { authored: {}, locked: {}, lastRenameAt: {}, metadata: {}, stateAt: {} };
+    this.data = { authored: {}, locked: {}, lastRenameAt: {}, metadata: {}, stateAt: {}, lastProject: {} };
     this.load();
   }
 
   load() {
     try {
       const parsed = JSON.parse(fs.readFileSync(this.file, 'utf8'));
-      this.data = { authored: {}, locked: {}, lastRenameAt: {}, metadata: {}, stateAt: {}, ...parsed };
+      this.data = { authored: {}, locked: {}, lastRenameAt: {}, metadata: {}, stateAt: {}, lastProject: {}, ...parsed };
     } catch { /* first run, or unreadable: defaults stand */ }
     return this;
   }
@@ -65,6 +65,11 @@ class Store {
     return { at: prev.at, changed: false };
   }
 
+  /* The last project a pane successfully resolved to, so a transient cwd
+     cannot downgrade a known project back to a folder name. */
+  lastProject(paneId) { return this.data.lastProject[paneId]; }
+  setLastProject(paneId, project) { this.data.lastProject[paneId] = project; return this; }
+
   metadata(id) { return this.data.metadata[id]; }
   setMetadata(id, value) { this.data.metadata[id] = value; return this; }
 
@@ -78,7 +83,7 @@ class Store {
   forget(id) {
     const owns = (candidate) => candidate === id || candidate.startsWith(id + ':');
 
-    for (const bucket of ['locked', 'lastRenameAt', 'stateAt']) {
+    for (const bucket of ['locked', 'lastRenameAt', 'stateAt', 'lastProject']) {
       for (const key of Object.keys(this.data[bucket])) {
         if (owns(key)) delete this.data[bucket][key];
       }
