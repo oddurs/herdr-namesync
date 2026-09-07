@@ -2,7 +2,7 @@
 id: 41
 title: The hero caption counts three of something the picture shows twice
 type: bug
-status: backlog
+status: done
 milestone: v0.7
 created: 2026-09-07
 updated: 2026-09-07
