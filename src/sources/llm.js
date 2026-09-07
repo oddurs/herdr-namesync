@@ -1,5 +1,6 @@
 'use strict';
 const { readPane } = require('../viewport');
+const { readAsks } = require('../transcript');
 const { normalize } = require('../naming');
 
 /* Asking a model what the agent is doing.
@@ -55,6 +56,8 @@ function createLlmSource(cfg = {}, root = {}) {
   const keyEnv = cfg.apiKeyEnv || 'NAMESYNC_API_KEY';
   const timeoutMs = cfg.timeoutMs || 8000;
   const maxChars = cfg.maxChars || 4000;
+  // Overridable so the transcript path can be pointed somewhere in tests.
+  const transcriptRoot = cfg.transcriptRoot || undefined;
   const lines = root.viewportLines || 60;
 
   return {
@@ -66,7 +69,15 @@ function createLlmSource(cfg = {}, root = {}) {
     available: ({ client } = {}) => Boolean(endpoint && model && client),
 
     async observe({ client, agent }) {
-      const { body } = await readPane(client, agent && agent.pane_id, { lines });
+      /* What the person asked for beats what the screen shows. herdr reports
+         the agent's session id, which locates the transcript, so this needs no
+         hook -- and it is real intent rather than scrollback. It is absent
+         often enough (no integration installed, session not reported) that the
+         pane remains the fallback rather than the exception. */
+      const asks = readAsks(agent, { limit: 3, root: transcriptRoot });
+      const body = asks.length
+        ? asks.map((a) => 'They asked: ' + a)
+        : (await readPane(client, agent && agent.pane_id, { lines })).body;
       if (!body.length) return null;
 
       const screen = body.join('\n').slice(-maxChars);

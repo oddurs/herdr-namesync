@@ -129,6 +129,19 @@ published once.
 
 ---
 
+## Not a gap: the agent session
+
+Worth recording as a thing herdr already does well.
+
+`agent_session` on an agent or pane carries the id its integration reported,
+and for Claude Code that id is the transcript filename. A plugin can therefore
+read what the user actually asked for without installing a hook of its own, and
+without knowing anything about how Claude Code stores its history beyond the
+filename.
+
+That turned a planned Claude-specific hook into a few lines against the public
+API.
+
 ## Not a gap: the two panels
 
 Worth recording, because it looked like duplication at first.

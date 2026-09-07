@@ -47,7 +47,7 @@ Good ideas without a date yet.
 
 `########··` 80% · 4 of 5 done · due 2027-02-15
 
-### backlog
+### in progress
 
 - [ ] `0023` Weigh a Claude Code hook against the agent-agnostic promise <sup>chore · p2</sup>
 

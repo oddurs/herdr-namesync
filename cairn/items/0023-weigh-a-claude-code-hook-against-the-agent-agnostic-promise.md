@@ -2,7 +2,7 @@
 id: 23
 title: Weigh a Claude Code hook against the agent-agnostic promise
 type: chore
-status: backlog
+status: doing
 milestone: v0.3
 created: 2026-09-06
 updated: 2026-09-06
