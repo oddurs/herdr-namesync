@@ -14,20 +14,27 @@
    label in the terminal mock.
 
    Hierarchy comes from size, weight and tracking only. No condensed widths,
-   no second family — those date a page faster than anything else.
+   no second family — those date a page faster than anything else. Where a
+   two-family system would break display away from body, this breaks it away
+   by weight: 700 is reserved for the display style and used nowhere else.
 
    Tracking follows one rule: negative as size grows, positive as it shrinks.
    IBM Plex Sans is drawn fairly open, so display sizes need pulling in and
    14px labels need letting out.
    --------------------------------------------------------------------------- */
 
-/* Display — the landing headline, and nothing else. */
+/* Display — the landing headline, and nothing else.
+
+   The only style on the site at 700. Everything else stops at 600, so the
+   headline breaks from the page by weight rather than by family: the same
+   separation herdr draws between Archivo and Inter, made without a second
+   typeface. Heavier type sets tighter, so the tracking pulls in with it. */
 .t-display {
   font-family: var(--font-sans);
   font-size: var(--step-display);
-  font-weight: var(--weight-semi);
-  line-height: 1.06;
-  letter-spacing: -0.023em;
+  font-weight: var(--weight-bold);
+  line-height: 1.04;
+  letter-spacing: -0.028em;
   color: var(--fg-strong);
   text-wrap: balance;
 }
