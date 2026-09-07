@@ -95,3 +95,15 @@ Documented, tested, and safe to depend on.
 - [x] `0035` Get listed in awesome-herdr <sup>feature · p2</sup>
 - [x] `0036` Close the two known rough edges <sup>feature · p1</sup>
 
+## v0.6 — Two surfaces, two sets of rules
+
+`##########` 100% · 3 of 3 done · due 2027-04-15
+
+Spaces carry prose and Agents carry slugs. Stop treating them as one naming problem.
+
+### done
+
+- [x] `0037` A Space label inherits slug punctuation from the title <sup>bug · p1</sup>
+- [x] `0038` The rename made a latent test flake visible <sup>bug · p1</sup>
+- [x] `0039` Say which naming rules apply to which surface <sup>docs · p2</sup>
+

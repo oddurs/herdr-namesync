@@ -165,6 +165,12 @@ name = "v0.5"
 title = "First-class herdr plugin"
 due = "2027-04-01"
 
+[[milestone]]
+name = "v0.6"
+title = "Two surfaces, two sets of rules"
+due = "2027-04-15"
+description = "Spaces carry prose and Agents carry slugs. Stop treating them as one naming problem."
+
 # ─── Saved views ─────────────────────────────────────────────────────────────
 # `cairn list --view next`, `cairn board --view triage`
 

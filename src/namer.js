@@ -2,7 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 const { execFile } = require('child_process');
-const { render, slugify, uniqueAgentName, normalize, stripProject, formatSince,
+const { render, slugify, uniqueAgentName, normalize, prose, stripProject, formatSince,
   AGENT_NAME_MAX } = require('./naming');
 const { decide } = require('./policy');
 const { isClaimed } = require('./grouping');
@@ -215,6 +215,14 @@ function index(snapshot) {
   return { workspaces, tabs, panes, agents, byWorkspace, liveAgentNames };
 }
 
+/* Templating for a prose surface. Only {intent} changes: {intent-slug} is a
+   slug wherever it is asked for, including in a workspace template, because a
+   template that spells "slug" is asking for one. The raw intent is what the
+   policy compares and what TOKENS.md publishes, so neither is disturbed. */
+function proseVars(vars) {
+  return vars.intent ? { ...vars, intent: prose(vars.intent) } : vars;
+}
+
 // Picks the one agent whose intent should name a workspace, or null when the
 // workspace is genuinely ambiguous.
 function leadAgent(agentsInWorkspace, mode) {
@@ -280,7 +288,7 @@ class Namer {
           if (!vars) continue;
           plans.push(this.#plan('tab', agent.tab_id,
             idx.tabs.get(agent.tab_id)?.label || '',
-            render(cfg.templates.tab, vars), vars, agent, force));
+            render(cfg.templates.tab, proseVars(vars)), vars, agent, force));
         }
         continue;
       }
@@ -293,13 +301,13 @@ class Namer {
         // "ptop-adopt-remaining-lessons" under a row already labelled "ptop"
         // spends half the sidebar's width saying the same thing twice.
         const label = cfg.stripProjectPrefix
-          ? stripProject(render(cfg.templates.workspace, vars), vars.project)
-          : render(cfg.templates.workspace, vars);
+          ? stripProject(render(cfg.templates.workspace, proseVars(vars)), vars.project)
+          : render(cfg.templates.workspace, proseVars(vars));
         plans.push(this.#plan('workspace', workspaceId, ws.label || '', label, vars, lead, force));
       }
       if (cfg.targets.tab) {
         plans.push(this.#plan('tab', lead.tab_id, idx.tabs.get(lead.tab_id)?.label || '',
-          render(cfg.templates.tab, vars), vars, lead, force));
+          render(cfg.templates.tab, proseVars(vars)), vars, lead, force));
       }
     }
 

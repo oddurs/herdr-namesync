@@ -6,6 +6,24 @@ Notable changes to namesync. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- A Space label built from a slug-shaped title kept the slug, so the sidebar
+  read `Adopt-remaining-lessons`. `{intent}` on a Space or tab label now reads
+  such a title as prose. Agent names are identifiers and are unaffected, and
+  `{intent-slug}` still yields a slug wherever it is asked for.
+
+### Changed
+
+- The test suite runs its async tests four at a time instead of firing all
+  fifty at once. It was competing with itself for subprocesses: real `git`
+  calls were being killed by their own 3s timeout, and a test asserting the
+  first source of a name failed for reasons unrelated to the code. Also three
+  times faster.
+- Detection tests build their own fixture repository instead of asking the
+  namesync checkout about itself, so an assertion says which source answered
+  rather than which two happened to agree.
+
 ## [0.2.0] — 2026-09-07
 
 Positioning, and the seams. The plugin now says what it actually does — it
