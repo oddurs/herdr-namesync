@@ -95,6 +95,10 @@ const DEFAULTS = {
   consultCostlySources: true,
   deepIntervalMs: 600000,
 
+  // How many rows to read when a source needs to see the pane. Agents run on
+  // the alternate screen, so anything past the visible rows returns nothing.
+  viewportLines: 60,
+
   // Titles that carry no intent. Matched case-insensitively against the whole
   // title after trimming.
   ignoreTitles: [

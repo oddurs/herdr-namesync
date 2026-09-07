@@ -128,6 +128,39 @@ how staleness is measured in the first place.
 The floor is charged only when a costly source is actually consulted, so a
 cheap answer never postpones the next real attempt.
 
+### Reading a pane, and what it is worth
+
+herdr can read a pane, so the obvious next source is "look at what the agent is
+actually doing". It was built, measured against the titles it would replace,
+and lost every case:
+
+```
+"Astro docs site GNU style"        ->  ".worktrees feat narrow by"
+"Open source project roadmap CLI"  ->  "Code astralia"
+"ptop-adopt-remaining-lessons"     ->  "Code perfect"
+"Richard Stallman perspective"     ->  null
+```
+
+Two of six produced nothing at all, and `Code astralia` is a parent directory
+plus a folder name that is not even the project — that repository is `cairn`.
+**A screenful yields a location, not an intent.** So it is not a source: a
+thing that cannot answer the question should not implement the interface that
+asks it.
+
+What survives is `src/viewport.js`, the reading and cleaning — chrome, rulers
+and the spinner removed — which is exactly the input something that *can*
+summarise would need.
+
+Two details worth keeping:
+
+- the **status line is chrome by appearance but carries the one durable fact**
+  on screen, so location is parsed from the raw lines before cleaning removes
+  it
+- the spinner is matched **by shape, not by glyph**. Claude Code cycles through
+  more sparkle characters than is practical to enumerate; an earlier version
+  listed five and missed the sixth. A word ending in an ellipsis followed by a
+  parenthesised duration is stable
+
 ### One answer per agent per pass
 
 `#vars` runs more than once for the same agent — once for its own name, again

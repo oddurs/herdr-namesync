@@ -2,7 +2,7 @@
 id: 20
 title: Read the pane when the title has gone quiet
 type: feature
-status: backlog
+status: doing
 milestone: v0.3
 created: 2026-09-06
 updated: 2026-09-06
