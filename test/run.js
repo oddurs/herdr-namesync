@@ -12,6 +12,7 @@ const { Namer, leadAgent, gitInfo, gitCache, detectProject,
 const { planOrder, isClaimed } = require('../src/grouping');
 const { isUselessCwd } = require('../src/namer');
 const setup = require('../src/setup');
+const { resolveSources, observe, createTitleSource } = require('../src/sources');
 const config = require('../src/config');
 
 let passed = 0;
@@ -918,6 +919,74 @@ testAsync('a manifest name beats the folder it lives in', async () => {
   fs.writeFileSync(path.join(dir, 'package.json'), '{"name":"declared-name"}');
   assert.strictEqual(await detectProject(dir), 'declared-name');
   assert.notStrictEqual(await detectProject(dir), path.basename(dir));
+});
+
+process.stdout.write('\nsources\n');
+
+testAsync('the title source returns the agent\'s own title', async () => {
+  const src = createTitleSource();
+  assert.strictEqual(await src.observe({ agent: agent() }), 'Fix auth middleware');
+  // The stripped title is preferred, and the glyph is gone either way.
+  assert.strictEqual(
+    await src.observe({ agent: { terminal_title: '\u25d1 Fix auth middleware' } }),
+    'Fix auth middleware');
+  assert.strictEqual(await src.observe({ agent: {} }), '');
+});
+
+testAsync('title is enabled by default and can be turned off', async () => {
+  assert.deepStrictEqual((await resolveSources(cfg())).map((s) => s.name), ['title']);
+  assert.deepStrictEqual(
+    (await resolveSources(cfg({ sources: { title: { enabled: false } } }))).map((s) => s.name),
+    []);
+});
+
+testAsync('the first source with an answer wins', async () => {
+  const asked = [];
+  const quiet = { name: 'quiet', observe: async () => { asked.push('quiet'); return ''; } };
+  const loud = { name: 'loud', observe: async () => { asked.push('loud'); return 'a real answer'; } };
+  const never = { name: 'never', observe: async () => { asked.push('never'); return 'too late'; } };
+
+  const r = await observe([quiet, loud, never], {});
+  assert.strictEqual(r.intent, 'a real answer');
+  assert.strictEqual(r.source, 'loud');
+  assert.deepStrictEqual(asked, ['quiet', 'loud'], 'a later source should not be consulted');
+});
+
+testAsync('a source that throws is skipped, not fatal', async () => {
+  // An observation failing is not a reason to stop naming the whole session.
+  const broken = { name: 'broken', observe: async () => { throw new Error('nope'); } };
+  const warned = [];
+  const r = await observe([broken, createTitleSource()],
+    { agent: agent() }, (lvl, msg) => warned.push(msg));
+  assert.strictEqual(r.intent, 'Fix auth middleware');
+  assert.ok(warned.some((w) => w.includes('broken')), 'the failure should be logged');
+});
+
+testAsync('no source with an answer means no name, not a crash', async () => {
+  const r = await observe([{ name: 'quiet', observe: async () => null }], {});
+  assert.strictEqual(r.intent, '');
+  assert.strictEqual(r.source, null);
+});
+
+testAsync('a custom source flows through the policy like any other', async () => {
+  // The point of the seam: where a name comes from changes nothing about
+  // whether it is allowed to be applied.
+  const custom = { name: 'custom', observe: async () => 'Postgres index tuning' };
+  const n = new Namer({ cfg: cfg(), store: freshStore(), sinks: [], sources: [custom] });
+  const plans = await n.buildPlans(snapshot([agent()]));
+  const ws = plans.find((p) => p.kind === 'workspace');
+  assert.strictEqual(ws.desired, 'Postgres index tuning');
+  assert.strictEqual(ws.verdict.rename, true);
+});
+
+testAsync('a held workspace ignores a custom source too', async () => {
+  const custom = { name: 'custom', observe: async () => 'Postgres index tuning' };
+  const store = freshStore();
+  store.lock('w1', 'edited by hand', 'code quality');
+  const n = new Namer({ cfg: cfg(), store, sinks: [], sources: [custom] });
+  const plans = await n.buildPlans(snapshot([agent()]));
+  const ws = plans.find((p) => p.kind === 'workspace');
+  assert.strictEqual(ws.verdict.rename, false, 'a source must not override a hold');
 });
 
 Promise.all(pending).then(() => {

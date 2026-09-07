@@ -6,6 +6,7 @@ const { render, slugify, uniqueAgentName, normalize, stripProject, formatSince,
   AGENT_NAME_MAX } = require('./naming');
 const { decide } = require('./policy');
 const { isClaimed } = require('./grouping');
+const { createTitleSource, observe } = require('./sources');
 
 function git(cwd, args) {
   return new Promise((resolve) => {
@@ -209,8 +210,9 @@ function index(snapshot) {
     if (!byWorkspace.has(a.workspace_id)) byWorkspace.set(a.workspace_id, []);
     byWorkspace.get(a.workspace_id).push(a);
   }
+  const panes = new Map((snapshot.panes || []).map((p) => [p.pane_id, p]));
   const liveAgentNames = new Set(agents.map((a) => a.name).filter(Boolean));
-  return { workspaces, tabs, agents, byWorkspace, liveAgentNames };
+  return { workspaces, tabs, panes, agents, byWorkspace, liveAgentNames };
 }
 
 // Picks the one agent whose intent should name a workspace, or null when the
@@ -222,16 +224,21 @@ function leadAgent(agentsInWorkspace, mode) {
 }
 
 class Namer {
-  constructor({ cfg, store, sinks, log = () => {} }) {
+  constructor({ cfg, store, sinks, sources, client, log = () => {} }) {
     this.cfg = cfg;
     this.store = store;
     this.sinks = sinks;
+    /* Where names come from. Defaults to the agent's own title, which is what
+       namesync has always used and what it should keep using while it works. */
+    this.sources = sources && sources.length ? sources : [createTitleSource()];
+    this.client = client || null;
     this.log = log;
   }
 
   async buildPlans(snapshot, { only, force = false } = {}) {
     const cfg = this.cfg;
     const idx = index(snapshot);
+    this.panes = idx.panes;
     const plans = [];
     const takenNames = new Set(idx.liveAgentNames);
 
@@ -309,7 +316,14 @@ class Namer {
   }
 
   async #vars(agent, ws) {
-    const intent = normalize(agent.terminal_title_stripped || agent.terminal_title || '');
+    /* Asking rather than reading. The answer is still the terminal title by
+       default; the difference is that `Namer` no longer knows that. */
+    const { intent } = await observe(this.sources, {
+      agent,
+      pane: this.panes ? this.panes.get(agent.pane_id) : undefined,
+      client: this.client,
+      cfg: this.cfg,
+    }, this.log);
     if (!intent) return null;
     /* The foreground process's directory is the more accurate of the two — it
        follows an agent into a worktree — but it is also transient: a pane
@@ -383,6 +397,7 @@ class Namer {
   async publishMetadata(snapshot) {
     if (!this.cfg.metadata?.enabled) return 0;
     const idx = index(snapshot);
+    this.panes = idx.panes;
     const sink = this.sinks.find((x) => x.name === 'herdr' && x.reportMetadata);
     if (!sink) return 0;
     let published = 0;

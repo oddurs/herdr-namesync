@@ -1,0 +1,48 @@
+'use strict';
+const { createTitleSource } = require('./title');
+
+/* Where a name comes from.
+ *
+ * The mirror of `sinks/`. A sink knows how to apply a name without knowing why
+ * it was chosen; a source knows how to observe what an agent is doing without
+ * knowing what will be done with the answer. `Namer` sits between them and
+ * owns the policy, which is the only place that decides anything.
+ *
+ * A source answers one question — what is this agent working on? — and returns
+ * a string, or null if it cannot say. Sources are consulted in order and the
+ * first real answer wins, so a fallback chain costs nothing while the cheap
+ * source is working.
+ *
+ * Whatever comes back is subject to the same policy as anything else: holds,
+ * the similarity gate, the debounce, the rate limit. No name earns authority
+ * by being expensive to obtain.
+ */
+async function resolveSources(cfg, { client } = {}) {
+  const candidates = [createTitleSource()];
+
+  const usable = [];
+  for (const source of candidates) {
+    const enabled = cfg.sources?.[source.name]?.enabled !== false;
+    if (!enabled) continue;
+    const ok = typeof source.available === 'function' ? await source.available({ cfg, client }) : true;
+    if (ok) usable.push(source);
+  }
+  return usable;
+}
+
+/* The first source with something to say. A source that throws is skipped
+   rather than allowed to stop the sync -- an observation failing is not a
+   reason to stop naming everything else in the session. */
+async function observe(sources, context, log = () => {}) {
+  for (const source of sources) {
+    try {
+      const answer = await source.observe(context);
+      if (answer) return { intent: answer, source: source.name };
+    } catch (err) {
+      log('warn', 'source ' + source.name + ': ' + err.message);
+    }
+  }
+  return { intent: '', source: null };
+}
+
+module.exports = { resolveSources, observe, createTitleSource };

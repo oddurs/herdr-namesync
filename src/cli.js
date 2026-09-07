@@ -8,6 +8,7 @@ const { Store, stateDir } = require('./state');
 const { HerdrApi } = require('./client');
 const { Namer } = require('./namer');
 const { resolveSinks } = require('./sinks');
+const { resolveSources } = require('./sources');
 const { Daemon } = require('./daemon');
 const { planOrder, applyOrder } = require('./grouping');
 const setup = require('./setup');
@@ -64,9 +65,10 @@ async function buildNamer(client, { dryRun = false } = {}) {
   const cfg = config.load();
   const store = new Store();
   const sinks = dryRun ? [] : await resolveSinks(cfg, { client });
+  const sources = await resolveSources(cfg, { client });
   const lines = [];
   const namer = new Namer({
-    cfg, store, sinks,
+    cfg, store, sinks, sources, client,
     log: (level, message) => lines.push(level + ': ' + message),
   });
   return { cfg, store, namer, lines };

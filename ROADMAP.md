@@ -49,11 +49,14 @@ Good ideas without a date yet.
 
 ### backlog
 
-- [ ] `0019` Introduce a source interface <sup>feature · p0</sup>
 - [ ] `0020` Read the pane when the title has gone quiet <sup>feature · p0</sup>
 - [ ] `0021` Only look harder when the cheap answer has failed <sup>feature · p0</sup>
 - [ ] `0022` An opt-in llm source, bring your own endpoint <sup>feature · p1</sup>
 - [ ] `0023` Weigh a Claude Code hook against the agent-agnostic promise <sup>chore · p2</sup>
+
+### in progress
+
+- [ ] `0019` Introduce a source interface <sup>feature · p0</sup>
 
 ## v1.0 — Stable release
 

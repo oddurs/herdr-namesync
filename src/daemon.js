@@ -5,6 +5,7 @@ const { HerdrApi, HerdrEvents } = require('./client');
 const { Store, stateDir } = require('./state');
 const { Namer } = require('./namer');
 const { resolveSinks } = require('./sinks');
+const { resolveSources } = require('./sources');
 const config = require('./config');
 const { normalize } = require('./naming');
 
@@ -242,10 +243,13 @@ class Daemon {
 
     const snapshot = (await this.api.snapshot()).snapshot;
     const sinks = await resolveSinks(cfg, { client: this.api });
+    const sources = await resolveSources(cfg, { client: this.api });
     const namer = new Namer({
       cfg,
       store: this.store,
       sinks,
+      sources,
+      client: this.api,
       log: (level, message) => this.log(level === 'rename' ? 'info' : level, message),
     });
     const plans = await namer.buildPlans(snapshot);
