@@ -76,6 +76,14 @@ const DEFAULTS = {
     herdr: { enabled: true },
   },
 
+  /* Where a name comes from. Consulted in order; the first real answer wins,
+     so a fallback chain costs nothing while the cheap source is working. The
+     agent's own title is free and works with every agent kind herdr detects,
+     and is the right default for as long as the agent keeps it current. */
+  sources: {
+    title: { enabled: true },
+  },
+
   // Titles that carry no intent. Matched case-insensitively against the whole
   // title after trimming.
   ignoreTitles: [

@@ -79,6 +79,37 @@ changes is a write and a redraw, multiplied by the number of agents. `$since`
 steps rather than ticking for exactly this reason — a minute counter across ten
 agents is ten redraws a minute for a number nobody reads that precisely.
 
+## Sources and sinks
+
+Two seams, deliberately symmetric.
+
+A **sink** knows how to apply a name without knowing why it was chosen. A
+**source** knows how to observe what an agent is working on without knowing
+what will be done with the answer. `Namer` sits between them and owns the
+policy, which is the only place anything is decided.
+
+```js
+// src/sources/
+{ name, available(), observe({ agent, pane, client }) -> string | null }
+
+// src/sinks/
+{ name, kinds, available(), apply({ kind, id, label }) -> boolean }
+```
+
+Sources are consulted in order and the first real answer wins, so a fallback
+chain costs nothing while the cheap source is working. `title` — the agent's
+own terminal title — is free, works with every agent kind herdr detects, and is
+the default.
+
+The rule that makes the seam safe: **whatever a source returns goes through the
+same policy as anything else.** Holds, the similarity gate, the debounce, the
+rate limit. No name earns authority by being expensive to obtain, which is what
+allows an unreliable or costly source to be added later without it being able
+to churn the sidebar.
+
+A source that throws is skipped and logged rather than allowed to stop the
+sync. One observation failing is not a reason to stop naming everything else.
+
 ## Exactly one watcher
 
 The pid file is ownership, not just a record. A watcher re-reads it on every

@@ -34,6 +34,7 @@ declining for a reason that is already being printed.
 | `policy.js` | one function, `decide()`, that says whether to rename |
 | `namer.js` | turning a herdr snapshot into plans, and applying them |
 | `client.js` | the herdr socket |
+| `sources/` | one module per way of observing what an agent is doing |
 | `sinks/` | one module per backend |
 | `daemon.js` | the event subscription and its lifecycle |
 

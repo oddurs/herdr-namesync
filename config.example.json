@@ -10,6 +10,8 @@
     "tab": false,
     "agent": true
   },
+  "showStale": true,
+  "staleAfterTurns": 6,
   "showDuration": true,
   "durationRefreshMs": 30000,
   "stripProjectPrefix": true,
@@ -25,6 +27,11 @@
   "multiAgent": "tab",
   "sinks": {
     "herdr": {
+      "enabled": true
+    }
+  },
+  "sources": {
+    "title": {
       "enabled": true
     }
   },
