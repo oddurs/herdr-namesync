@@ -2,7 +2,7 @@
 id: 18
 title: A folder or project name pasted into rename reads as hand-written
 type: bug
-status: doing
+status: done
 milestone: v0.2
 created: 2026-09-06
 updated: 2026-09-06

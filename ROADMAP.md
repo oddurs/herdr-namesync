@@ -31,11 +31,7 @@ Good ideas without a date yet.
 
 ## v0.2 — Make the policy legible
 
-`#########·` 86% · 6 of 7 done · due 2027-01-15
-
-### in progress
-
-- [ ] `0018` A folder or project name pasted into rename reads as hand-written <sup>bug · p0</sup>
+`##########` 100% · 7 of 7 done · due 2027-01-15
 
 ### done
 
@@ -45,6 +41,7 @@ Good ideas without a date yet.
 - [x] `0015` Clearing a name should hand it back <sup>bug · p0</sup>
 - [x] `0016` namesync wakes itself up by publishing metadata <sup>bug · p0</sup>
 - [x] `0017` Folder name beat the repo name after a walk-up <sup>bug · p0</sup>
+- [x] `0018` A folder or project name pasted into rename reads as hand-written <sup>bug · p0</sup>
 
 ## v1.0 — Stable release
 
