@@ -37,6 +37,7 @@
   },
   "consultCostlySources": true,
   "deepIntervalMs": 600000,
+  "viewportLines": 60,
   "ignoreTitles": [
     "claude",
     "claude code",

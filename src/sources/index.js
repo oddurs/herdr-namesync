@@ -18,11 +18,13 @@ const { createTitleSource } = require('./title');
  * by being expensive to obtain.
  */
 async function resolveSources(cfg, { client } = {}) {
+  // Order is the fallback chain, cheapest first.
   const candidates = [createTitleSource()];
 
   const usable = [];
   for (const source of candidates) {
-    const enabled = cfg.sources?.[source.name]?.enabled !== false;
+    const settings = cfg.sources?.[source.name] || {};
+    const enabled = source.costly ? settings.enabled === true : settings.enabled !== false;
     if (!enabled) continue;
     const ok = typeof source.available === 'function' ? await source.available({ cfg, client }) : true;
     if (ok) usable.push(source);

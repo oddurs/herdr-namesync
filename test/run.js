@@ -12,6 +12,7 @@ const { Namer, leadAgent, gitInfo, gitCache, detectProject,
 const { planOrder, isClaimed } = require('../src/grouping');
 const { isUselessCwd } = require('../src/namer');
 const setup = require('../src/setup');
+const viewport = require('../src/viewport');
 const { resolveSources, observe, createTitleSource } = require('../src/sources');
 const config = require('../src/config');
 
@@ -1065,6 +1066,50 @@ testAsync('costly sources can be switched off entirely', async () => {
     sources: [source, createTitleSource()] });
   await n.buildPlans(snapshot([agent({ agent_status: 'idle', state_change_seq: 99 })]));
   assert.strictEqual(calls.length, 0);
+});
+
+process.stdout.write('\nreading a pane\n');
+
+// A screenful from a real agent, chrome and all.
+const SCREEN = [
+  '\u256d\u2500 something \u2500\u256e',
+  '',
+  '\u23fa Running 1 shell command \u00b7 1m 7s\u2026',
+  '  \u23bf  $ bash -n scripts/preflight && echo "syntax ok"',
+  '\u2726 Tomfoolering\u2026 (29m 22s \u00b7 \u2193 64.1k tokens)',
+  '\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500',
+  '\u276f ',
+  '  Opus 5 (1M context) \u00b7 ~/Code/perfect \u00b7  item-0021-memory-bar* \u00b7 78% ctx \u00b7 $393.47      /rc',
+  '  \u23f5\u23f5 bypass permissions on (shift+tab to cycle) \u00b7 \u2190 for agents',
+].join('\n');
+
+test('cleaning keeps the work and drops the furniture', () => {
+  const body = viewport.clean(SCREEN);
+  assert.ok(body.some((l) => l.includes('bash -n scripts/preflight')), 'lost the command');
+  assert.ok(!body.some((l) => l.includes('Tomfoolering')), 'kept the spinner');
+  assert.ok(!body.some((l) => /^[\u2500\u2501]+$/.test(l)), 'kept a ruler');
+  assert.ok(!body.some((l) => l.includes('bypass permissions')), 'kept the mode line');
+  assert.ok(!body.some((l) => l === ''), 'kept a blank line');
+});
+
+test('the status line is chrome, so location is read before cleaning', () => {
+  // It ends with the same slash-command hint the chrome filter matches on, so
+  // cleaning removes it -- and it carries the one durable fact on screen.
+  assert.strictEqual(viewport.locationFrom(SCREEN.split('\n')), 'Code perfect');
+  assert.strictEqual(viewport.clean(SCREEN).some((l) => l.includes('Opus 5')), false);
+});
+
+test('a location is not an intent, which is why this is not a source', () => {
+  // Recorded so the conclusion survives the reasoning: measured against six
+  // live agents, every guess was worse than the title it would have replaced.
+  const location = viewport.locationFrom(SCREEN.split('\n'));
+  assert.strictEqual(location, 'Code perfect');
+  assert.ok(!/[a-z]+ing\b/.test(location), 'a location never describes work');
+});
+
+testAsync('reading a pane that is not there yields nothing, not a throw', async () => {
+  assert.deepStrictEqual(await viewport.readPane(null, 'w1:p1'), { body: [], raw: [] });
+  assert.deepStrictEqual(await viewport.readPane({}, null), { body: [], raw: [] });
 });
 
 Promise.all(pending).then(() => {
