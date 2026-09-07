@@ -2,7 +2,7 @@
 id: 48
 title: Explain the top line of the hero mock
 type: feature
-status: backlog
+status: done
 milestone: v0.7
 depends_on:
 - 46
