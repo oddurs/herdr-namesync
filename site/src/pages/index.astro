@@ -143,11 +143,27 @@ Open source wifi e-reader</code></pre>
       <div class="band__inner prose">
         <h2 class="band__heading">Install</h2>
         <pre><code>herdr plugin install oddurs/herdr-namesync
-herdr integration install claude</code></pre>
+namesync setup --write            # add the sidebar rows herdr needs
+herdr integration install claude  # sharper agent state detection</code></pre>
         <p>
-          herdr 0.8 or newer, Node 18 or newer, no npm dependencies. The startup hook
-          launches a watcher that holds one event subscription and reconnects on its own
-          across herdr restarts.
+          The middle step is the one that catches people out. namesync publishes
+          <code>$project</code>, <code>$branch</code>, <code>$since</code> and
+          <code>$n</code>, but herdr renders none of them until the sidebar asks — and
+          <code>herdr config</code> has no <code>set</code> for a plugin to do it with.
+          Without it you install namesync and nothing visible changes.
+        </p>
+        <p>
+          <code>setup</code> prints the rows and writes nothing without
+          <code>--write</code>, backs up your config first, and refuses outright if you
+          already have a sidebar layout. What it adds is fenced, so
+          <code>namesync setup --undo</code> takes it back byte for byte.
+        </p>
+        <p>Then look before you leap:</p>
+        <pre><code>namesync dry-run</code></pre>
+        <p>
+          Every decision it would make against your live session, with the reason for
+          each, and nothing changed. herdr 0.8 or newer, Node 18 or newer, no npm
+          dependencies.
         </p>
         <p><a href={url("docs/install")}>Read the docs</a></p>
       </div>
