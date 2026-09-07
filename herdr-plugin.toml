@@ -2,7 +2,7 @@ id = "namesync"
 name = "Namesync"
 version = "0.1.0"
 min_herdr_version = "0.8.0"
-description = "Renames workspaces, tabs and agents from the coding agent's own intent. Event-driven, no LLM calls, no API keys."
+description = "Keeps workspace, tab and agent names in step with the work as it changes, and holds off when it should not. Works with no model; can use one when you want."
 platforms = ["linux", "macos", "windows"]
 
 # One-shot per the plugin contract: it re-seeds names after a session restore,

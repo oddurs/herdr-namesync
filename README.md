@@ -3,7 +3,8 @@
 [![ci](https://github.com/oddurs/herdr-namesync/actions/workflows/ci.yml/badge.svg)](https://github.com/oddurs/herdr-namesync/actions/workflows/ci.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Names your terminal workspaces after what you are actually doing in them.
+Keeps your terminal workspace names in step with the work — and knows when to
+leave them alone.
 
 A [herdr](https://herdr.dev) plugin.
 **[Documentation](https://oddurs.github.io/herdr-namesync/docs/install)** —
@@ -53,14 +54,32 @@ the duration is how long that agent has been sitting in its current state.
 The bottom line of each pair is the agent's own title — namesync never wrote
 it, it only moved it somewhere useful.
 
-## Why this exists
+## Why another renamer
 
-Every other renamer generates a name: it calls a model with your first prompt,
-or shells out to an on-device summariser, or asks you for an `OPENAI_API_KEY`.
+herdr's marketplace lists twenty-three plugins that rename things. That is a
+fair question to ask before installing a twenty-fourth, so here is the honest
+answer.
 
-That work is already done. Claude Code, Codex and friends continuously publish a
-summary of the current task as their OSC terminal title, and herdr already
-captures it as `terminal_title_stripped`:
+Almost all of them name a session **once**, from its first prompt, and never
+revise it. That is correct for about ten minutes. By the afternoon the label
+describes work that finished before lunch — which is the problem this plugin
+was built for, not a variation on it.
+
+| Instead of | They are better when | namesync is better when |
+| --- | --- | --- |
+| [herdr-automatic-rename](https://github.com/qu8n/herdr-automatic-rename) composes a breadcrumb — `api › feat/oauth › nvim` | You want to know **where** a pane is: directory, branch, program | You want to know **what is happening** in it |
+| [herdr-plugin-renamer](https://github.com/wyattjoh/herdr-plugin-renamer) names from the first prompt | One session, one task, short-lived | A session that runs all day and changes subject |
+| [herdr-tab-smart-rename](https://github.com/iurysza/herdr-tab-smart-rename) asks a model per task | You want a model interpreting every task | You want it free by default and a model only when it earns it |
+
+The distinction that matters is not what a name is generated from. It is
+whether anything decides **when it should change** — and whether it can tell
+you why it left a name alone.
+
+## Nothing generates the name, unless you ask it to
+
+The work is usually already done. Claude Code, Codex and friends publish a
+summary of the current task as their OSC terminal title, and herdr captures it
+as `terminal_title_stripped`:
 
 ```console
 $ herdr agent list | jq -r '.result.agents[].terminal_title_stripped'
@@ -69,9 +88,41 @@ Richard Stallman perspective
 Open source wifi e-reader
 ```
 
-So the interesting problem is not *generating* an intent name. It is deciding
-**when a name should change**, and propagating it to every surface that shows
-one. That is all this plugin does.
+Free, instant, and it works for all seventeen agent kinds herdr recognises. So
+that is the default, and it needs no model, no key and no account.
+
+Its one weakness is that agents set a title early and rarely revise it. When a
+title goes stale, namesync notices (`$stale`) and can fall back to a model you
+configure — off unless you set an endpoint, gated so it is consulted only when
+the free answer has demonstrably failed, and subject to exactly the same policy
+as any other name. Being expensive buys a name no authority here.
+
+## What it looks like over an afternoon
+
+One workspace, three hours, nobody touching the sidebar:
+
+```
+ ◑ 3  fontina · main  2m
+   Claude Code settings configuration      ← the agent's own title, adopted
+
+ ◑ 3  fontina · main  40m
+   Claude Code settings configuration      ← work moved on; title has not
+
+ ◑ 3  fontina · main  1h  $stale
+   Fix stable toolchain                    ← noticed, and refreshed
+```
+
+And the case no other renamer can show — the workspace beside it, named by
+hand:
+
+```
+ ✓ 2  fontina · worktree · feat/packaging  1d
+   Richard Stallman perspective            ← held. Never touched again.
+```
+
+`namesync status` says which names are held, for how long, and whether the
+agent has moved on since. Clear the name yourself and it hands the workspace
+back, picking up from the agent again on the next event.
 
 ## When it renames
 
