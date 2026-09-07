@@ -102,6 +102,7 @@ workspace label, so a two-line row can carry two different things:
 | `$since` | How long the agent has been in its current state: `now`, `3m`, `15m`, `3h`, `2d`. Minute precision for the first ten, then five-minute steps, then hours — every change is a metadata write and a sidebar redraw for that agent, so the value gets coarser as it gets less interesting. |
 | `$locked` | `held` when namesync has been told to leave a name alone. A held name behaves completely differently from a live one, so the sidebar should be able to say which it is looking at. |
 | `$stale` | `stale` when the agent has not revised its title across several state transitions — it has finished and started work repeatedly without changing its description of it. |
+| `$age` | How long the current intent has been current, from the last time the title changed. Unlike `$since` it survives state transitions, so it answers "what has this space been grinding on" rather than "how long in this state". |
 | `$agent` | Agent kind, such as `claude`. |
 | `$agents` | Number of agents in the workspace, when more than one. |
 
@@ -157,6 +158,10 @@ rows = [
 
 Colour carries the hierarchy rather than repeating it: Gotham `base7` for the
 project, mauve for the branch, blue for the live intent underneath.
+
+`$since` belongs in the Agents panel and `$age` in the Spaces panel, which is
+the same divide as everything else: Agents answers what needs you now, Spaces
+answers what this place is. The rows `namesync setup` writes do exactly that.
 
 The point of the split is that the two lines age differently. The project and
 branch are stable identity. The title underneath is whatever the agent is
