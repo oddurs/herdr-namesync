@@ -212,7 +212,9 @@ Resolved in this order, first answer wins:
 4. **The nearest project marker.** For directories that are not git
    repositories, walks up looking for `package.json`, `Cargo.toml`, `go.mod`
    and friends, stopping at `$HOME`.
-5. **The folder name.** Last resort.
+5. **The folder name.** Genuinely last. A directory found by walking up is
+   asked the same questions from the top, so a deleted worktree still reports
+   the repository it belonged to rather than the folder above it.
 
 These names are an interface, not implementation detail: herdr's metadata has
 no schema or versioning, so a rename breaks a reader silently.

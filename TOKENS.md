@@ -23,7 +23,7 @@ rows. All values are strings or absent — never empty strings.
 
 | Token | Where | Meaning | Stability |
 | --- | --- | --- | --- |
-| `project` | both | The repository's name. Origin remote, then any other remote, then the project's own manifest, then the folder. | stable |
+| `project` | both | The repository's name. Origin remote, then any other remote, then the project's own manifest, then the folder — in that order, at whichever directory turns out to be the project root. | stable |
 | `branch` | both | Current git branch. | stable |
 | `worktree` | both | The literal string `worktree` when the pane sits in a linked worktree. Absent otherwise. | stable |
 | `n` | both | The workspace's number — what `prefix+shift+N` selects. | stable |

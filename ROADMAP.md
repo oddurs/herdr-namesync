@@ -31,7 +31,11 @@ Good ideas without a date yet.
 
 ## v0.2 — Make the policy legible
 
-`##########` 100% · 5 of 5 done · due 2027-01-15
+`#########·` 83% · 5 of 6 done · due 2027-01-15
+
+### in progress
+
+- [ ] `0017` Folder name beat the repo name after a walk-up <sup>bug · p0</sup>
 
 ### done
 
