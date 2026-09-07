@@ -2,7 +2,7 @@
 id: 49
 title: Say what it will not do
 type: feature
-status: backlog
+status: done
 milestone: v0.7
 created: 2026-09-07
 updated: 2026-09-07

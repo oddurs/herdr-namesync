@@ -109,13 +109,9 @@ Spaces carry prose and Agents carry slugs. Stop treating them as one naming prob
 
 ## v0.7 — Make the landing page argue
 
-`#########·` 90% · 9 of 10 done · due 2027-05-01
+`##########` 100% · 10 of 10 done · due 2027-05-01
 
 One visual and four screens of prose, with the install path four screens down. The page states the case; it does not make it.
-
-### backlog
-
-- [ ] `0049` Say what it will not do <sup>feature · p1</sup>
 
 ### done
 
@@ -128,4 +124,5 @@ One visual and four screens of prose, with the install path four screens down. T
 - [x] `0046` Decide how many sections the landing page carries <sup>chore · p1</sup>
 - [x] `0047` Show one title becoming two names <sup>feature · p2</sup>
 - [x] `0048` Explain the top line of the hero mock <sup>feature · p2</sup>
+- [x] `0049` Say what it will not do <sup>feature · p1</sup>
 

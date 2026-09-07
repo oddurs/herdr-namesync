@@ -223,6 +223,26 @@ Open source wifi e-reader</code></pre>
     </section>
 
     <section class="band band--rule">
+      <div class="band__inner prose quiet">
+        <h2 class="band__heading">What it will not do</h2>
+        <p>
+          namesync moves a name that already exists. It does not write one, so it
+          inherits whatever the agent publishes — and agents set a title early and often
+          never revise it. When that happens the space is named after work that finished
+          hours ago, and namesync is mirroring faithfully. Lowering
+          <code>similarityThreshold</code> will not help, because nothing upstream
+          changed. It can only tell you: that is what <code>$stale</code> is for.
+        </p>
+        <p>
+          herdr can send a prompt to a running agent. namesync could therefore ask one
+          what it is working on and get a perfect answer every time. It does not, and it
+          will not — that writes into your conversation, spends your tokens and pollutes
+          the transcript, to fix what is ultimately a cosmetic problem.
+        </p>
+      </div>
+    </section>
+
+    <section class="band band--rule">
       <div class="band__inner prose">
         <h2 class="band__heading">Install</h2>
         <pre><code>herdr plugin install oddurs/herdr-namesync
@@ -447,6 +467,13 @@ herdr integration install claude  # sharper agent state detection</code></pre>
 
     .split dt { margin-bottom: 0; }
   }
+
+  /* The quietest section on the page, and deliberately. It follows four that
+     assert things, and a limitation set in the same voice as a feature reads
+     like one. */
+  .quiet { color: var(--fg-muted); }
+
+  .quiet .band__heading { color: var(--fg-muted); }
 
   .rules { margin: 1.8em 0; }
 
