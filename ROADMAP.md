@@ -71,9 +71,9 @@ Documented, tested, and safe to depend on.
 
 ## v0.4 — Ground the model
 
-`··········` 0% · 0 of 1 done · due 2027-03-15
+`##########` 100% · 1 of 1 done · due 2027-03-15
 
-### backlog
+### done
 
-- [ ] `0025` Ground the model in the project name <sup>feature · p2</sup>
+- [x] `0025` Ground the model in the project name <sup>feature · p2</sup>
 

@@ -2,7 +2,7 @@
 id: 25
 title: Ground the model in the project name
 type: feature
-status: backlog
+status: done
 milestone: v0.4
 created: 2026-09-06
 updated: 2026-09-06
