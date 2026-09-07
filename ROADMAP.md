@@ -49,8 +49,11 @@ Good ideas without a date yet.
 
 ### backlog
 
-- [ ] `0022` An opt-in llm source, bring your own endpoint <sup>feature · p1</sup>
 - [ ] `0023` Weigh a Claude Code hook against the agent-agnostic promise <sup>chore · p2</sup>
+
+### in progress
+
+- [ ] `0022` An opt-in llm source, bring your own endpoint <sup>feature · p1</sup>
 
 ### done
 

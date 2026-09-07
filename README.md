@@ -240,7 +240,7 @@ jump key that would change.
 Idempotent, and deliberately minimal-movement — a project ranks where its
 earliest member already sits, so blocks do not jump to the top. Never automatic.
 
-## What it cannot do
+## What it cannot do by default
 
 namesync moves a name that already exists. It does not generate one, which
 means it inherits whatever the agent publishes.
@@ -252,6 +252,12 @@ namesync has nothing newer to propagate — it is mirroring faithfully. Lowering
 
 This is the main argument for `$project` and `$branch`: they stay true whether
 or not the title has moved.
+
+For the sessions where that is not enough, an optional `llm` source can read
+the pane and write a label — off unless you configure an endpoint, consulted
+only once the title has demonstrably gone stale, and subject to exactly the
+same policy as any other name. See
+[Where names come from](site/src/content/docs/sources.md).
 
 ## Terminal tabs
 

@@ -1,5 +1,6 @@
 'use strict';
 const { createTitleSource } = require('./title');
+const { createLlmSource } = require('./llm');
 
 /* Where a name comes from.
  *
@@ -18,8 +19,12 @@ const { createTitleSource } = require('./title');
  * by being expensive to obtain.
  */
 async function resolveSources(cfg, { client } = {}) {
-  // Order is the fallback chain, cheapest first.
-  const candidates = [createTitleSource()];
+  // Order is the fallback chain, cheapest first. The title is free and usually
+  // right; anything below it is consulted only when the title has failed.
+  const candidates = [
+    createTitleSource(),
+    createLlmSource(cfg.sources?.llm, cfg),
+  ];
 
   const usable = [];
   for (const source of candidates) {

@@ -13,6 +13,8 @@ const { planOrder, isClaimed } = require('../src/grouping');
 const { isUselessCwd } = require('../src/namer');
 const setup = require('../src/setup');
 const viewport = require('../src/viewport');
+const { createLlmSource, usable } = require('../src/sources/llm');
+const http = require('http');
 const { resolveSources, observe, createTitleSource } = require('../src/sources');
 const config = require('../src/config');
 
@@ -1110,6 +1112,114 @@ test('a location is not an intent, which is why this is not a source', () => {
 testAsync('reading a pane that is not there yields nothing, not a throw', async () => {
   assert.deepStrictEqual(await viewport.readPane(null, 'w1:p1'), { body: [], raw: [] });
   assert.deepStrictEqual(await viewport.readPane({}, null), { body: [], raw: [] });
+});
+
+process.stdout.write('\nasking a model\n');
+
+// A stand-in for anything speaking the chat-completions shape.
+function stubModel(reply, { status = 200, delayMs = 0 } = {}) {
+  const seen = [];
+  const server = http.createServer((req, res) => {
+    let raw = '';
+    req.on('data', (c) => { raw += c; });
+    req.on('end', () => {
+      seen.push({ auth: req.headers.authorization, body: JSON.parse(raw) });
+      setTimeout(() => {
+        res.writeHead(status, { 'content-type': 'application/json' });
+        res.end(JSON.stringify({ choices: [{ message: { content: reply } }] }));
+      }, delayMs);
+    });
+  });
+  return new Promise((resolve) => {
+    server.listen(0, '127.0.0.1', () => resolve({
+      server, seen,
+      url: 'http://127.0.0.1:' + server.address().port + '/v1/chat/completions',
+    }));
+  });
+}
+
+// A client that returns a fixed pane screenful.
+const paneClient = (text) => ({ request: async () => ({ read: { text } }) });
+const SCREEN_TEXT = 'Ran 3 shell commands\n\u23fa The macOS test was never added; adding it now';
+
+test('a model answer is scrutinised like any other name', () => {
+  assert.strictEqual(usable('Fix worktree detection'), 'Fix worktree detection');
+  assert.strictEqual(usable('"Fix worktree detection."'), 'Fix worktree detection');
+  assert.strictEqual(usable('unknown'), '', 'the escape hatch must not become a name');
+  assert.strictEqual(usable(''), '');
+  assert.strictEqual(usable('I am sorry, I cannot determine that'), '',
+    'a model explaining itself is not a label');
+  assert.strictEqual(usable('Based on the screen it appears to be'), '');
+  assert.strictEqual(usable('a b c d e f g h i j'), '', 'too many words');
+});
+
+testAsync('it sends the cleaned pane and returns a usable label', async () => {
+  const { server, seen, url } = await stubModel('Fix worktree branch detection');
+  try {
+    const src = createLlmSource({ enabled: true, endpoint: url, model: 'test-model' }, {});
+    const answer = await src.observe({
+      client: paneClient(SCREEN_TEXT), agent: { pane_id: 'w1:p1' },
+    });
+    assert.strictEqual(answer, 'Fix worktree branch detection');
+    assert.strictEqual(seen.length, 1);
+    assert.strictEqual(seen[0].body.model, 'test-model');
+    assert.strictEqual(seen[0].body.temperature, 0, 'one screen should give one name');
+    assert.ok(seen[0].body.messages[1].content.includes('macOS test'),
+      'the pane content should reach the model');
+  } finally { server.close(); }
+});
+
+testAsync('the key comes from the environment, never from config', async () => {
+  const { server, seen, url } = await stubModel('Fix the parser');
+  try {
+    process.env.NS_TEST_KEY = 'secret-value';
+    const src = createLlmSource(
+      { enabled: true, endpoint: url, model: 'm', apiKeyEnv: 'NS_TEST_KEY' }, {});
+    await src.observe({ client: paneClient(SCREEN_TEXT), agent: { pane_id: 'w1:p1' } });
+    assert.strictEqual(seen[0].auth, 'Bearer secret-value');
+  } finally { server.close(); delete process.env.NS_TEST_KEY; }
+});
+
+testAsync('an endpoint that errors is skipped, not fatal', async () => {
+  const { server, url } = await stubModel('nope', { status: 500 });
+  try {
+    const src = createLlmSource({ enabled: true, endpoint: url, model: 'm' }, {});
+    const warned = [];
+    const r = await observe([src, createTitleSource()],
+      { client: paneClient(SCREEN_TEXT), agent: agent(), deep: true },
+      (lvl, msg) => warned.push(msg));
+    assert.strictEqual(r.intent, 'Fix auth middleware', 'should fall back to the title');
+    assert.ok(warned.some((w) => w.includes('llm')));
+  } finally { server.close(); }
+});
+
+testAsync('a slow endpoint gives up rather than holding the sync', async () => {
+  const { server, url } = await stubModel('too late', { delayMs: 400 });
+  try {
+    const src = createLlmSource(
+      { enabled: true, endpoint: url, model: 'm', timeoutMs: 50 }, {});
+    await assert.rejects(() => src.observe({
+      client: paneClient(SCREEN_TEXT), agent: { pane_id: 'w1:p1' },
+    }));
+  } finally { server.close(); }
+});
+
+testAsync('a generated name has no more authority than a title', async () => {
+  // The whole safety argument: expensive does not mean exempt.
+  const { server, url } = await stubModel('Postgres index tuning');
+  try {
+    const src = createLlmSource({ enabled: true, endpoint: url, model: 'm' }, {});
+    const store = freshStore();
+    store.lock('w1', 'edited by hand', 'code quality');
+    store.titleSeen('w1:p1', 'Fix auth middleware', 1, Date.now());
+    const n = new Namer({ cfg: cfg(), store, sinks: [], sources: [src],
+      client: paneClient(SCREEN_TEXT) });
+    const plans = await n.buildPlans(snapshot([
+      agent({ agent_status: 'idle', state_change_seq: 99 }),
+    ]));
+    const ws = plans.find((p) => p.kind === 'workspace');
+    assert.strictEqual(ws.verdict.rename, false, 'a hold must survive a paid answer');
+  } finally { server.close(); }
 });
 
 Promise.all(pending).then(() => {

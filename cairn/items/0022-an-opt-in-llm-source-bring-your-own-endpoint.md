@@ -2,7 +2,7 @@
 id: 22
 title: An opt-in llm source, bring your own endpoint
 type: feature
-status: backlog
+status: doing
 milestone: v0.3
 created: 2026-09-06
 updated: 2026-09-06

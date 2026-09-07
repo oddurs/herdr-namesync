@@ -33,6 +33,14 @@
   "sources": {
     "title": {
       "enabled": true
+    },
+    "llm": {
+      "enabled": false,
+      "endpoint": "",
+      "model": "",
+      "apiKeyEnv": "NAMESYNC_API_KEY",
+      "timeoutMs": 8000,
+      "maxChars": 4000
     }
   },
   "consultCostlySources": true,

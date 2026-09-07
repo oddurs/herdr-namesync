@@ -82,6 +82,23 @@ const DEFAULTS = {
      and is the right default for as long as the agent keeps it current. */
   sources: {
     title: { enabled: true },
+
+    /* Ask a model what the agent is doing, from what its pane shows. Off
+       unless an endpoint and model are set -- there is no default endpoint,
+       because there is no vendor in the code. Anything speaking the OpenAI
+       chat-completions shape works, including a local Ollama or LM Studio.
+
+       The key is read from the environment variable named here, never stored
+       in config. Consulted only when the title has gone stale, the agent is
+       settled, and deepIntervalMs has elapsed. */
+    llm: {
+      enabled: false,
+      endpoint: '',
+      model: '',
+      apiKeyEnv: 'NAMESYNC_API_KEY',
+      timeoutMs: 8000,
+      maxChars: 4000,
+    },
   },
 
   /* A source may declare itself costly -- slow, metered, or both. Those are
