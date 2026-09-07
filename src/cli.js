@@ -13,6 +13,7 @@ const { Daemon } = require('./daemon');
 const { planOrder, applyOrder } = require('./grouping');
 const setup = require('./setup');
 const { similarity, formatSince } = require('./naming');
+const { loadEnvFile } = require('./envfile');
 
 const PID_FILE = path.join(stateDir(), 'daemon.pid');
 const LOG_FILE = path.join(stateDir(), 'daemon.log');
@@ -400,6 +401,11 @@ const COMMANDS = {
 };
 
 async function main() {
+  /* Before anything reads process.env. The watcher is spawned detached and
+     inherits its environment once -- from a shell if you restarted it there,
+     from herdr if the startup hook launched it at login. The file is how a key
+     survives the second case. It never overrides what is already set. */
+  loadEnvFile(config.load().envFile);
   const cmd = process.argv[2] || 'help';
   const fn = COMMANDS[cmd];
   if (!fn) { process.stderr.write('unknown command: ' + cmd + '\n'); process.exitCode = 2; return COMMANDS.help(); }

@@ -58,6 +58,46 @@ including a model running on your own machine.
 The key is read from the environment variable you name. It is never stored in
 config.
 
+### Where to put the key
+
+The watcher runs detached and inherits its environment **once, at spawn**. A key
+exported in a terminal reaches a watcher you restart from that terminal — and
+never reaches one that herdr's startup hook launched at login, because that one
+inherited herdr's environment instead. The symptom is a plugin that worked when
+you set it up and is keyless the next morning.
+
+So put it in a file:
+
+```sh
+mkdir -p ~/.config/namesync
+printf 'export OPENROUTER_API_KEY=sk-or-v1-...\n' > ~/.config/namesync/env
+chmod 600 ~/.config/namesync/env
+```
+
+namesync reads it at startup, whatever launched it. It never overrides a
+variable already set, so a key you export deliberately in a shell still wins
+over one you wrote down last month. Point somewhere else with `envFile` in
+config.
+
+`namesync status` will tell you if the source is running without a key.
+
+### Choosing a model
+
+The job is two to five words from a short prompt, so the cheapest fast model is
+usually over-qualified. One thing to watch: **reasoning models bill their
+thinking against the same completion budget**, so a small `maxTokens` can leave
+them with nothing to say out loud. namesync notices and tells you rather than
+falling quietly back to the title:
+
+```
+the model returned no text and stopped at the token limit — if it is a
+reasoning model, raise sources.llm.maxTokens or set sources.llm.reasoning
+```
+
+`maxTokens` defaults to 64. `reasoning` is passed through untouched when set
+(`{ "effort": "minimal" }`, `{ "exclude": true }`) and omitted otherwise,
+because a strict OpenAI-compatible server rejects fields it does not know.
+
 ### What it is given
 
 **What you asked for, when that is available.** herdr reports the agent's

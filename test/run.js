@@ -14,6 +14,7 @@ const { isUselessCwd } = require('../src/namer');
 const setup = require('../src/setup');
 const viewport = require('../src/viewport');
 const { createLlmSource, usable } = require('../src/sources/llm');
+const envfile = require('../src/envfile');
 const http = require('http');
 const transcript = require('../src/transcript');
 const { resolveSources, observe, createTitleSource } = require('../src/sources');
@@ -1342,6 +1343,71 @@ testAsync('with no project resolved it says nothing about one', async () => {
     const system = seen[0].body.messages[0].content;
     assert.ok(!/repository is called/i.test(system), 'no project, no claim about one');
   } finally { server.close(); }
+});
+
+test('an env file fills gaps but never overrules the shell', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ns-env-'));
+  const file = path.join(dir, 'env');
+  fs.writeFileSync(file,
+    '# a comment\n\nexport FROM_FILE=yes\nQUOTED="has spaces"\nALREADY_SET=file-wins-not\n');
+  /* The shell is the deliberate act and the file is the standing one, so a
+     value exported in this terminal has to beat a value written last month. */
+  const env = { ALREADY_SET: 'shell' };
+  const loaded = envfile.loadEnvFile(file, env);
+  assert.deepStrictEqual(loaded.sort(), ['FROM_FILE', 'QUOTED']);
+  assert.strictEqual(env.FROM_FILE, 'yes');
+  assert.strictEqual(env.QUOTED, 'has spaces');
+  assert.strictEqual(env.ALREADY_SET, 'shell');
+});
+
+test('a missing env file is ordinary, not an error', () => {
+  const env = {};
+  assert.deepStrictEqual(envfile.loadEnvFile('/no/such/env', env), []);
+  assert.deepStrictEqual(env, {});
+});
+
+test('the env parser is not a shell', () => {
+  /* No interpolation and no command substitution: the value is the literal
+     text. Anyone needing more should have a shell source the file instead. */
+  const out = envfile.parseEnv('A=$B\nC=`whoami`\nnot a pair\n');
+  assert.deepStrictEqual(out, { A: '$B', C: '`whoami`' });
+});
+
+testAsync('a reasoning model that spends its budget thinking says so', async () => {
+  /* The silent version of this bug: content empty, response healthy, source
+     falls back to the title, nothing logged, and the person concludes the
+     feature does not work. */
+  const server = http.createServer((req, res) => {
+    res.writeHead(200, { 'content-type': 'application/json' });
+    res.end(JSON.stringify({ choices: [{ message: { content: '' }, finish_reason: 'length' }] }));
+  });
+  await new Promise((r) => server.listen(0, r));
+  const url = 'http://127.0.0.1:' + server.address().port + '/v1/chat/completions';
+  try {
+    const src = createLlmSource({ enabled: true, endpoint: url, model: 'm' }, {});
+    await assert.rejects(
+      () => src.observe({ client: paneClient('working on the parser'), agent: { pane_id: 'w1:p1' } }),
+      /raise sources\.llm\.maxTokens/);
+  } finally { server.close(); }
+});
+
+testAsync('a reasoning passthrough is sent only when configured', async () => {
+  const plain = await stubModel('Fix the parser');
+  try {
+    await createLlmSource({ enabled: true, endpoint: plain.url, model: 'm' }, {})
+      .observe({ client: paneClient('x'), agent: { pane_id: 'w1:p1' } });
+    // A strict OpenAI-compatible server rejects fields it does not know.
+    assert.ok(!('reasoning' in plain.seen[0].body), 'nothing extra by default');
+    assert.strictEqual(plain.seen[0].body.max_tokens, 64);
+  } finally { plain.server.close(); }
+
+  const opted = await stubModel('Fix the parser');
+  try {
+    await createLlmSource(
+      { enabled: true, endpoint: opted.url, model: 'm', reasoning: { effort: 'minimal' } }, {})
+      .observe({ client: paneClient('x'), agent: { pane_id: 'w1:p1' } });
+    assert.deepStrictEqual(opted.seen[0].body.reasoning, { effort: 'minimal' });
+  } finally { opted.server.close(); }
 });
 
 Promise.all(pending).then(() => {

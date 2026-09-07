@@ -80,6 +80,11 @@ const DEFAULTS = {
      so a fallback chain costs nothing while the cheap source is working. The
      agent's own title is free and works with every agent kind herdr detects,
      and is the right default for as long as the agent keeps it current. */
+  /* Secrets, read at startup and never overriding the environment. Defaults
+     to ~/.config/namesync/env. The watcher is detached, so a key exported in a
+     shell does not reach a daemon that herdr started at login; this does. */
+  envFile: null,
+
   sources: {
     title: { enabled: true },
 
@@ -98,6 +103,12 @@ const DEFAULTS = {
       apiKeyEnv: 'NAMESYNC_API_KEY',
       timeoutMs: 8000,
       maxChars: 4000,
+      /* Reasoning models bill thinking against this, and a budget that only
+         fits the answer leaves them nothing to say. See src/sources/llm.js. */
+      maxTokens: 64,
+      /* Provider-specific, passed through untouched when set. Null by default
+         because a strict OpenAI-compatible server rejects unknown fields. */
+      reasoning: null,
     },
   },
 
