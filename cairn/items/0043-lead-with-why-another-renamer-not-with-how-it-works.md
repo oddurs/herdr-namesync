@@ -2,7 +2,7 @@
 id: 43
 title: Lead with why another renamer, not with how it works
 type: chore
-status: backlog
+status: done
 milestone: v0.7
 created: 2026-09-07
 updated: 2026-09-07
