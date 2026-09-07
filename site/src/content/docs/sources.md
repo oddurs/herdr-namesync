@@ -60,18 +60,34 @@ config.
 
 ### What it is given
 
-The pane, cleaned: chrome, rulers and the spinner removed, leaving what the
-agent has actually said and done. Roughly twenty lines of real narrative —
+**What you asked for, when that is available.** herdr reports the agent's
+session id — its own integration tells it — and that id *is* the transcript
+filename. So namesync can read the last few things you actually said, with no
+hook installed and nothing agent-specific in the plumbing:
+
+```
+"fix the stable toolchain and then continue"
+"add to cairn then do them in order, plan build code-review pr merge"
+```
+
+That is real intent rather than scrollback. Turns that appear in a transcript
+without anyone having said them — tool results, injected reminders, the summary
+written when a conversation is compacted — are filtered out; the compaction
+summary in particular is the freshest entry in a long session and describes
+nothing you asked for.
+
+**The pane, when it is not.** Cleaned of chrome, rulers and the spinner:
 
 ```
 Ran 1 shell command
 ⏺ Yes — reverted to HEAD, losing the Option change. Re-applying.
-Ran 3 shell commands
 ⏺ The macOS test was never added; that script failed on its first substitution.
 ```
 
 Agents run on the alternate screen, so this is the visible rows and no history.
-Enough for "what now", not enough for "what has this session been about".
+Enough for "what now", not enough for "what has this session been about". A
+session is often not reported — no integration installed, or a pane herdr has
+not matched — so the pane is a real fallback rather than a theoretical one.
 
 ### When it is asked
 
