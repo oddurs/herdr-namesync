@@ -4,5 +4,5 @@ contact_links:
     url: https://github.com/herdrdev/herdr
     about: Issues with herdr itself — panes, layout, the sidebar, the socket API.
   - name: Documentation
-    url: https://oddurs.github.io/namesync/docs/install
+    url: https://oddurs.github.io/herdr-namesync/docs/install
     about: Installing, configuring, and how the naming policy decides.

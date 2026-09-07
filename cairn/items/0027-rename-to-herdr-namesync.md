@@ -13,7 +13,7 @@ priority: p1
 
 This is a distribution question rather than a branding one, because the install command **is** the repository name:
 
-    herdr plugin install oddurs/namesync          <- says nothing
+    herdr plugin install oddurs/herdr-namesync          <- says nothing
     herdr plugin install oddurs/herdr-namesync    <- self-documenting
 
 The marketplace can sort by name, and the ecosystem index (awesome-herdr) groups by prefix. A name without the prefix is invisible in both. The higher-star projects in the wider ecosystem use `herdr-<thing>` (herdr-plus ★289, herdr-worktrunk ★130) rather than the more verbose `herdr-plugin-<thing>`.

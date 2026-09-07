@@ -16,7 +16,7 @@ The category is crowded and we did not know how crowded. The official marketplac
     ★12            wyattjoh/herdr-plugin-renamer
     ★16            wenhanweime/herdr-plugin-renamer
     ...
-    ★ 0            oddurs/namesync
+    ★ 0            oddurs/herdr-namesync
 
 Being twenty-fourth into a solved-looking problem means the positioning has to be specific or it is noise.
 

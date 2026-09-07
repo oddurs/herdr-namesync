@@ -17,10 +17,10 @@
   "author": "Oddur Sigurdsson",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/oddurs/namesync.git"
+    "url": "git+https://github.com/oddurs/herdr-namesync.git"
   },
   "bugs": {
-    "url": "https://github.com/oddurs/namesync/issues"
+    "url": "https://github.com/oddurs/herdr-namesync/issues"
   },
   "keywords": [
     "herdr",
