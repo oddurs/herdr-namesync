@@ -58,8 +58,17 @@ A label nobody chose is not a name worth protecting. namesync treats these as
 adoptable even though it did not write them:
 
 - the directory name herdr starts a workspace with — `bedreader`, `perfect`
+- the project's own name — `fontina`, when the space is on fontina
+- the pane's directory, and the foreground process's, which can differ
+- the current branch
 - herdr placeholders — `w3`, `tab 2`, `workspace`
 - an empty label
+
+Anything that merely restates *where* the workspace is, or *what* the project
+is called, is not a description of work. This matters more than it sounds:
+herdr's rename dialog puts a directory name back when a name is cleared, and
+treating that as a considered choice would freeze the workspace on the one name
+you were trying to remove.
 
 That distinction is what lets a fresh workspace get claimed on its first turn
 while `testing` and `code quality` sit untouched beside it.

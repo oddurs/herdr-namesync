@@ -341,6 +341,10 @@ class Namer {
       dirName: repo,
       branch: branch || '',
       worktree: worktree ? 'worktree' : '',
+      // Both directories, because detection may resolve either and herdr may
+      // label from either.
+      paneDir: agent.cwd ? path.basename(agent.cwd) : '',
+      foregroundDir: agent.foreground_cwd ? path.basename(agent.foreground_cwd) : '',
       agent: agent.agent || '',
       n: ws.number == null ? '' : String(ws.number),
     };
@@ -354,7 +358,14 @@ class Namer {
       cfg: this.cfg,
       store: this.store,
       agentStatus: agent.agent_status,
-      context: { repo: vars.repo, dirName: vars.dirName, branch: vars.branch },
+      context: {
+        project: vars.project,
+        repo: vars.repo,
+        dirName: vars.dirName,
+        paneDir: vars.paneDir,
+        foregroundDir: vars.foregroundDir,
+        branch: vars.branch,
+      },
       force,
     });
     return { kind, id, current, desired, verdict, agent: agent.pane_id, vars };

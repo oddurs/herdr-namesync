@@ -31,7 +31,11 @@ Good ideas without a date yet.
 
 ## v0.2 — Make the policy legible
 
-`##########` 100% · 6 of 6 done · due 2027-01-15
+`#########·` 86% · 6 of 7 done · due 2027-01-15
+
+### in progress
+
+- [ ] `0018` A folder or project name pasted into rename reads as hand-written <sup>bug · p0</sup>
 
 ### done
 
