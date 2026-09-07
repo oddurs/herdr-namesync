@@ -2,7 +2,7 @@
 id: 40
 title: The landing page ships the failure the docs warn about
 type: bug
-status: backlog
+status: done
 milestone: v0.7
 created: 2026-09-07
 updated: 2026-09-07
