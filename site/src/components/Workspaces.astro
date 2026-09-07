@@ -80,10 +80,17 @@ const glyph = { working: '◑', idle: '○', done: '✓' } as const;
     </div>
   </div>
 
+  <dl class="ws__key t-label">
+    <div><dt class="ws__key-n">1</dt><dd>the key that jumps there — herdr has no token for it</dd></div>
+    <div><dt class="ws__key-project">fontina</dt><dd>the repository, never the folder it sits in</dd></div>
+    <div><dt class="ws__key-flag">worktree</dt><dd>a linked worktree, not a fourth clone</dd></div>
+  </dl>
+
   <figcaption class="ws__caption t-label">
-    Two rows say <code>unifont</code> and both are <strong>fontina</strong> — as is
-    the held row above them. The folder is never the project. The two held names were
-    typed by hand and stay exactly as they are.
+    The top line is identity and stays true whether or not the title moves; the line
+    under it is whatever the agent is describing right now. Two rows say
+    <code>unifont</code> and both are <strong>fontina</strong>, as is the held row
+    above them — and the two held names were typed by hand and stay as they are.
   </figcaption>
 </figure>
 
@@ -249,6 +256,40 @@ const glyph = { working: '◑', idle: '○', done: '✓' } as const;
      step back from it. The orange flag beside it carries the state; dimming
      the name as well said "inactive", which is the opposite of true. */
   .ws__row[data-held='true'] .ws__name--after { color: var(--fg-strong); }
+
+  /* Naming what the row is made of, rather than describing it from a paragraph
+     two screens away. Only the tokens the mock actually renders -- the full
+     table is in the docs, and reproducing it here turns a landing page back
+     into documentation. */
+  .ws__key {
+    margin: 0;
+    padding: 0.95rem 0.15rem 0;
+    display: grid;
+    gap: 0.4rem;
+    color: var(--fg-subtle);
+    line-height: 1.5;
+  }
+
+  .ws__key > div {
+    display: grid;
+    grid-template-columns: 5.4rem minmax(0, 1fr);
+    gap: 0.75rem;
+    align-items: baseline;
+  }
+
+  /* Each term is set in the colour it wears in the panel above, so the eye
+     matches key to row without a leader line. */
+  .ws__key dt {
+    font-family: var(--font-code);
+    font-size: 0.92em;
+    text-align: right;
+  }
+
+  .ws__key-n { color: var(--accent); }
+  .ws__key-project { color: var(--fg-strong); }
+  .ws__key-flag { color: var(--gotham-orange); }
+
+  .ws__key dd { margin: 0; }
 
   .ws__caption {
     padding: 0.9rem 0.15rem 0;
