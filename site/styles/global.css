@@ -1,0 +1,18 @@
+/* namesync — dark only, Gotham, set in IBM Plex.
+   Layered on purpose: tokens define, base styles elements, type owns the
+   named text styles, prose owns rhythm, code owns highlighting, app owns the
+   frame, and the last three own one page each.
+
+   Order is load-bearing and the build concatenates in exactly this order, so
+   a later layer can override an earlier one without a selector arms race.
+   Listed here rather than @imported: one request, no waterfall. */
+@import './tokens.css';
+@import './base.css';
+@import './type.css';
+@import './prose.css';
+@import './code.css';
+@import './app.css';
+@import './logo.css';
+@import './workspaces.css';
+@import './home.css';
+@import './docs.css';

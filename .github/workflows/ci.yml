@@ -40,14 +40,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: dtolnay/rust-toolchain@stable
         with:
-          node-version: '22'
-          cache: npm
-          cache-dependency-path: site/package-lock.json
-      - run: npm ci
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: site
+      # Formatting and lints before the build, so a failure names the problem
+      # rather than burying it under a compile error further down.
+      - run: cargo fmt --check
         working-directory: site
-      - run: npm run build
+      - run: cargo clippy --all-targets -- -D warnings
+        working-directory: site
+      - run: cargo run --release -- build
         working-directory: site
 
   # Publish the built site. Only from main, and only after the site job has
@@ -67,14 +72,11 @@ jobs:
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
         with:
-          node-version: '22'
-          cache: npm
-          cache-dependency-path: site/package-lock.json
-      - run: npm ci
-        working-directory: site
-      - run: npm run build
+          workspaces: site
+      - run: cargo run --release -- build
         working-directory: site
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

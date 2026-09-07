@@ -2,7 +2,7 @@
 id: 64
 title: Say how to run the site
 type: docs
-status: backlog
+status: done
 milestone: v0.8
 created: 2026-09-07
 updated: 2026-09-07

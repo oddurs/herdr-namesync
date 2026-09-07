@@ -1,0 +1,55 @@
+/* The herdr-namesync lockup. */
+
+.lockup {
+    display: inline-flex;
+    align-items: center;
+    /* Gap tracks the type size, so the lockup holds at any scale. */
+    gap: 0.36em;
+    font-size: var(--lockup-size);
+    line-height: 1;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .lockup__mark {
+    /* Cap height, not em box: the mark then sits on the same optical line as
+       the wordmark instead of floating above it. */
+    height: 0.76em;
+    width: auto;
+    flex: none;
+    overflow: visible;
+    /* Nudge onto the x-height centre. */
+    transform: translateY(0.012em);
+  }
+
+  .lockup__out {
+    stroke: var(--fg-subtle);
+    transition: stroke var(--dur-fast) var(--ease);
+  }
+
+  .lockup__in {
+    stroke: var(--accent-text);
+    transition: stroke var(--dur-fast) var(--ease);
+  }
+
+  .lockup__word {
+    font-family: var(--font-sans);
+    font-weight: var(--weight-semi);
+    /* Plex Sans is drawn open for screen reading; closing it up is what turns
+       the word into a mark rather than a word set in the UI face. */
+    letter-spacing: -0.017em;
+    color: var(--fg-strong);
+  }
+
+  /* The namespace, not the name. Set back far enough to let `namesync` carry
+     the lockup, close enough that the whole string still reads as one word —
+     which it has to, because it is what you type to install it. */
+  .lockup__scope {
+    font-weight: var(--weight-regular);
+    color: var(--fg-subtle);
+  }
+
+  .lockup:hover .lockup__scope { color: var(--fg-muted); }
+
+  .lockup:hover .lockup__out { stroke: var(--fg-muted); }
+  .lockup:hover .lockup__in { stroke: var(--accent-hover); }

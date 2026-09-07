@@ -82,19 +82,6 @@
   --state-renamed: var(--gotham-green);
   --state-held: var(--gotham-mauve);
 
-  /* Code, mapped onto the palette so Shiki cannot introduce a foreign hue */
-  --astro-code-foreground: var(--fg);
-  --astro-code-background: transparent;
-  --astro-code-token-comment: #4d7180;
-  --astro-code-token-punctuation: var(--fg-subtle);
-  --astro-code-token-string: var(--gotham-green);
-  --astro-code-token-string-expression: var(--gotham-green);
-  --astro-code-token-constant: var(--gotham-yellow);
-  --astro-code-token-keyword: var(--accent-text);
-  --astro-code-token-function: var(--gotham-base6);
-  --astro-code-token-parameter: var(--fg);
-  --astro-code-token-link: var(--accent-text);
-
   /* --- 3a. Type ----------------------------------------------------------
 
      IBM Plex, sans and mono. One superfamily, drawn together on shared

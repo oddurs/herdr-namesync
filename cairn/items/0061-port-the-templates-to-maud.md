@@ -2,7 +2,7 @@
 id: 61
 title: Port the templates to maud
 type: feature
-status: backlog
+status: done
 milestone: v0.8
 created: 2026-09-07
 updated: 2026-09-07

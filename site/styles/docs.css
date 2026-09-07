@@ -1,78 +1,6 @@
----
-import { getCollection, render } from 'astro:content';
-import Base from '../../layouts/Base.astro';
-import { url } from '../../lib/url';
+/* The documentation reader: sidebar, measure, pager. */
 
-export async function getStaticPaths() {
-  const docs = (await getCollection('docs')).sort((a, b) => a.data.order - b.data.order);
-
-  return docs.map((entry, i) => ({
-    params: { slug: entry.id },
-    props: {
-      entry,
-      nav: docs.map((d) => ({ slug: d.id, title: d.data.title })),
-      prev: i > 0 ? docs[i - 1] : null,
-      next: i < docs.length - 1 ? docs[i + 1] : null,
-    },
-  }));
-}
-
-const { entry, nav, prev, next } = Astro.props;
-const { Content } = await render(entry);
----
-
-<Base title={`${entry.data.title} — namesync`} description={entry.data.summary} section="docs">
-  <div class="shell">
-    <nav class="toc" aria-label="Documentation">
-      <ol class="t-ui">
-        {
-          nav.map((item) => (
-            <li>
-              <a
-                href={url(`docs/${item.slug}`)}
-                aria-current={item.slug === entry.id ? 'page' : undefined}
-              >
-                {item.title}
-              </a>
-            </li>
-          ))
-        }
-      </ol>
-    </nav>
-
-    <main class="reader">
-      <article class="prose">
-        <h1>{entry.data.title}</h1>
-        <p class="summary t-lead">{entry.data.summary}</p>
-        <Content />
-      </article>
-
-      <nav class="pager" aria-label="Pagination">
-        {
-          prev ? (
-            <a class="pager__link" href={url(`docs/${prev.id}`)}>
-              <span class="pager__dir t-label">Previous</span>
-              <span class="pager__title t-ui">{prev.data.title}</span>
-            </a>
-          ) : (
-            <span />
-          )
-        }
-        {
-          next && (
-            <a class="pager__link pager__link--next" href={url(`docs/${next.id}`)}>
-              <span class="pager__dir t-label">Next</span>
-              <span class="pager__title t-ui">{next.data.title}</span>
-            </a>
-          )
-        }
-      </nav>
-    </main>
-  </div>
-</Base>
-
-<style>
-  .shell {
+.shell {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: clamp(2rem, 5vw, 4.5rem);
@@ -172,4 +100,3 @@ const { Content } = await render(entry);
   }
 
   .pager__link:hover .pager__title { color: var(--accent-hover); }
-</style>
