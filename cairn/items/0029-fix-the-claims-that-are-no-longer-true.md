@@ -2,7 +2,7 @@
 id: 29
 title: Fix the claims that are no longer true
 type: feature
-status: backlog
+status: done
 milestone: v0.5
 created: 2026-09-07
 updated: 2026-09-07

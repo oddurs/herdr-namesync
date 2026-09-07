@@ -12,6 +12,19 @@ Notable changes to namesync. The format follows
   removed itself rather than silently omitting it.
 - The `llm` source tells the model which repository it is looking at, using the
   resolved project name rather than the folder.
+- Secrets can live in `~/.config/namesync/env`, read at startup so a key
+  survives a watcher that herdr launched at login. The environment still wins.
+- `sources.llm.maxTokens` (default 64) and an optional `reasoning` passthrough.
+
+### Fixed
+
+- A reasoning model that spent its whole completion budget thinking used to
+  fail silently and look like a plugin that did nothing. It now says so.
+
+### Changed
+
+- The repository is `herdr-namesync`. The command, manifest id and config
+  directory are still `namesync`.
 
 ## [0.1.0] — 2026-09-06
 

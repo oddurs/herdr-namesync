@@ -55,6 +55,18 @@ function createLlmSource(cfg = {}, root = {}) {
   const model = cfg.model || '';
   const keyEnv = cfg.apiKeyEnv || 'NAMESYNC_API_KEY';
   const timeoutMs = cfg.timeoutMs || 8000;
+  /* 24 was enough for a label and a silent failure for anyone who picked a
+     reasoning model, because thinking is billed against the same completion
+     budget: the content came back empty, `usable` rejected it, and the source
+     fell back to the title with nothing logged. 64 still refuses to pay for an
+     essay -- `usable` caps the answer at eight words regardless -- while
+     leaving room for a little hidden preamble. */
+  const maxTokens = cfg.maxTokens || 64;
+  /* Passed straight through when set, for providers that accept it
+     (`{ effort: 'minimal' }`, `{ exclude: true }`). Off by default: a strict
+     OpenAI-compatible server rejects fields it does not know, and a local
+     llama.cpp is exactly that. */
+  const reasoning = cfg.reasoning || null;
   const maxChars = cfg.maxChars || 4000;
   // Overridable so the transcript path can be pointed somewhere in tests.
   const transcriptRoot = cfg.transcriptRoot || undefined;
@@ -120,7 +132,8 @@ function createLlmSource(cfg = {}, root = {}) {
             // Deterministic enough that the same screen does not produce three
             // different names and churn the sidebar.
             temperature: 0,
-            max_tokens: 24,
+            max_tokens: maxTokens,
+            ...(reasoning ? { reasoning } : {}),
             messages: [
               { role: 'system', content: system },
               { role: 'user', content: screen },
@@ -129,7 +142,19 @@ function createLlmSource(cfg = {}, root = {}) {
         });
         if (!res.ok) throw new Error(endpoint + ' returned ' + res.status);
         const json = await res.json();
-        const answer = json?.choices?.[0]?.message?.content;
+        const choice = json?.choices?.[0];
+        const answer = choice?.message?.content;
+
+        /* An empty answer from a healthy response is the reasoning-model
+           failure, and it is worth naming rather than swallowing. The model
+           spent the completion budget thinking and had nothing left to say
+           out loud, so the source degrades to the title and the person sees
+           a plugin that appears to do nothing. */
+        if (!answer && choice?.finish_reason === 'length') {
+          throw new Error('the model returned no text and stopped at the token'
+            + ' limit -- if it is a reasoning model, raise sources.llm.maxTokens'
+            + ' or set sources.llm.reasoning');
+        }
         return usable(answer) || null;
       } finally {
         clearTimeout(timer);
