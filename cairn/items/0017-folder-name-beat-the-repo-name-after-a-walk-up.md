@@ -2,7 +2,7 @@
 id: 17
 title: Folder name beat the repo name after a walk-up
 type: bug
-status: doing
+status: done
 milestone: v0.2
 created: 2026-09-06
 updated: 2026-09-06
