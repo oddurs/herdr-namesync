@@ -43,6 +43,18 @@ Good ideas without a date yet.
 - [x] `0017` Folder name beat the repo name after a walk-up <sup>bug · p0</sup>
 - [x] `0018` A folder or project name pasted into rename reads as hand-written <sup>bug · p0</sup>
 
+## v0.3 — Name it when the agent stops saying
+
+`··········` 0% · 0 of 5 done · due 2027-02-15
+
+### backlog
+
+- [ ] `0019` Introduce a source interface <sup>feature · p0</sup>
+- [ ] `0020` Read the pane when the title has gone quiet <sup>feature · p0</sup>
+- [ ] `0021` Only look harder when the cheap answer has failed <sup>feature · p0</sup>
+- [ ] `0022` An opt-in llm source, bring your own endpoint <sup>feature · p1</sup>
+- [ ] `0023` Weigh a Claude Code hook against the agent-agnostic promise <sup>chore · p2</sup>
+
 ## v1.0 — Stable release
 
 `##########` 100% · 1 of 1 done · due 2027-03-01

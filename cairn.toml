@@ -150,6 +150,11 @@ name = "v0.2"
 title = "Make the policy legible"
 due = "2027-01-15"
 
+[[milestone]]
+name = "v0.3"
+title = "Name it when the agent stops saying"
+due = "2027-02-15"
+
 # ─── Saved views ─────────────────────────────────────────────────────────────
 # `cairn list --view next`, `cairn board --view triage`
 
