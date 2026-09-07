@@ -1,7 +1,7 @@
 ---
 title: Where names come from
 summary: The default costs nothing and is usually right. What to do about the sessions where it isn't.
-order: 6
+order: 7
 ---
 
 namesync applies a name it does not write. By default that name is the agent's

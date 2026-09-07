@@ -34,3 +34,8 @@
   color: var(--fg-subtle);
   line-height: 1.9;
 }
+
+.masthead__brand {
+    text-decoration: none;
+    display: inline-flex;
+  }

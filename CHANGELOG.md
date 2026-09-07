@@ -6,6 +6,19 @@ Notable changes to namesync. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- The documentation site is a Rust binary rather than an Astro project. One
+  crate renders it and serves it: `cargo run -- serve` renders each request
+  from disk and pushes a reload over SSE when anything changes, and
+  `cargo run -- build` writes the same pages out for GitHub Pages. Both go
+  through one renderer, so the served page and the built page cannot drift.
+  No Node, no npm, no lockfile, no `node_modules`.
+- Frontmatter is validated rather than trusted. `title`, `summary` and `order`
+  are all required and orders must be unique — which immediately caught
+  `internals` and `sources` both claiming order 6, a tie Astro had been
+  breaking on filesystem order.
+
 ### Fixed
 
 - A Space label built from a slug-shaped title kept the slug, so the sidebar

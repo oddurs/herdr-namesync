@@ -5,8 +5,9 @@ make and easy to review.
 
 ## Getting set up
 
-There is nothing to install. The plugin is dependency-free Node; only the
-documentation site has packages.
+There is nothing to install for the plugin: it is dependency-free Node. The
+documentation site is a small Rust binary, so it needs a toolchain but no
+package manager.
 
 ```bash
 git clone git@github.com:oddurs/herdr-namesync.git
@@ -45,6 +46,26 @@ policy is testable without a herdr session, and it should stay that way.
 framework and no dependencies; copy the nearest existing test. Tests must never
 read your real config — use `cfg({ ... })`, which builds from defaults.
 
+## The site
+
+```bash
+cd site
+cargo run -- serve      # http://127.0.0.1:4321, reloads on change
+cargo run -- build      # static HTML into site/dist
+```
+
+Two modes, one renderer. `serve` renders each request from the files on disk
+and pushes a reload over SSE when `content/`, `styles/` or `public/` changes,
+so there is no build step between an edit and seeing it. `build` writes the
+same pages out for GitHub Pages, which serves files and cannot run anything.
+
+Both go through `Site::load`, which is what stops them drifting: a page cannot
+render one way in the browser and another way in `dist/`.
+
+Documents live in `site/content/docs`. Frontmatter needs `title`, `summary` and
+`order`, all three required and orders unique — a missing field or a duplicate
+order fails the build rather than producing a page that renders wrong.
+
 ## Two things worth knowing before you touch the socket
 
 Both cost real debugging time, and both are documented at greater length in
@@ -62,7 +83,8 @@ underscores (`pane_updated`).
 
 - One change per pull request.
 - Run `node test/run.js`. CI runs it on Node 18, 20 and 22.
-- If you touched the site, `cd site && npm run build`.
+- If you touched the site, `cd site && cargo run -- build`. CI also runs
+  `cargo fmt --check` and `cargo clippy -- -D warnings`.
 - Describe what changed and why. If it is a policy change, say which real
   situation it improves — the rules exist to stop the sidebar churning, and
   loosening one has a cost.

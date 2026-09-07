@@ -1,101 +1,6 @@
----
-/**
- * The hero: herdr's Spaces panel, performing one rename pass on load.
- *
- * Drawn from a real session rather than invented, down to the row structure —
- * herdr's sidebar puts state, index, project and repo on the first line and
- * the workspace name on the second, and that split is the whole reason the
- * plugin has anything to say. The `before` values are the folder names herdr
- * falls back to when nobody has named a space, which is why three of them are
- * the same word: a checkout of `fontina` lives in ~/Code/unifont.
- *
- * Two rows are held. They were named by hand and namesync never touches them,
- * so they sit still while everything around them resolves. That is the
- * argument, so it is shown rather than claimed.
- */
+/* The herdr sidebar mock in the hero, and its key. */
 
-type Row = {
-  n: string;
-  state: 'working' | 'idle' | 'done';
-  project: string;
-  branch?: string;
-  worktree?: boolean;
-  since: string;
-  before: string;
-  after: string;
-  held?: boolean;
-};
-
-const rows: Row[] = [
-  { n: '1', state: 'working', project: 'fontina', branch: 'main', since: '3m',
-    before: 'testing', after: 'testing', held: true },
-  { n: '2', state: 'working', project: 'fontina', branch: 'feat/fixed-pitch-check', worktree: true, since: '1m',
-    before: 'unifont', after: 'Richard Stallman perspective' },
-  { n: '3', state: 'working', project: 'fontina', branch: 'main', since: '2m',
-    before: 'unifont', after: 'Claude Code settings configuration' },
-  { n: '4', state: 'working', project: 'cairn', branch: 'feat/composition', since: '40m',
-    before: 'cairn', after: 'cairn', held: true },
-  { n: '5', state: 'working', project: 'poptop', branch: 'item-0028-disk-saturation', since: '20m',
-    before: 'perfect', after: 'Ptop adopt remaining lessons' },
-  { n: '6', state: 'done', project: 'trafford', branch: 'feat/move-and-duplicate', since: '3h',
-    before: 'milky-xl', after: 'Terminal Obsidian clone' },
-];
-
-// herdr's own state glyphs.
-const glyph = { working: '◑', idle: '○', done: '✓' } as const;
----
-
-<figure class="ws">
-  <div class="ws__frame">
-    <div class="ws__bar">
-      <span class="ws__dots" aria-hidden="true"><i></i><i></i><i></i></span>
-      <span class="ws__app">herdr</span>
-    </div>
-
-    <div class="ws__panel">
-      <div class="ws__legend">Spaces</div>
-
-      <ul class="ws__list">
-        {
-          rows.map((row, i) => (
-            <li class="ws__row" style={`--i:${i}`} data-held={row.held ? 'true' : 'false'}>
-              <span class="ws__meta">
-                <span class={`ws__glyph ws__glyph--${row.state}`}>{glyph[row.state]}</span>
-                <span class="ws__n">{row.n}</span>
-                <span class="ws__project">{row.project}</span>
-                {row.worktree && <span class="ws__worktree">worktree</span>}
-                {row.held && <span class="ws__flag">held</span>}
-                <span class="ws__branch">{row.branch}</span>
-                <span class="ws__since">{row.since}</span>
-              </span>
-
-              <span class="ws__label">
-                <span class="ws__name ws__name--before">{row.before}</span>
-                <span class="ws__name ws__name--after">{row.after}</span>
-              </span>
-            </li>
-          ))
-        }
-      </ul>
-    </div>
-  </div>
-
-  <dl class="ws__key t-label">
-    <div><dt class="ws__key-n">1</dt><dd>the key that jumps there — herdr has no token for it</dd></div>
-    <div><dt class="ws__key-project">fontina</dt><dd>the repository, never the folder it sits in</dd></div>
-    <div><dt class="ws__key-flag">worktree</dt><dd>a linked worktree, not a fourth clone</dd></div>
-  </dl>
-
-  <figcaption class="ws__caption t-label">
-    The top line is identity and stays true whether or not the title moves; the line
-    under it is whatever the agent is describing right now. Two rows say
-    <code>unifont</code> and both are <strong>fontina</strong>, as is the held row
-    above them — and the two held names were typed by hand and stay as they are.
-  </figcaption>
-</figure>
-
-<style>
-  /* Sized against its own column rather than the viewport: this sits in a
+/* Sized against its own column rather than the viewport: this sits in a
      hero that is one column on small screens and roughly half of one on
      large, so viewport units would size it for the wrong box. */
   .ws {
@@ -345,4 +250,3 @@ const glyph = { working: '◑', idle: '○', done: '✓' } as const;
   @keyframes ws-hold {
     35% { color: var(--fg-muted); }
   }
-</style>

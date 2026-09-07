@@ -1,0 +1,39 @@
+/* Syntax highlighting.
+ *
+ * syntect emits Sublime scope names as classes, prefixed so they cannot
+ * collide with the site's own. Scopes are hierarchical -- `comment.line.
+ * number-sign.bash` arrives as `tok-comment tok-line tok-number-sign
+ * tok-bash` -- so styling the head of each family covers every language at
+ * once, and nothing here mentions a language by name.
+ *
+ * Mapped onto Gotham rather than themed independently: highlighting that
+ * introduces a foreign hue is the fastest way to make a palette look
+ * accidental. Six colours, which is fewer than any theme ships and more than
+ * any of these blocks need. */
+
+.tok-comment { color: #4d7180; }
+.tok-punctuation { color: var(--fg-subtle); }
+
+.tok-string,
+.tok-quoted { color: var(--gotham-green); }
+
+.tok-constant,
+.tok-numeric { color: var(--gotham-yellow); }
+
+.tok-keyword,
+.tok-storage { color: var(--accent-text); }
+
+/* Function names and the head of a command line -- the thing being invoked,
+   which in a shell block is the only word that matters at a glance. */
+.tok-entity,
+.tok-support { color: var(--gotham-base6); }
+
+.tok-variable { color: var(--fg); }
+
+/* A string wins over the scopes it contains. An interpolated variable inside
+   quotes is still part of the string as far as reading it goes, and letting
+   the inner scope repaint it breaks the block into confetti. */
+.tok-string .tok-variable,
+.tok-string .tok-punctuation,
+.tok-quoted .tok-variable,
+.tok-quoted .tok-punctuation { color: inherit; }

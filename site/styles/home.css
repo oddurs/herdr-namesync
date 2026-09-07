@@ -1,0 +1,231 @@
+/* The landing page: hero, comparison table, rules list, the two-name split. */
+
+main { padding: 0 var(--gutter); }
+
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: clamp(2.5rem, 6vw, 4.5rem);
+    align-items: center;
+    max-width: var(--page-wide);
+    margin: 0 auto;
+    padding: clamp(3rem, 7vw, 5.5rem) 0 clamp(3rem, 7vw, 5rem);
+  }
+
+  @media (min-width: 60rem) {
+    .hero { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); }
+  }
+
+  /* The italic is the rhetorical turn of the sentence, not an accent on a
+     word: the first clause states, the second undercuts it. */
+  /* Type comes from .t-display; this only positions it. The negative margin
+     pulls the cap of the T back to the optical margin so the headline aligns
+     with the lede below it. */
+  .hero__title {
+    margin: 0 0 0.62em -0.028em;
+  }
+
+  /* The turn in the sentence. IBM Plex Sans has a true italic — drawn, not
+     slanted — so it reads as a change of voice rather than a tilt. */
+  .hero__title em {
+    display: block;
+    font-style: italic;
+    font-weight: var(--weight-regular);
+    letter-spacing: -0.019em;
+    color: var(--fg-strong);
+  }
+
+  .hero__lede {
+    max-width: 27rem;
+  }
+
+  /* A copyable command rather than a button. The audience installs plugins from
+     a terminal all day; a call-to-action pill would be the one element on the
+     page borrowed from a different kind of site. */
+  .hero__start { margin-top: 1.9em; }
+
+  /* Same surface as a prose code block, so it reads as one element the site
+     already uses rather than a hero-only invention. */
+  .hero__cmd {
+    margin: 0;
+    max-width: 27rem;
+    padding: var(--space-4) var(--space-5);
+    background: var(--bg-sunken);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow-x: auto;
+  }
+
+  .hero__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-5);
+    margin: 1.05em 0 0;
+  }
+
+  .band { padding: clamp(3rem, 7vw, 4.75rem) 0; }
+  .band--rule { border-top: 1px solid var(--border); }
+
+  /* One left spine for the whole page: the reading column starts at the same
+     edge as the headline instead of being centred, so the eye never has to
+     re-find where the text begins. */
+  .band__inner {
+    max-width: var(--page-wide);
+    margin: 0 auto;
+  }
+
+  .band__inner > * {
+    max-width: min(var(--measure), 100%);
+  }
+
+  /* These sections already sit behind a full-width rule, so the heading drops
+     the one the prose styles add. */
+  .band__heading {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  /* Wider than the reading measure: three columns of prose do not fit in 32rem,
+     and this is the one element on the page that earns the extra width. */
+  .band__inner > .compare { max-width: 100%; }
+
+  .compare { margin: 1.8em 0; }
+
+  /* prose.css styles `tbody td`, not a row header, so this cell would otherwise
+     sit flush against the rule with no padding at all. */
+  .compare tbody th[scope='row'] {
+    text-align: left;
+    padding: 0.75em 1.1em 0.75em 0;
+    border-bottom: 1px solid var(--border);
+    vertical-align: baseline;
+    color: var(--fg-strong);
+    font-weight: var(--weight-regular);
+  }
+
+  .compare tbody tr:last-child th[scope='row'] { border-bottom: 0; }
+
+  .compare th[scope='row'] a { font-weight: var(--weight-semi); }
+
+  /* The concession, set quieter than the name it qualifies. */
+  .compare th[scope='row'] span {
+    display: block;
+    margin-top: 0.2em;
+    font-weight: var(--weight-regular);
+    color: var(--fg-muted);
+  }
+
+  /* Stacked on a phone: three columns of prose in 22rem is four words a line.
+     Each row becomes its own block, with the two verdicts labelled. */
+  @media (max-width: 46rem) {
+    .compare, .compare tbody, .compare tr, .compare td { display: block; }
+    .compare thead { display: none; }
+
+    .compare tr {
+      padding: 1.05em 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .compare tr:last-child { border-bottom: 0; }
+
+    .compare th[scope='row'] {
+      display: block;
+      padding: 0 0 0.5em;
+      border: 0;
+    }
+
+    .compare td {
+      padding: 0.25em 0 0 1.1em;
+      border: 0;
+      position: relative;
+    }
+
+    .compare td::before {
+      content: '›';
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+    }
+  }
+
+  /* One title above, the two names it becomes below. The rule under the source
+     is the fork: everything beneath it descends from the line above it. */
+  .split {
+    margin: 1.8em 0;
+    max-width: min(var(--measure), 100%);
+  }
+
+  .split__from {
+    padding-bottom: 1.05em;
+    border-bottom: 1px solid var(--border-strong);
+  }
+
+  .split__row { padding-top: 1.05em; }
+
+  .split dt {
+    color: var(--fg-muted);
+    font-size: var(--step--1);
+    margin-bottom: 0.3em;
+  }
+
+  .split dd { margin: 0; }
+
+  .split dd code {
+    color: var(--fg-strong);
+    font-size: var(--step-0);
+  }
+
+  .split dd span {
+    display: block;
+    margin-top: 0.25em;
+    color: var(--fg-muted);
+  }
+
+  @media (min-width: 44rem) {
+    .split__from,
+    .split__row {
+      display: grid;
+      grid-template-columns: 9rem minmax(0, 1fr);
+      gap: var(--space-5);
+      align-items: baseline;
+    }
+
+    .split dt { margin-bottom: 0; }
+  }
+
+  /* The quietest section on the page, and deliberately. It follows four that
+     assert things, and a limitation set in the same voice as a feature reads
+     like one. */
+  .quiet { color: var(--fg-muted); }
+
+  .quiet .band__heading { color: var(--fg-muted); }
+
+  .rules { margin: 1.8em 0; }
+
+  .rules__row {
+    padding: 1.05em 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .rules__row:last-child { border-bottom: 0; }
+
+  /* Label in sans, description in serif: the same split as the rest of the
+     site, at the scale of one row. */
+  .rules dt {
+    font-weight: var(--weight-semi);
+    color: var(--fg-strong);
+    margin-bottom: 0.3em;
+  }
+
+  .rules dd { color: var(--fg-muted); }
+
+  @media (min-width: 44rem) {
+    .rules__row {
+      display: grid;
+      grid-template-columns: 12rem minmax(0, 1fr);
+      gap: var(--space-5);
+      align-items: baseline;
+    }
+
+    .rules dt { margin-bottom: 0; }
+  }

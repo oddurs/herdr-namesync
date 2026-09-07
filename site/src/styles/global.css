@@ -1,8 +1,0 @@
-/* namesync — dark only, Gotham, set in IBM Plex.
-   Layered on purpose: tokens define, base styles elements, type owns the
-   named text styles, prose owns rhythm, app owns the frame. */
-@import './tokens.css';
-@import './base.css';
-@import './type.css';
-@import './prose.css';
-@import './app.css';

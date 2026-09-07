@@ -2,7 +2,7 @@
 id: 63
 title: Point CI at cargo and drop the npm toolchain
 type: chore
-status: backlog
+status: done
 milestone: v0.8
 created: 2026-09-07
 updated: 2026-09-07

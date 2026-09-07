@@ -2,7 +2,7 @@
 id: 59
 title: Stand up the Rust site crate
 type: chore
-status: backlog
+status: done
 milestone: v0.8
 created: 2026-09-07
 updated: 2026-09-07
