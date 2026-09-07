@@ -724,8 +724,56 @@ test('writing backs up first and appends valid TOML', () => {
   assert.ok(after.startsWith(before), 'existing config must be preserved');
   assert.ok(after.includes('[ui.sidebar.agents]'));
   assert.ok(after.includes('[ui.sidebar.spaces]'));
-  // and the result is now recognised as configured, so a second run declines
-  assert.strictEqual(setup.plan(file).action, 'present');
+  /* A second run recognises the block as *ours* rather than merely as a
+     sidebar that exists. The distinction matters: `present` means a layout
+     someone else wrote and setup must not touch, `installed` means there is
+     nothing to do and it can be taken back out. */
+  assert.strictEqual(setup.plan(file).action, 'installed');
+});
+
+test('setup is reversible, and takes back exactly what it added', () => {
+  const before = '[ui]\nsidebar_width = 30\n';
+  const file = tmpConfig(before);
+  setup.write(file, setup.blocks());
+  assert.strictEqual(setup.plan(file).action, 'installed');
+
+  const { action } = setup.undo(file);
+  assert.strictEqual(action, 'removed');
+  /* Byte-for-byte. A plugin that edits the host's configuration has to be able
+     to leave without a trace, or the config accretes dead blocks forever. */
+  assert.strictEqual(fs.readFileSync(file, 'utf8'), before);
+  assert.strictEqual(setup.plan(file).action, 'append');
+});
+
+test('undo will not guess at a block written before the fences', () => {
+  /* An earlier setup left an unfenced block. Its extent is unknowable -- the
+     user may have edited inside it -- so undo reports where it is instead of
+     deleting lines it cannot bound. */
+  const legacy = '[ui]\n\n# Added by namesync. $project is published by the plugin\n'
+    + '[ui.sidebar.spaces]\nrows = [["state_icon"]]\n';
+  const file = tmpConfig(legacy);
+  const res = setup.undo(file);
+  assert.strictEqual(res.action, 'legacy');
+  assert.strictEqual(res.line, 3);
+  assert.strictEqual(fs.readFileSync(file, 'utf8'), legacy, 'nothing touched');
+});
+
+test('undo leaves a sidebar it did not write alone', () => {
+  /* Someone else's layout, or one hand-copied out of the docs. Removing it
+     would be worse than doing nothing, so undo declines rather than guessing
+     from the section headers. */
+  const mine = '[ui.sidebar.spaces]\nrows = [["state_icon"]]\n';
+  const file = tmpConfig(mine);
+  assert.strictEqual(setup.undo(file).action, 'absent');
+  assert.strictEqual(fs.readFileSync(file, 'utf8'), mine);
+});
+
+test('writing twice does not stack two blocks', () => {
+  const file = tmpConfig('[ui]\n');
+  setup.write(file, setup.blocks());
+  // The CLI stops at `installed`, but the guard belongs here too.
+  const text = fs.readFileSync(file, 'utf8');
+  assert.strictEqual((text.match(/namesync begin/g) || []).length, 1);
 });
 
 test('sections are matched as headers, not as substrings', () => {

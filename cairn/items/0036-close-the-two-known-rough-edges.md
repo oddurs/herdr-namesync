@@ -2,7 +2,7 @@
 id: 36
 title: Close the two known rough edges
 type: feature
-status: backlog
+status: done
 milestone: v0.5
 created: 2026-09-07
 updated: 2026-09-07

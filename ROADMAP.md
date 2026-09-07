@@ -79,14 +79,13 @@ Documented, tested, and safe to depend on.
 
 ## v0.5 — First-class herdr plugin
 
-`#######···` 64% · 7 of 11 done · due 2027-04-01
+`########··` 73% · 8 of 11 done · due 2027-04-01
 
 ### backlog
 
 - [ ] `0032` Install without editing config.toml <sup>feature · p1</sup>
 - [ ] `0033` Cut a real 0.2.0 release <sup>feature · p2</sup>
 - [ ] `0035` Get listed in awesome-herdr <sup>feature · p2</sup>
-- [ ] `0036` Close the two known rough edges <sup>feature · p1</sup>
 
 ### done
 
@@ -97,4 +96,5 @@ Documented, tested, and safe to depend on.
 - [x] `0030` Set the repo homepage and topics <sup>feature · p0</sup>
 - [x] `0031` Show it working <sup>feature · p1</sup>
 - [x] `0034` Rewrite the site landing to match <sup>feature · p2</sup>
+- [x] `0036` Close the two known rough edges <sup>feature · p1</sup>
 
