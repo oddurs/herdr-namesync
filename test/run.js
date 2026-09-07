@@ -121,6 +121,13 @@ test('isJunkTitle keeps real intents, including tool-named ones', () => {
     assert.ok(!naming.isJunkTitle(t, c), 'should be intent: ' + t);
   }
 });
+test('stripping nothing leaves the case alone', () => {
+  // Capitalising unconditionally would rewrite the first letter of every
+  // lowercase title, whether or not a prefix was removed.
+  assert.strictEqual(naming.stripProject('fix the parser', 'app'), 'fix the parser');
+  assert.strictEqual(naming.stripProject('app fix the parser', 'app'), 'Fix the parser');
+});
+
 test('render fills template tokens', () => {
   assert.strictEqual(naming.render('{repo} - {intent}', { repo: 'app', intent: 'Fix auth' }), 'app - Fix auth');
 });
@@ -987,6 +994,77 @@ testAsync('a held workspace ignores a custom source too', async () => {
   const plans = await n.buildPlans(snapshot([agent()]));
   const ws = plans.find((p) => p.kind === 'workspace');
   assert.strictEqual(ws.verdict.rename, false, 'a source must not override a hold');
+});
+
+process.stdout.write('\nlooking harder\n');
+
+// A source that records every time it is consulted, so the gate can be
+// observed rather than inferred.
+function countingCostly(answer = 'from the expensive one') {
+  const calls = [];
+  return { source: { name: 'costly', costly: true,
+    observe: async () => { calls.push(Date.now()); return answer; } }, calls };
+}
+
+testAsync('a costly source is skipped while the title is fresh', async () => {
+  const { source, calls } = countingCostly();
+  const n = new Namer({ cfg: cfg(), store: freshStore(), sinks: [],
+    sources: [source, createTitleSource()] });
+  await n.buildPlans(snapshot([agent({ agent_status: 'idle', state_change_seq: 1 })]));
+  assert.strictEqual(calls.length, 0, 'nothing had failed yet');
+});
+
+testAsync('a costly source is skipped while the agent is mid-turn', async () => {
+  const { source, calls } = countingCostly();
+  const store = freshStore();
+  // Make the title stale first.
+  store.titleSeen('w1:p1', 'Fix auth middleware', 1, Date.now());
+  const n = new Namer({ cfg: cfg(), store, sinks: [], sources: [source, createTitleSource()] });
+  await n.buildPlans(snapshot([agent({ agent_status: 'working', state_change_seq: 99 })]));
+  assert.strictEqual(calls.length, 0, 'the pane is half-written mid-turn');
+});
+
+testAsync('a costly source is consulted once the title has gone stale', async () => {
+  const { source, calls } = countingCostly();
+  const store = freshStore();
+  store.titleSeen('w1:p1', 'Fix auth middleware', 1, Date.now());
+  const n = new Namer({ cfg: cfg(), store, sinks: [], sources: [source, createTitleSource()] });
+  const plans = await n.buildPlans(snapshot([agent({ agent_status: 'idle', state_change_seq: 99 })]));
+  assert.strictEqual(calls.length, 1, 'the free answer had demonstrably failed');
+  assert.strictEqual(plans.find((p) => p.kind === 'workspace').desired,
+    'from the expensive one');
+});
+
+testAsync('the floor stops a repeatedly-finishing session billing in a loop', async () => {
+  const { source, calls } = countingCostly();
+  const store = freshStore();
+  store.titleSeen('w1:p1', 'Fix auth middleware', 1, Date.now());
+  const n = new Namer({ cfg: cfg(), store, sinks: [], sources: [source, createTitleSource()] });
+  const snap = snapshot([agent({ agent_status: 'idle', state_change_seq: 99 })]);
+  await n.buildPlans(snap);
+  await n.buildPlans(snap);
+  await n.buildPlans(snap);
+  assert.strictEqual(calls.length, 1, 'consulted again inside the floor');
+});
+
+testAsync('a cheap answer does not postpone the next real attempt', async () => {
+  // Only an actual consultation charges the floor.
+  const { source, calls } = countingCostly();
+  const store = freshStore();
+  const n = new Namer({ cfg: cfg(), store, sinks: [], sources: [createTitleSource(), source] });
+  await n.buildPlans(snapshot([agent({ agent_status: 'idle', state_change_seq: 1 })]));
+  assert.strictEqual(store.lastDeep('w1:p1'), 0, 'the floor was charged for nothing');
+  assert.strictEqual(calls.length, 0);
+});
+
+testAsync('costly sources can be switched off entirely', async () => {
+  const { source, calls } = countingCostly();
+  const store = freshStore();
+  store.titleSeen('w1:p1', 'Fix auth middleware', 1, Date.now());
+  const n = new Namer({ cfg: cfg({ consultCostlySources: false }), store, sinks: [],
+    sources: [source, createTitleSource()] });
+  await n.buildPlans(snapshot([agent({ agent_status: 'idle', state_change_seq: 99 })]));
+  assert.strictEqual(calls.length, 0);
 });
 
 Promise.all(pending).then(() => {

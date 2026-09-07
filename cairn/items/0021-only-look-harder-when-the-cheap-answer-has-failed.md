@@ -2,7 +2,7 @@
 id: 21
 title: Only look harder when the cheap answer has failed
 type: feature
-status: backlog
+status: doing
 milestone: v0.3
 created: 2026-09-06
 updated: 2026-09-06

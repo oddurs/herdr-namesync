@@ -18,14 +18,14 @@ function stateDir() {
 class Store {
   constructor(file = path.join(stateDir(), 'state.json')) {
     this.file = file;
-    this.data = { authored: {}, locked: {}, lastRenameAt: {}, metadata: {}, stateAt: {}, lastProject: {}, titleAt: {} };
+    this.data = { authored: {}, locked: {}, lastRenameAt: {}, metadata: {}, stateAt: {}, lastProject: {}, titleAt: {}, lastDeep: {} };
     this.load();
   }
 
   load() {
     try {
       const parsed = JSON.parse(fs.readFileSync(this.file, 'utf8'));
-      this.data = { authored: {}, locked: {}, lastRenameAt: {}, metadata: {}, stateAt: {}, lastProject: {}, titleAt: {}, ...parsed };
+      this.data = { authored: {}, locked: {}, lastRenameAt: {}, metadata: {}, stateAt: {}, lastProject: {}, titleAt: {}, lastDeep: {}, ...parsed };
     } catch { /* first run, or unreadable: defaults stand */ }
     return this;
   }
@@ -96,6 +96,12 @@ class Store {
     return { at: prev.at, turns: Math.max(0, (seq || 0) - (prev.seq || 0)), changed: false };
   }
 
+  /* When a costly source was last consulted for a pane. The floor between
+     consultations lives here rather than in the source, so every costly source
+     inherits it rather than each one having to remember. */
+  lastDeep(paneId) { return this.data.lastDeep[paneId] || 0; }
+  markDeep(paneId, at = Date.now()) { this.data.lastDeep[paneId] = at; return this; }
+
   metadata(id) { return this.data.metadata[id]; }
   setMetadata(id, value) { this.data.metadata[id] = value; return this; }
 
@@ -109,7 +115,7 @@ class Store {
   forget(id) {
     const owns = (candidate) => candidate === id || candidate.startsWith(id + ':');
 
-    for (const bucket of ['locked', 'lastRenameAt', 'stateAt', 'lastProject', 'titleAt']) {
+    for (const bucket of ['locked', 'lastRenameAt', 'stateAt', 'lastProject', 'titleAt', 'lastDeep']) {
       for (const key of Object.keys(this.data[bucket])) {
         if (owns(key)) delete this.data[bucket][key];
       }

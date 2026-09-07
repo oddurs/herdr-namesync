@@ -35,14 +35,19 @@ async function resolveSources(cfg, { client } = {}) {
    reason to stop naming everything else in the session. */
 async function observe(sources, context, log = () => {}) {
   for (const source of sources) {
+    /* A costly source is only worth its cost when the free one has failed.
+       `context.deep` is that judgement, made by the caller: the title has gone
+       stale, the agent is not mid-turn, and this pane has not been consulted
+       too recently. */
+    if (source.costly && !context.deep) continue;
     try {
       const answer = await source.observe(context);
-      if (answer) return { intent: answer, source: source.name };
+      if (answer) return { intent: answer, source: source.name, costly: Boolean(source.costly) };
     } catch (err) {
       log('warn', 'source ' + source.name + ': ' + err.message);
     }
   }
-  return { intent: '', source: null };
+  return { intent: '', source: null, costly: false };
 }
 
 module.exports = { resolveSources, observe, createTitleSource };

@@ -110,6 +110,33 @@ to churn the sidebar.
 A source that throws is skipped and logged rather than allowed to stop the
 sync. One observation failing is not a reason to stop naming everything else.
 
+### When a costly source is worth asking
+
+A source may declare itself `costly` — slow, metered, or both. Those are
+consulted only when three things hold at once:
+
+- **stale** — the title has survived several state transitions unchanged,
+  which is namesync's own evidence that the free source has failed
+- **settled** — the agent is not mid-turn, so the pane shows a finished result
+  rather than something half-written
+- **not recent** — a floor per pane, or a session that finishes repeatedly
+  while genuinely stale would bill in a loop
+
+Finishing alone is not enough. A title survives completions unchanged, which is
+how staleness is measured in the first place.
+
+The floor is charged only when a costly source is actually consulted, so a
+cheap answer never postpones the next real attempt.
+
+### One answer per agent per pass
+
+`#vars` runs more than once for the same agent — once for its own name, again
+for the workspace it leads. Each run used to resolve git and consult sources
+afresh. That is wasted work, and with a costly source it is worse than wasted:
+the first call charges the floor and the second falls back, so a single sync
+produced two different answers for one agent. Results are now memoised for the
+duration of a pass.
+
 ## Exactly one watcher
 
 The pid file is ownership, not just a record. A watcher re-reads it on every

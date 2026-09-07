@@ -146,6 +146,9 @@ function stripProject(text, project) {
   const esc = String(project).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const stripped = t.replace(new RegExp('^' + esc + '[\\s:_/-]+', 'i'), '').trim();
   if (!stripped || !tokens(stripped).length) return t;
+  // Nothing was removed, so there is nothing to re-case. Capitalising here
+  // would quietly rewrite the first letter of every lowercase title.
+  if (stripped === t) return t;
   return stripped.charAt(0).toUpperCase() + stripped.slice(1);
 }
 
