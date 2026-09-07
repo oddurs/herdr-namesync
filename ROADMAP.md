@@ -109,13 +109,12 @@ Spaces carry prose and Agents carry slugs. Stop treating them as one naming prob
 
 ## v0.7 — Make the landing page argue
 
-`#####·····` 50% · 5 of 10 done · due 2027-05-01
+`######····` 60% · 6 of 10 done · due 2027-05-01
 
 One visual and four screens of prose, with the install path four screens down. The page states the case; it does not make it.
 
 ### backlog
 
-- [ ] `0045` Tighten the hero lede so the held-names promise lands earlier <sup>docs · p2</sup>
 - [ ] `0046` Decide how many sections the landing page carries <sup>chore · p1</sup>
 - [ ] `0047` Show one title becoming two names <sup>feature · p2</sup>
 - [ ] `0048` Explain the top line of the hero mock <sup>feature · p2</sup>
@@ -128,4 +127,5 @@ One visual and four screens of prose, with the install path four screens down. T
 - [x] `0042` Put an install path in the hero <sup>feature · p1</sup>
 - [x] `0043` Lead with why another renamer, not with how it works <sup>chore · p1</sup>
 - [x] `0044` Name the alternatives on the landing page <sup>feature · p1</sup>
+- [x] `0045` Tighten the hero lede so the held-names promise lands earlier <sup>docs · p2</sup>
 
