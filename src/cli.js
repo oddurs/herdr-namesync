@@ -170,6 +170,25 @@ const COMMANDS = {
         await client.request('ping', {}, { timeoutMs: 3000 });
         const sinks = await resolveSinks(cfg, { client });
         out.push('  sinks       ' + (sinks.map((s) => s.name).join(', ') || 'none'));
+
+        /* Sources are the mirror of sinks, so they belong beside them. A
+           costly source that quietly removed itself is the thing a reader is
+           most likely to be confused by -- it was configured, and nothing
+           happened -- so say which one and why rather than just omitting it. */
+        const sources = await resolveSources(cfg, { client });
+        const names = sources.map((s) => s.name);
+        out.push('  sources     ' + (names.join(', ') || 'none'));
+
+        const llm = cfg.sources && cfg.sources.llm;
+        if (llm && llm.enabled && !names.includes('llm')) {
+          const missing = [!llm.endpoint && 'endpoint', !llm.model && 'model'].filter(Boolean);
+          out.push('              llm off: no ' + (missing.join(' or ') || 'reason given'));
+        } else if (llm && llm.enabled && !process.env[llm.apiKeyEnv || 'NAMESYNC_API_KEY']) {
+          /* Not fatal -- a local endpoint needs no key -- but a remote one
+             will answer 401 on every call, and the fallback to the title
+             makes that look like nothing happening. */
+          out.push('              llm has no key in $' + (llm.apiKeyEnv || 'NAMESYNC_API_KEY'));
+        }
       });
     } catch (err) {
       out.push('  sinks       herdr unreachable (' + err.message + ')');
