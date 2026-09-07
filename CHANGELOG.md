@@ -16,6 +16,9 @@ Notable changes to namesync. The format follows
   survives a watcher that herdr launched at login. The environment still wins.
 - `sources.llm.maxTokens` (default 64) and an optional `reasoning` passthrough.
 
+- `setup` fences what it writes, so it is idempotent and `setup --undo` takes
+  back exactly what it added.
+
 ### Fixed
 
 - A reasoning model that spent its whole completion budget thinking used to

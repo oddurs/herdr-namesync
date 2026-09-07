@@ -289,7 +289,43 @@ const COMMANDS = {
      blocks, and write them only when asked. */
   async setup() {
     const apply = process.argv.includes('--write');
+
+    /* Reversible, because a plugin that edits the host's configuration should
+       be able to put it back. The block is fenced, so this removes exactly
+       what was added rather than restoring a backup that may be older than
+       the user's other edits. */
+    if (process.argv.includes('--undo')) {
+      const { file, action, backup, line } = setup.undo();
+      if (action === 'missing') { process.stdout.write('no herdr config at ' + file + '\n'); return; }
+      if (action === 'legacy') {
+        process.stdout.write('found a namesync block in ' + file + ' at line ' + line + '\n'
+          + '  it was written before setup started fencing what it adds, so its\n'
+          + '  extent is not known and removing it automatically could take your\n'
+          + '  edits with it. Delete the two [ui.sidebar.*] sections by hand.\n');
+        return;
+      }
+      if (action === 'absent') {
+        process.stdout.write('nothing of namesync\'s in ' + file + '\n'
+          + '  the sidebar rows there, if any, were not written by setup.\n');
+        return;
+      }
+      process.stdout.write('removed the namesync block from ' + file + '\n'
+        + '  backup: ' + backup + '\n');
+      try {
+        await withClient((client) => client.request('server.reload_config', {}));
+        process.stdout.write('  herdr reloaded its config\n');
+      } catch { process.stdout.write('  restart herdr to pick it up\n'); }
+      return;
+    }
+
     const { file, action, sections, text } = setup.plan();
+
+    if (action === 'installed') {
+      process.stdout.write('already set up in ' + file + '\n'
+        + '  the namesync block is present and nothing needs doing.\n'
+        + '  `namesync setup --undo` takes it back out.\n');
+      return;
+    }
 
     if (action === 'missing') {
       process.stdout.write('no herdr config at ' + file + '\n\n'
@@ -387,7 +423,7 @@ const COMMANDS = {
       '  startup       start the watcher if it is not running (herdr startup hook)',
       '  daemon        run the watcher in the foreground',
       '  start|stop|restart',
-      '  setup         show the sidebar rows to add to herdr (--write applies)',
+      '  setup         show the sidebar rows to add to herdr (--write applies, --undo reverts)',
       '  status        show watcher, config and sink state',
       '  dry-run       print what would be renamed, change nothing',
       '  rename-now    rename the current workspace immediately',

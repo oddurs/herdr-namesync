@@ -153,9 +153,20 @@ herdr integration install claude  # sharper agent state detection
 ```
 
 The middle step matters: namesync publishes `$project`, `$branch`, `$since` and
-`$n`, but herdr renders none of them until the sidebar asks. `setup` prints the
-rows, and `--write` appends them after backing up your config. It refuses if
-you already have a sidebar layout — that one is yours.
+`$n`, but herdr renders none of them until the sidebar asks, and `herdr config`
+has no `set` for a plugin to do it with.
+
+So `setup` is as small a guest as it can be. It prints the rows and changes
+nothing without `--write`. It backs up your config first. It refuses outright
+if you already have a sidebar layout — that one is yours. What it does add is
+fenced, so running it twice is a no-op and
+
+```bash
+namesync setup --undo
+```
+
+takes back exactly what was added, leaving the rest of your config
+byte-for-byte as it was.
 
 Requires herdr ≥ 0.8 and Node ≥ 18. No npm dependencies.
 
