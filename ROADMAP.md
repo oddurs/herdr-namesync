@@ -45,7 +45,7 @@ Good ideas without a date yet.
 
 ## v0.3 — Name it when the agent stops saying
 
-`··········` 0% · 0 of 5 done · due 2027-02-15
+`##········` 20% · 1 of 5 done · due 2027-02-15
 
 ### backlog
 
@@ -54,9 +54,9 @@ Good ideas without a date yet.
 - [ ] `0022` An opt-in llm source, bring your own endpoint <sup>feature · p1</sup>
 - [ ] `0023` Weigh a Claude Code hook against the agent-agnostic promise <sup>chore · p2</sup>
 
-### in progress
+### done
 
-- [ ] `0019` Introduce a source interface <sup>feature · p0</sup>
+- [x] `0019` Introduce a source interface <sup>feature · p0</sup>
 
 ## v1.0 — Stable release
 

@@ -2,7 +2,7 @@
 id: 19
 title: Introduce a source interface
 type: feature
-status: doing
+status: done
 milestone: v0.3
 created: 2026-09-06
 updated: 2026-09-06
