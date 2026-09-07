@@ -183,6 +183,15 @@ async function detectProject(cwd) {
   }
 
   if (root) {
+    /* The root can be a different directory from the one probed -- a deleted
+       worktree walks up to the repository it belonged to -- and that directory
+       may well have a remote even though the original path could not be
+       queried. Ask it, rather than settling for its folder name: the folder is
+       the last resort, not a shortcut past the rest of the chain. */
+    if (root !== cwd) {
+      const fromRoot = await remoteName(root);
+      if (fromRoot) return fromRoot;
+    }
     const declared = manifestName(root);
     if (declared) return declared;
     return path.basename(root);

@@ -874,6 +874,31 @@ test('the two clocks answer different questions', () => {
   assert.strictEqual(naming.formatSince(t0 + 10 * 60000 - stateAt), '1m');
 });
 
+process.stdout.write('\nfolder is the last resort\n');
+
+testAsync('a path that no longer exists still resolves to the repository', async () => {
+  // A deleted worktree: every git query against the path fails, so detection
+  // walks up. The directory it lands on has a remote, and that remote is the
+  // answer -- not the folder it happens to be sitting in.
+  const { detectProject, gitCache } = require('../src/namer');
+  gitCache.clear();
+  const repo = path.join(__dirname, '..');
+  const gone = path.join(repo, '.does-not-exist', 'deep', 'gone');
+  const viaGone = await detectProject(gone);
+  const direct = await detectProject(repo);
+  assert.strictEqual(viaGone, direct,
+    'walking up should reach the same identity as asking the root directly');
+});
+
+testAsync('a manifest name beats the folder it lives in', async () => {
+  const { detectProject, gitCache } = require('../src/namer');
+  gitCache.clear();
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ns-folder-'));
+  fs.writeFileSync(path.join(dir, 'package.json'), '{"name":"declared-name"}');
+  assert.strictEqual(await detectProject(dir), 'declared-name');
+  assert.notStrictEqual(await detectProject(dir), path.basename(dir));
+});
+
 Promise.all(pending).then(() => {
   process.stdout.write('\n' + passed + ' passed, ' + failed + ' failed\n');
   process.exit(failed ? 1 : 0);

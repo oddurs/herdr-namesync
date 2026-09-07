@@ -120,9 +120,12 @@ Resolved in this order, first answer wins:
 3. **The repository root's folder name.** Worktree-aware: a linked worktree
    reports the repo it belongs to, not the worktree directory.
 4. **The nearest project marker.** For directories that are not git
-   repositories, walks up looking for `package.json`, `Cargo.toml`, `go.mod`
-   and friends, stopping at `$HOME`.
-5. **The folder name.** Last resort.
+   repositories — or paths that no longer exist, such as a deleted worktree —
+   walks up looking for `package.json`, `Cargo.toml`, `go.mod` and friends,
+   stopping at `$HOME`. The directory it lands on is then asked the same
+   questions from the top: a repository found this way still answers with its
+   remote.
+5. **The folder name.** Genuinely last, and only when nothing above answered.
 
 Anything reading a workspace or pane sees these. herdr's metadata has no schema
 or versioning, so a rename breaks a reader with no error at all — the contract
