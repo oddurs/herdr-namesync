@@ -19,6 +19,16 @@ Enough to dogfood in a real project.
 - [x] `0008` Tag v0.1.0 and write the release notes <sup>chore · p1</sup>
 - [x] `0011` Revise TOKENS.md now that smali is abandoned <sup>docs · p1</sup>
 
+## v1.0 — Stable release
+
+`##########` 100% · 1 of 1 done · due 2027-03-01
+
+Documented, tested, and safe to depend on.
+
+### done
+
+- [x] `0007` Publish the docs site <sup>chore · p2</sup>
+
 ## later — Someday
 
 `#####·····` 50% · 1 of 2 done
@@ -58,16 +68,6 @@ Good ideas without a date yet.
 - [x] `0021` Only look harder when the cheap answer has failed <sup>feature · p0</sup>
 - [x] `0022` An opt-in llm source, bring your own endpoint <sup>feature · p1</sup>
 - [x] `0023` Weigh a Claude Code hook against the agent-agnostic promise <sup>chore · p2</sup>
-
-## v1.0 — Stable release
-
-`##########` 100% · 1 of 1 done · due 2027-03-01
-
-Documented, tested, and safe to depend on.
-
-### done
-
-- [x] `0007` Publish the docs site <sup>chore · p2</sup>
 
 ## v0.4 — Ground the model
 
@@ -125,4 +125,19 @@ One visual and four screens of prose, with the install path four screens down. T
 - [x] `0047` Show one title becoming two names <sup>feature · p2</sup>
 - [x] `0048` Explain the top line of the hero mock <sup>feature · p2</sup>
 - [x] `0049` Say what it will not do <sup>feature · p1</sup>
+
+## v0.8 — A site that builds itself
+
+`··········` 0% · 0 of 6 done · due 2027-05-15
+
+One Rust binary that renders the site and serves it live. No Node, no npm, no toolchain to install.
+
+### backlog
+
+- [ ] `0059` Stand up the Rust site crate <sup>chore · p1</sup>
+- [ ] `0060` Render markdown and highlight code without a JS toolchain <sup>feature · p1</sup>
+- [ ] `0061` Port the templates to maud <sup>feature · p1</sup>
+- [ ] `0062` A live server with hot reload <sup>feature · p1</sup>
+- [ ] `0063` Point CI at cargo and drop the npm toolchain <sup>chore · p1</sup>
+- [ ] `0064` Say how to run the site <sup>docs · p2</sup>
 

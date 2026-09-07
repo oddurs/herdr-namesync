@@ -10,7 +10,7 @@
 
 # On-disk format version. cairn refuses to open a project written in a format it
 # does not know, rather than misreading it. See "Compatibility" in the manual.
-format = 1
+format = 2
 
 [project]
 name = "namesync"
@@ -63,6 +63,10 @@ color = "gray"
 name = "docs"
 icon = "*"
 color = "blue"
+
+[[type]]
+name = "milestone"
+description = "a release, or whatever this project ships"
 
 # ─── Statuses ────────────────────────────────────────────────────────────────
 # Order matters: it is the column order on the board and the sort order in
@@ -125,57 +129,19 @@ name = "area"
 kind = "text"
 description = "Subsystem this touches"
 
-# ─── Milestones ──────────────────────────────────────────────────────────────
-# Sections of the rendered roadmap, in due-date order.
+[[field]]
+name = "due"
+kind = "date"
+description = "when a milestone is meant to land"
 
-[[milestone]]
-name = "v0.1"
-title = "First usable version"
-due = "2026-12-01"
-description = "Enough to dogfood in a real project."
-
-[[milestone]]
-name = "v1.0"
-title = "Stable release"
-due = "2027-03-01"
-description = "Documented, tested, and safe to depend on."
-
-[[milestone]]
-name = "later"
-title = "Someday"
-description = "Good ideas without a date yet."
-
-[[milestone]]
-name = "v0.2"
-title = "Make the policy legible"
-due = "2027-01-15"
-
-[[milestone]]
-name = "v0.3"
-title = "Name it when the agent stops saying"
-due = "2027-02-15"
-
-[[milestone]]
-name = "v0.4"
-title = "Ground the model"
-due = "2027-03-15"
-
-[[milestone]]
-name = "v0.5"
-title = "First-class herdr plugin"
-due = "2027-04-01"
-
-[[milestone]]
-name = "v0.6"
-title = "Two surfaces, two sets of rules"
-due = "2027-04-15"
-description = "Spaces carry prose and Agents carry slugs. Stop treating them as one naming problem."
-
-[[milestone]]
-name = "v0.7"
-title = "Make the landing page argue"
-due = "2027-05-01"
-description = "One visual and four screens of prose, with the install path four screens down. The page states the case; it does not make it."
+[[field]]
+name = "milestone"
+kind = "ref"
+target = "milestone"
+by = "key"
+rollup = true
+inverse = "scheduled"
+description = "what this ships in"
 
 # ─── Saved views ─────────────────────────────────────────────────────────────
 # `cairn list --view next`, `cairn board --view triage`
