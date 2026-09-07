@@ -45,21 +45,18 @@ Good ideas without a date yet.
 
 ## v0.3 — Name it when the agent stops saying
 
-`######····` 60% · 3 of 5 done · due 2027-02-15
+`########··` 80% · 4 of 5 done · due 2027-02-15
 
 ### backlog
 
 - [ ] `0023` Weigh a Claude Code hook against the agent-agnostic promise <sup>chore · p2</sup>
-
-### in progress
-
-- [ ] `0022` An opt-in llm source, bring your own endpoint <sup>feature · p1</sup>
 
 ### done
 
 - [x] `0019` Introduce a source interface <sup>feature · p0</sup>
 - [x] `0020` Read the pane when the title has gone quiet <sup>feature · p0</sup>
 - [x] `0021` Only look harder when the cheap answer has failed <sup>feature · p0</sup>
+- [x] `0022` An opt-in llm source, bring your own endpoint <sup>feature · p1</sup>
 
 ## v1.0 — Stable release
 
