@@ -171,6 +171,12 @@ title = "Two surfaces, two sets of rules"
 due = "2027-04-15"
 description = "Spaces carry prose and Agents carry slugs. Stop treating them as one naming problem."
 
+[[milestone]]
+name = "v0.7"
+title = "Make the landing page argue"
+due = "2027-05-01"
+description = "One visual and four screens of prose, with the install path four screens down. The page states the case; it does not make it."
+
 # ─── Saved views ─────────────────────────────────────────────────────────────
 # `cairn list --view next`, `cairn board --view triage`
 

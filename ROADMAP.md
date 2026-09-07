@@ -107,3 +107,22 @@ Spaces carry prose and Agents carry slugs. Stop treating them as one naming prob
 - [x] `0038` The rename made a latent test flake visible <sup>bug · p1</sup>
 - [x] `0039` Say which naming rules apply to which surface <sup>docs · p2</sup>
 
+## v0.7 — Make the landing page argue
+
+`··········` 0% · 0 of 10 done · due 2027-05-01
+
+One visual and four screens of prose, with the install path four screens down. The page states the case; it does not make it.
+
+### backlog
+
+- [ ] `0040` The landing page ships the failure the docs warn about <sup>bug · p0</sup>
+- [ ] `0041` The hero caption counts three of something the picture shows twice <sup>bug · p2</sup>
+- [ ] `0042` Put an install path in the hero <sup>feature · p1</sup>
+- [ ] `0043` Lead with why another renamer, not with how it works <sup>chore · p1</sup>
+- [ ] `0044` Name the alternatives on the landing page <sup>feature · p1</sup>
+- [ ] `0045` Tighten the hero lede so the held-names promise lands earlier <sup>docs · p2</sup>
+- [ ] `0046` Decide how many sections the landing page carries <sup>chore · p1</sup>
+- [ ] `0047` Show one title becoming two names <sup>feature · p2</sup>
+- [ ] `0048` Explain the top line of the hero mock <sup>feature · p2</sup>
+- [ ] `0049` Say what it will not do <sup>feature · p1</sup>
+
