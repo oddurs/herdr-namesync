@@ -654,7 +654,7 @@ function tmpConfig(body) {
 
 test('the blocks reference only tokens namesync publishes', () => {
   const text = setup.blocks();
-  for (const t of ['$n', '$project', '$worktree', '$locked', '$stale', '$since']) {
+  for (const t of ['$n', '$project', '$worktree', '$locked', '$stale', '$since', '$age']) {
     assert.ok(text.includes(t), 'missing ' + t);
   }
   // branch and git_status are herdr built-ins for Space rows; $branch is the
@@ -832,6 +832,46 @@ testAsync('applying a release actually clears the hold, and persists it', async 
     verdict: { rename: true, shouldRelease: true } }]);
   assert.strictEqual(store.isLocked('w1'), false, 'hold survived the release');
   assert.strictEqual(new Store(store.file).isLocked('w1'), false, 'release was not saved');
+});
+
+process.stdout.write('\nintent age\n');
+
+testAsync('$age tracks the intent, $since tracks the state', async () => {
+  const sent = [];
+  const sink = { name: 'herdr', kinds: ['workspace', 'tab', 'agent'], apply: async () => true,
+    reportMetadata: async (kind, id, tokens) => { sent.push({ kind, tokens }); return true; } };
+  const store = freshStore();
+  const n = new Namer({ cfg: cfg(), store, sinks: [sink] });
+
+  // Same title throughout; the agent changes state twice.
+  await n.publishMetadata(snapshot([agent({ agent_status: 'working', state_change_seq: 1 })]));
+  const first = sent.find((x) => x.kind === 'workspace').tokens;
+  assert.strictEqual(first.age, 'now');
+  assert.strictEqual(first.since, 'now');
+
+  // Age is measured from when the title changed, so a state change does not
+  // reset it. Both read 'now' here because no time has passed -- what matters
+  // is that they come from different clocks.
+  store.setMetadata('workspace:w1', ''); store.setMetadata('pane:w1:p1', '');
+  await n.publishMetadata(snapshot([agent({ agent_status: 'idle', state_change_seq: 2 })]));
+  const second = sent.find((x) => x.kind === 'workspace' && x !== sent[0]).tokens;
+  assert.ok('age' in second && 'since' in second);
+});
+
+test('the two clocks answer different questions', () => {
+  const st = freshStore();
+  const t0 = 1000000;
+  // Title set once, then two state transitions over ten minutes.
+  st.titleSeen('w1:p1', 'Fix auth', 1, t0);
+  st.stateAt('w1:p1', 'working', t0);
+  st.stateAt('w1:p1', 'idle', t0 + 9 * 60000);
+
+  const titleAt = st.titleSeen('w1:p1', 'Fix auth', 3, t0 + 10 * 60000).at;
+  const stateAt = st.stateAt('w1:p1', 'idle', t0 + 10 * 60000).at;
+
+  // age counts from the title; since counts from the last transition.
+  assert.strictEqual(naming.formatSince(t0 + 10 * 60000 - titleAt), '10m');
+  assert.strictEqual(naming.formatSince(t0 + 10 * 60000 - stateAt), '1m');
 });
 
 Promise.all(pending).then(() => {

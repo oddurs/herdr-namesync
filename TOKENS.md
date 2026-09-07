@@ -28,7 +28,8 @@ rows. All values are strings or absent — never empty strings.
 | `worktree` | both | The literal string `worktree` when the pane sits in a linked worktree. Absent otherwise. | stable |
 | `n` | both | The workspace's number — what `prefix+shift+N` selects. | stable |
 | `intent` | workspace | The agent's live title, before any template is applied. | stable |
-| `since` | both | How long the agent has held its current state: `now`, `20m`, `3h`, `2d`. | stable |
+| `since` | both | How long the agent has held its **current state**. Resets on every transition, so it answers "who has been blocked longest". | stable |
+| `age` | both | How long the **current intent** has been current, measured from the last time the title changed. Survives state transitions, so it answers "what has been grinding on the same thing all day". | stable |
 | `locked` | both | The literal string `held` when namesync has been told to leave this name alone. Absent otherwise. | stable |
 | `stale` | both | The literal string `stale` when the agent has not revised its title across several state transitions. A signal, never acted on. | stable |
 | `agent` | both | Agent kind, such as `claude`. | stable |
@@ -42,9 +43,15 @@ rows. All values are strings or absent — never empty strings.
 installed, may be disabled, or may not have resolved a value yet. Fall back to
 what herdr itself knows: a workspace always has a `label`.
 
-**Do not parse `since`.** It is a human-facing bucket, not a duration. If you
-need arithmetic you need a timestamp, and herdr does not expose one — see
-`UPSTREAM.md`.
+**Do not parse `since` or `age`.** They are human-facing buckets, not
+durations: minute precision for ten minutes, then five-minute steps, then
+hours. If you need arithmetic you need a timestamp, and herdr does not expose
+one — see `UPSTREAM.md`.
+
+**`since` and `age` are different clocks.** `since` restarts whenever the agent
+changes state; `age` restarts only when the title changes. An agent that has
+started and finished work six times is still describing the same task, and
+`age` is the number that says so.
 
 **Treat `n` as display, not identity.** It is positional and changes when
 spaces are reordered. `workspace_id` is the stable handle.

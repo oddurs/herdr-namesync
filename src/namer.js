@@ -387,14 +387,27 @@ class Namer {
       return formatSince(now - at);
     };
 
+    /* One lookup, two answers. titleSeen records when the title last changed
+       and how many state transitions it has survived since. */
+    const title = (a) => this.store.titleSeen(
+      a.pane_id, normalize(a.terminal_title_stripped || ''), a.state_change_seq || 0, now,
+    );
+
     /* A title the agent has stopped maintaining. Reported, never acted on:
        there is nothing better to rename to, and guessing would be worse than
        showing a name that is merely old. */
     const stale = (a) => {
       if (!this.cfg.showStale) return null;
-      const title = normalize(a.terminal_title_stripped || '');
-      const { turns } = this.store.titleSeen(a.pane_id, title, a.state_change_seq || 0, now);
-      return turns >= this.cfg.staleAfterTurns ? 'stale' : null;
+      return title(a).turns >= this.cfg.staleAfterTurns ? 'stale' : null;
+    };
+
+    /* How long this intent has been the current one. Different question from
+       $since, which resets on every state transition: an agent that has
+       started and finished work six times is still describing the same task,
+       and this is the number that says so. */
+    const age = (a) => {
+      if (!this.cfg.showDuration) return null;
+      return formatSince(now - title(a).at);
     };
 
     for (const [workspaceId, agentsHere] of idx.byWorkspace) {
@@ -420,6 +433,7 @@ class Namer {
           worktree: v.worktree || null,
           branch: v.branch || null,
           since: duration(a),
+          age: age(a),
           agent: v.agent || null,
         });
       }
@@ -440,6 +454,7 @@ class Namer {
         branch: v.branch || null,
         intent: v.intent || null,
         since: duration(lead),
+        age: age(lead),
         agent: v.agent || null,
         agents: agentsHere.length > 1 ? String(agentsHere.length) : null,
       });

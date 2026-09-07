@@ -2,7 +2,7 @@
 id: 16
 title: namesync wakes itself up by publishing metadata
 type: bug
-status: doing
+status: done
 milestone: v0.2
 created: 2026-09-06
 updated: 2026-09-06
