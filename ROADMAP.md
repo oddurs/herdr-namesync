@@ -21,9 +21,13 @@ Enough to dogfood in a real project.
 
 ## later — Someday
 
-`##########` 100% · 1 of 1 done
+`#####·····` 50% · 1 of 2 done
 
 Good ideas without a date yet.
+
+### backlog
+
+- [ ] `0024` Measure the tagline as a conditional <sup>feature · p2</sup>
 
 ### done
 
@@ -64,4 +68,12 @@ Documented, tested, and safe to depend on.
 ### done
 
 - [x] `0007` Publish the docs site <sup>chore · p2</sup>
+
+## v0.4 — Ground the model
+
+`··········` 0% · 0 of 1 done · due 2027-03-15
+
+### backlog
+
+- [ ] `0025` Ground the model in the project name <sup>feature · p2</sup>
 

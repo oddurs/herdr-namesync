@@ -83,6 +83,28 @@ function createLlmSource(cfg = {}, root = {}) {
       const screen = body.join('\n').slice(-maxChars);
       const key = process.env[keyEnv];
 
+      /* What the repository is called, which the model otherwise has no way to
+         know. Measured across 8 live panes: it never made a label worse, and
+         where the name carries meaning it made one much better -- `ptop` reads
+         like `htop`, so "Planning and ordering tasks" became "UI design for
+         process monitoring".
+
+         Richer context was measured and rejected. More of the session is a net
+         negative, because recent asks are procedure ("plan build code-review pr
+         merge") and feeding more of them teaches the model to describe the
+         workflow instead of the work. A README tagline split 2 wins to 3
+         losses: added context competes with the asks rather than supplementing
+         them, filling a gap when they are thin and diluting them when they are
+         sharp. See cairn 0024.
+
+         This is the resolved repo name rather than the folder, so a checkout of
+         `fontina` sitting in ~/Code/unifont says fontina. */
+      const project = agent && agent.tokens && agent.tokens.project;
+      const system = project
+        ? PROMPT + '\n\nThe repository is called "' + project + '". Use it to understand'
+          + ' what the work is about. Do not put its name in the label.'
+        : PROMPT;
+
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), timeoutMs);
       try {
@@ -100,7 +122,7 @@ function createLlmSource(cfg = {}, root = {}) {
             temperature: 0,
             max_tokens: 24,
             messages: [
-              { role: 'system', content: PROMPT },
+              { role: 'system', content: system },
               { role: 'user', content: screen },
             ],
           }),

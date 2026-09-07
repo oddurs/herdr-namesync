@@ -155,6 +155,11 @@ name = "v0.3"
 title = "Name it when the agent stops saying"
 due = "2027-02-15"
 
+[[milestone]]
+name = "v0.4"
+title = "Ground the model"
+due = "2027-03-15"
+
 # ─── Saved views ─────────────────────────────────────────────────────────────
 # `cairn list --view next`, `cairn board --view triage`
 

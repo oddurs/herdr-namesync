@@ -6,6 +6,13 @@ Notable changes to namesync. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `status` reports sources alongside sinks, and says why a configured source
+  removed itself rather than silently omitting it.
+- The `llm` source tells the model which repository it is looking at, using the
+  resolved project name rather than the folder.
+
 ## [0.1.0] — 2026-09-06
 
 First release. A herdr plugin that names workspaces, tabs and agents from the
