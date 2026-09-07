@@ -6,6 +6,12 @@ Notable changes to namesync. The format follows
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-09-07
+
+Positioning, and the seams. The plugin now says what it actually does — it
+keeps a name current rather than generating one — and the places where it met
+the operating system rather than herdr have been closed.
+
 ### Added
 
 - `status` reports sources alongside sinks, and says why a configured source
