@@ -1304,6 +1304,46 @@ testAsync('with no session reported it falls back to the pane', async () => {
   } finally { server.close(); }
 });
 
+testAsync('the model is told which project it is looking at', async () => {
+  const { server, seen, url } = await stubModel('Implement roadmap suggestions');
+  const { root, id } = tmpTranscript([said('do all of those, plan build code-review pr merge')]);
+  try {
+    const src = createLlmSource(
+      { enabled: true, endpoint: url, model: 'm', transcriptRoot: root }, {});
+    await src.observe({
+      client: paneClient(''),
+      agent: {
+        pane_id: 'w1:p1',
+        agent_session: { kind: 'id', value: id },
+        // The resolved repo name, which is not the folder name.
+        tokens: { project: 'cairn' },
+      },
+    });
+    const system = seen[0].body.messages[0].content;
+    assert.ok(system.includes('cairn'), 'the project should reach the model');
+    assert.ok(/do not put its name in the label/i.test(system),
+      'and it should be told to keep it out of the answer');
+  } finally { server.close(); }
+});
+
+testAsync('with no project resolved it says nothing about one', async () => {
+  const { server, seen, url } = await stubModel('Clean up disk space');
+  const { root, id } = tmpTranscript([said('let us make some space on my computer')]);
+  try {
+    const src = createLlmSource(
+      { enabled: true, endpoint: url, model: 'm', transcriptRoot: root }, {});
+    /* A pane outside any repository is ordinary -- inventing a project, or
+       leaving an empty pair of quotes in the prompt, would be worse than
+       saying nothing. */
+    await src.observe({
+      client: paneClient(''),
+      agent: { pane_id: 'w1:p1', agent_session: { kind: 'id', value: id }, tokens: {} },
+    });
+    const system = seen[0].body.messages[0].content;
+    assert.ok(!/repository is called/i.test(system), 'no project, no claim about one');
+  } finally { server.close(); }
+});
+
 Promise.all(pending).then(() => {
   process.stdout.write('\n' + passed + ' passed, ' + failed + ' failed\n');
   process.exit(failed ? 1 : 0);
