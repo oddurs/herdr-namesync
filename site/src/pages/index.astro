@@ -48,6 +48,47 @@ import { url } from '../lib/url';
         </p>
         <p>
           That is the problem this plugin was built for, rather than a variation on it.
+          Three of them are worth naming, because each is better than namesync at
+          something:
+        </p>
+
+        <table class="compare">
+          <thead>
+            <tr>
+              <th scope="col">Instead of</th>
+              <th scope="col">Better when</th>
+              <th scope="col">namesync when</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">
+                <a href="https://github.com/qu8n/herdr-automatic-rename">herdr-automatic-rename</a>
+                <span>composes a breadcrumb — <code>api › feat/oauth › nvim</code></span>
+              </th>
+              <td>You want to know <em>where</em> a pane is: directory, branch, program</td>
+              <td>You want to know <em>what is happening</em> in it</td>
+            </tr>
+            <tr>
+              <th scope="row">
+                <a href="https://github.com/wyattjoh/herdr-plugin-renamer">herdr-plugin-renamer</a>
+                <span>names from the first prompt</span>
+              </th>
+              <td>One session, one task, short-lived</td>
+              <td>A session that runs all day and changes subject</td>
+            </tr>
+            <tr>
+              <th scope="row">
+                <a href="https://github.com/iurysza/herdr-tab-smart-rename">herdr-tab-smart-rename</a>
+                <span>asks a model per task</span>
+              </th>
+              <td>You want a model interpreting every task</td>
+              <td>You want it free by default, and a model only when it earns it</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p>
           The distinction is not what a name is generated from — it is whether anything
           decides when it should change, and whether it can tell you why it left a name
           alone.
@@ -259,6 +300,68 @@ herdr integration install claude  # sharper agent state detection</code></pre>
     margin-top: 0;
     padding-top: 0;
     border-top: 0;
+  }
+
+  /* Wider than the reading measure: three columns of prose do not fit in 32rem,
+     and this is the one element on the page that earns the extra width. */
+  .band__inner > .compare { max-width: 100%; }
+
+  .compare { margin: 1.8em 0; }
+
+  /* prose.css styles `tbody td`, not a row header, so this cell would otherwise
+     sit flush against the rule with no padding at all. */
+  .compare tbody th[scope='row'] {
+    text-align: left;
+    padding: 0.75em 1.1em 0.75em 0;
+    border-bottom: 1px solid var(--border);
+    vertical-align: baseline;
+    color: var(--fg-strong);
+    font-weight: var(--weight-regular);
+  }
+
+  .compare tbody tr:last-child th[scope='row'] { border-bottom: 0; }
+
+  .compare th[scope='row'] a { font-weight: var(--weight-semi); }
+
+  /* The concession, set quieter than the name it qualifies. */
+  .compare th[scope='row'] span {
+    display: block;
+    margin-top: 0.2em;
+    font-weight: var(--weight-regular);
+    color: var(--fg-muted);
+  }
+
+  /* Stacked on a phone: three columns of prose in 22rem is four words a line.
+     Each row becomes its own block, with the two verdicts labelled. */
+  @media (max-width: 46rem) {
+    .compare, .compare tbody, .compare tr, .compare td { display: block; }
+    .compare thead { display: none; }
+
+    .compare tr {
+      padding: 1.05em 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .compare tr:last-child { border-bottom: 0; }
+
+    .compare th[scope='row'] {
+      display: block;
+      padding: 0 0 0.5em;
+      border: 0;
+    }
+
+    .compare td {
+      padding: 0.25em 0 0 1.1em;
+      border: 0;
+      position: relative;
+    }
+
+    .compare td::before {
+      content: '›';
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+    }
   }
 
   .rules { margin: 1.8em 0; }
