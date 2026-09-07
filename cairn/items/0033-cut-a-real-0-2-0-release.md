@@ -2,7 +2,7 @@
 id: 33
 title: Cut a real 0.2.0 release
 type: feature
-status: backlog
+status: done
 milestone: v0.5
 created: 2026-09-07
 updated: 2026-09-07
