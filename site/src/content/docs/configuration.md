@@ -61,7 +61,7 @@ watcher.
 | `staleAfterTurns` | How many agent state transitions a title may survive unchanged before it is flagged. A working-to-idle cycle is two, so the default of 6 is roughly three completed turns. |
 | `showDuration` | Publish `$since`. This is the only feature that needs a timer; turning it off removes the timer. |
 | `durationRefreshMs` | How often to re-check elapsed time. Coarse buckets plus metadata dedup mean a tick usually writes nothing. |
-| `stripProjectPrefix` | Drop a leading project name from the label, since the sidebar already shows the project. `ptop-adopt-remaining-lessons` becomes `Adopt-remaining-lessons`. Never strips the whole name. |
+| `stripProjectPrefix` | Drop a leading project name from the **Space label**, since the sidebar already shows the project on the line above. `ptop-adopt-remaining-lessons` becomes `Adopt remaining lessons`. Never strips the whole name, and never applies to tab labels or agent names. |
 | `logLevel` | `error`, `warn`, `info` or `debug`. |
 
 ## Templates
@@ -83,10 +83,40 @@ To keep the repository visible alongside the intent:
 { "templates": { "workspace": "{repo} — {intent}" } }
 ```
 
-Agent names are a special case. herdr requires them to match
+## One template each, because the surfaces differ
+
+The three surfaces are not three copies of the same setting. An agent name is an
+identifier; a Space or tab label is prose. Everything below follows from that:
+
+| | Agent | Space | Tab |
+| --- | --- | --- | --- |
+| Shape | slug | prose | prose |
+| Charset | `[a-z][a-z0-9_-]{0,31}` | anything | anything |
+| Length cap | 32, enforced | none | none |
+| `stripProjectPrefix` | no | yes | no |
+| Unique among live agents | required | no | no |
+
+Agent names are the constrained case. herdr requires them to match
 `[a-z][a-z0-9_-]{0,31}` and to be unique among live agents, so whatever a
 template produces is slugified, truncated on a word boundary, and de-duplicated
 with a numeric suffix before it is applied.
+
+The prose surfaces have the opposite problem: nothing constrains them, so a
+title that is *already* a slug would be passed through as one. A branch name or
+a copied identifier in the title used to make the sidebar read
+`Adopt-remaining-lessons` — a hyphenated identifier wearing a capital letter.
+`{intent}` on a Space or tab label now reads such a title as prose:
+`Adopt remaining lessons`. One hyphen is never enough to trigger it, because
+`well-known` and `read-only` are words; it takes an unbroken run of two or more
+separators with no spaces anywhere, which is a shape a phrase does not have.
+
+`{intent-slug}` is exempt. A template that spells "slug" is asking for one, on
+any surface.
+
+**Space labels are deliberately uncapped.** herdr clips to the column, and it is
+the side that knows how wide the column is — a cap guessed here would cut prose
+mid-word where herdr would clip it correctly. Real labels run to around 34
+characters, so there is nothing to defend against.
 
 ## Sidebar tokens
 

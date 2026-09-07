@@ -36,7 +36,7 @@ cairn render                      # regenerate ROADMAP.md
 - **`priority`**: one of p0, p1, p2, p3 — p0 is a release blocker
 - **`effort`**: one of s, m, l, xl — Rough size, not an estimate
 - **`area`**: free text — Subsystem this touches
-- **Milestones**: `v0.1` (due 2026-12-01), `v1.0` (due 2027-03-01), `later`
+- **Milestones**: `v0.1` (due 2026-12-01), `later`, `v0.2` (due 2027-01-15), `v0.3` (due 2027-02-15), `v1.0` (due 2027-03-01), `v0.4` (due 2027-03-15), `v0.5` (due 2027-04-01), `v0.6` (due 2027-04-15)
 - **Saved views** (`cairn list --view NAME`): `now`, `next`, `triage`
 
 ### Rules

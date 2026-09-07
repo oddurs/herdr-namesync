@@ -3,6 +3,7 @@ const assert = require('assert');
 const os = require('os');
 const path = require('path');
 const fs = require('fs');
+const { execFileSync } = require('child_process');
 
 const naming = require('../src/naming');
 const { decide, SKIP } = require('../src/policy');
@@ -29,11 +30,33 @@ function test(name, fn) {
   try { fn(); passed += 1; process.stdout.write('  ok   ' + name + '\n'); }
   catch (err) { failed += 1; process.stdout.write('  FAIL ' + name + '\n       ' + err.message + '\n'); }
 }
+/* Registered, not started. Firing all fifty at once made the suite compete with
+   itself: several spawn git, git() gives each child 3s, and a machine running
+   fifty tests' worth of subprocesses pushed real calls past that timeout. The
+   child was killed, detectProject fell through to its next source, and a test
+   asserting the first source failed for reasons that had nothing to do with the
+   code under test. A cap costs a little wall-clock and buys a suite that means
+   what it says. */
 function testAsync(name, fn) {
-  pending.push(Promise.resolve().then(fn).then(
-    () => { passed += 1; process.stdout.write('  ok   ' + name + '\n'); },
-    (err) => { failed += 1; process.stdout.write('  FAIL ' + name + '\n       ' + err.message + '\n'); },
-  ));
+  pending.push({ name, fn });
+}
+
+const CONCURRENCY = 4;
+async function runPending() {
+  let next = 0;
+  const worker = async () => {
+    while (next < pending.length) {
+      const { name, fn } = pending[next]; next += 1;
+      try {
+        await fn();
+        passed += 1; process.stdout.write('  ok   ' + name + '\n');
+      } catch (err) {
+        failed += 1;
+        process.stdout.write('  FAIL ' + name + '\n       ' + err.message + '\n');
+      }
+    }
+  };
+  await Promise.all(Array.from({ length: CONCURRENCY }, worker));
 }
 
 function freshStore() {
@@ -133,6 +156,24 @@ test('stripping nothing leaves the case alone', () => {
   assert.strictEqual(naming.stripProject('app fix the parser', 'app'), 'Fix the parser');
 });
 
+test('a slug-shaped title becomes prose', () => {
+  // Space labels are prose and agent names are slugs. A title that is already
+  // a slug used to be handed to the prose surface unchanged, so the sidebar
+  // read "Adopt-remaining-lessons".
+  assert.strictEqual(naming.prose('ptop-adopt-remaining-lessons'), 'Ptop adopt remaining lessons');
+  assert.strictEqual(naming.prose('fix_auth_flow_now'), 'Fix auth flow now');
+});
+test('an ordinary hyphen is not a slug', () => {
+  // Splitting a compound is a worse mistake than leaving a slug alone, so one
+  // separator is never enough -- and a title with spaces in it is a phrase
+  // whatever else it contains.
+  for (const t of ['well-known', 'read-only', 'ptop-cli']) {
+    assert.strictEqual(naming.prose(t), t);
+  }
+  assert.strictEqual(naming.prose('a well-known parser bug'), 'a well-known parser bug');
+  assert.strictEqual(naming.prose('Fix the auth flow'), 'Fix the auth flow');
+});
+
 test('render fills template tokens', () => {
   assert.strictEqual(naming.render('{repo} - {intent}', { repo: 'app', intent: 'Fix auth' }), 'app - Fix auth');
 });
@@ -209,6 +250,29 @@ testAsync('plans a workspace and agent rename', async () => {
   assert.strictEqual(ws.desired, 'Fix auth middleware');
   assert.strictEqual(ws.verdict.rename, true);
   assert.strictEqual(ag.desired, 'fix-auth-middleware');
+});
+testAsync('a slug title names the Space in prose and the agent in slug', async () => {
+  const n = new Namer({ cfg: cfg(), store: freshStore(), sinks: [] });
+  const plans = await n.buildPlans(snapshot([
+    agent({ terminal_title_stripped: 'app-adopt-remaining-lessons' }),
+  ]));
+  // The project prefix goes because the row above already says "app"; the
+  // separators go because the label is prose.
+  assert.strictEqual(plans.find((p) => p.kind === 'workspace').desired, 'Adopt remaining lessons');
+  // The agent name is an identifier and must stay one.
+  assert.strictEqual(plans.find((p) => p.kind === 'agent').desired, 'app-adopt-remaining-lessons');
+});
+testAsync('a template that asks for a slug still gets one', async () => {
+  // Only {intent} is prose. A workspace template spelling "intent-slug" is
+  // asking for a slug, and undoing it would defeat the setting.
+  const n = new Namer({
+    cfg: cfg({ templates: { workspace: '{intent-slug}' }, stripProjectPrefix: false }),
+    store: freshStore(), sinks: [],
+  });
+  const plans = await n.buildPlans(snapshot([
+    agent({ terminal_title_stripped: 'Adopt remaining lessons' }),
+  ]));
+  assert.strictEqual(plans.find((p) => p.kind === 'workspace').desired, 'adopt-remaining-lessons');
 });
 testAsync('falls back to tabs when a workspace holds several agents', async () => {
   const n = new Namer({ cfg: cfg(), store: freshStore(), sinks: [] });
@@ -958,18 +1022,44 @@ test('the two clocks answer different questions', () => {
 
 process.stdout.write('\nfolder is the last resort\n');
 
+/* A repository whose three possible identities are three different strings, so
+   an assertion says which source answered rather than which two happened to
+   agree. Asking the namesync checkout itself could not: before it was renamed,
+   its remote and its manifest both said "namesync", and a test comparing the
+   two passed whichever one the code had actually consulted. */
+function fixtureRepo({ remote, manifest } = {}) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ns-repo-'));
+  execFileSync('git', ['-C', dir, 'init', '-q'], { stdio: 'ignore' });
+  if (remote) execFileSync('git', ['-C', dir, 'remote', 'add', 'origin', remote], { stdio: 'ignore' });
+  if (manifest) fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ name: manifest }));
+  return dir;
+}
+
 testAsync('a path that no longer exists still resolves to the repository', async () => {
   // A deleted worktree: every git query against the path fails, so detection
   // walks up. The directory it lands on has a remote, and that remote is the
-  // answer -- not the folder it happens to be sitting in.
+  // answer -- not the folder it happens to be sitting in, and not what the
+  // project's own manifest calls it.
   const { detectProject, gitCache } = require('../src/namer');
   gitCache.clear();
-  const repo = path.join(__dirname, '..');
+  const repo = fixtureRepo({
+    remote: 'https://github.com/acme/by-remote.git',
+    manifest: 'by-manifest',
+  });
   const gone = path.join(repo, '.does-not-exist', 'deep', 'gone');
-  const viaGone = await detectProject(gone);
-  const direct = await detectProject(repo);
-  assert.strictEqual(viaGone, direct,
-    'walking up should reach the same identity as asking the root directly');
+  assert.strictEqual(await detectProject(gone), 'by-remote',
+    'walking up should reach the repository and ask its remote');
+  assert.notStrictEqual(path.basename(repo), 'by-remote');
+});
+
+testAsync('the manifest answers when the walk-up finds no remote', async () => {
+  // Same walk, one rung further down the chain: a repository with no remote at
+  // all still knows what it calls itself.
+  const { detectProject, gitCache } = require('../src/namer');
+  gitCache.clear();
+  const repo = fixtureRepo({ manifest: 'by-manifest' });
+  const gone = path.join(repo, '.does-not-exist', 'deep', 'gone');
+  assert.strictEqual(await detectProject(gone), 'by-manifest');
 });
 
 testAsync('a manifest name beats the folder it lives in', async () => {
@@ -1458,7 +1548,7 @@ testAsync('a reasoning passthrough is sent only when configured', async () => {
   } finally { opted.server.close(); }
 });
 
-Promise.all(pending).then(() => {
+runPending().then(() => {
   process.stdout.write('\n' + passed + ' passed, ' + failed + ' failed\n');
   process.exit(failed ? 1 : 0);
 });

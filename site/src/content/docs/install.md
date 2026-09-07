@@ -71,12 +71,13 @@ namesync dry-run
 
 ```
 rename  agent w5:p1      ""            -> "ptop-adopt-remaining-lessons" | intent changed
-rename  workspace w5     "perfect"     -> "ptop-adopt-remaining-lessons" | intent changed
+rename  workspace w5     "perfect"     -> "Adopt remaining lessons"      | intent changed
 skip    workspace w1     "testing"     -> "Astro docs site GNU style"    | current name was set by hand
 skip    workspace w7     "Herdr namer" -> "Herdr namer"                  | name already matches
 ```
 
-If the skips look right, start the watcher:
+One title, two names: an agent name is an identifier and a Space label is
+prose. If the skips look right, start the watcher:
 
 ```bash
 namesync start

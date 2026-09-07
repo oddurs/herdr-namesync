@@ -16,6 +16,7 @@
   "durationRefreshMs": 30000,
   "stripProjectPrefix": true,
   "respectPluginRoles": true,
+  "envFile": null,
   "metadata": {
     "enabled": true
   },
@@ -40,7 +41,9 @@
       "model": "",
       "apiKeyEnv": "NAMESYNC_API_KEY",
       "timeoutMs": 8000,
-      "maxChars": 4000
+      "maxChars": 4000,
+      "maxTokens": 64,
+      "reasoning": null
     }
   },
   "consultCostlySources": true,
