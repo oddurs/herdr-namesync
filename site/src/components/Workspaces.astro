@@ -1,186 +1,306 @@
 ---
 /**
- * The hero: a herdr sidebar that performs one rename pass on load.
+ * The hero: herdr's Spaces panel, performing one rename pass on load.
  *
- * The rows are the author's real workspaces. Three of them were named by hand
- * and stay exactly as they are — that is the whole argument for the plugin, so
- * it is shown rather than claimed.
+ * Drawn from a real session rather than invented, down to the row structure —
+ * herdr's sidebar puts state, index, project and repo on the first line and
+ * the workspace name on the second, and that split is the whole reason the
+ * plugin has anything to say. The `before` values are the folder names herdr
+ * falls back to when nobody has named a space, which is why three of them are
+ * the same word: a checkout of `fontina` lives in ~/Code/unifont.
+ *
+ * Two rows are held. They were named by hand and namesync never touches them,
+ * so they sit still while everything around them resolves. That is the
+ * argument, so it is shown rather than claimed.
  */
 
-type Row =
-  | { id: string; name: string; held: true }
-  | { id: string; before: string; after: string; held?: false };
+type Row = {
+  n: string;
+  state: 'working' | 'idle' | 'done';
+  project: string;
+  branch?: string;
+  worktree?: boolean;
+  since: string;
+  before: string;
+  after: string;
+  held?: boolean;
+};
 
 const rows: Row[] = [
-  { id: 'w1', name: 'testing', held: true },
-  { id: 'w2', name: 'm5', held: true },
-  { id: 'w4', name: 'cairn', held: true },
-  { id: 'w5', before: 'perfect', after: 'ptop-adopt-remaining-lessons' },
-  { id: 'w6', before: 'bedreader', after: 'Open source wifi e-reader' },
-  { id: 'w8', before: 'milky-xl', after: 'Apple Notes-style Obsidian app' },
+  { n: '1', state: 'working', project: 'fontina', branch: 'main', since: '3m',
+    before: 'testing', after: 'testing', held: true },
+  { n: '2', state: 'working', project: 'fontina', branch: 'feat/fixed-pitch-check', worktree: true, since: '1m',
+    before: 'unifont', after: 'Richard Stallman perspective' },
+  { n: '3', state: 'working', project: 'fontina', branch: 'main', since: '2m',
+    before: 'unifont', after: 'Claude Code settings configuration' },
+  { n: '4', state: 'working', project: 'cairn', branch: 'feat/composition', since: '40m',
+    before: 'cairn', after: 'cairn', held: true },
+  { n: '5', state: 'working', project: 'poptop', branch: 'item-0028-disk-saturation', since: '20m',
+    before: 'perfect', after: 'Adopt-remaining-lessons' },
+  { n: '6', state: 'done', project: 'trafford', branch: 'feat/move-and-duplicate', since: '3h',
+    before: 'milky-xl', after: 'Terminal Obsidian clone' },
 ];
+
+// herdr's own state glyphs.
+const glyph = { working: '◑', idle: '○', done: '✓' } as const;
 ---
 
 <figure class="ws">
-  <div class="ws__chrome t-label">
-    <span class="ws__title">herdr</span>
-    <span class="ws__count">{rows.length} spaces</span>
+  <div class="ws__frame">
+    <div class="ws__bar">
+      <span class="ws__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span class="ws__app">herdr</span>
+    </div>
+
+    <div class="ws__panel">
+      <div class="ws__legend">Spaces</div>
+
+      <ul class="ws__list">
+        {
+          rows.map((row, i) => (
+            <li class="ws__row" style={`--i:${i}`} data-held={row.held ? 'true' : 'false'}>
+              <span class="ws__meta">
+                <span class={`ws__glyph ws__glyph--${row.state}`}>{glyph[row.state]}</span>
+                <span class="ws__n">{row.n}</span>
+                <span class="ws__project">{row.project}</span>
+                {row.worktree && <span class="ws__worktree">worktree</span>}
+                {row.held && <span class="ws__flag">held</span>}
+                <span class="ws__branch">{row.branch}</span>
+                <span class="ws__since">{row.since}</span>
+              </span>
+
+              <span class="ws__label">
+                <span class="ws__name ws__name--before">{row.before}</span>
+                <span class="ws__name ws__name--after">{row.after}</span>
+              </span>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
   </div>
 
-  <ul class="ws__list">
-    {
-      rows.map((row, i) => (
-        <li class="ws__row t-code" style={`--i:${i}`} data-held={row.held ? 'true' : 'false'}>
-          <span class="ws__id">{row.id}</span>
-          {row.held ? (
-            <span class="ws__name ws__name--held">
-              {row.name}
-              <span class="ws__flag">held</span>
-            </span>
-          ) : (
-            <span class="ws__swap">
-              <span class="ws__name ws__name--before">{row.before}</span>
-              <span class="ws__name ws__name--after">{row.after}</span>
-            </span>
-          )}
-        </li>
-      ))
-    }
-  </ul>
-
   <figcaption class="ws__caption t-label">
-    Three of these were named by hand. namesync leaves them alone.
+    Three of these live in folders called <code>unifont</code>. Two were named by
+    hand and stay exactly as they are.
   </figcaption>
 </figure>
 
 <style>
+  /* Sized against its own column rather than the viewport: this sits in a
+     hero that is one column on small screens and roughly half of one on
+     large, so viewport units would size it for the wrong box. */
   .ws {
     margin: 0;
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius-lg);
-    background: linear-gradient(180deg, var(--bg-panel), var(--bg));
-    overflow: hidden;
+    container-type: inline-size;
   }
 
-  .ws__chrome {
-    display: flex;
-    align-items: baseline;
-    gap: 0.8rem;
-    padding: 0.7rem 1.1rem;
-    border-bottom: 1px solid var(--border);
+  .ws__frame {
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-lg);
     background: var(--bg-sunken);
+    overflow: hidden;
+    /* One soft lift. Depth here is to separate the window from the page, not
+       to decorate it, so it stays under the threshold of being noticed. */
+    box-shadow: 0 1px 0 color-mix(in srgb, var(--fg-strong) 6%, transparent) inset,
+                0 18px 40px -24px rgb(0 0 0 / 0.85);
+  }
+
+  /* --- window chrome ---------------------------------------------------- */
+
+  .ws__bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75em;
+    padding: 0.62rem 0.9rem;
+    border-bottom: 1px solid var(--border);
+    background: color-mix(in srgb, var(--bg-panel) 70%, var(--bg-sunken));
+  }
+
+  .ws__dots {
+    display: inline-flex;
+    gap: 0.42em;
+  }
+
+  .ws__dots i {
+    width: 0.62em;
+    height: 0.62em;
+    border-radius: 50%;
+    /* Monochrome. Coloured traffic lights would be the loudest thing on the
+       page and would say "macOS" rather than "terminal". */
+    background: var(--border-strong);
+  }
+
+  .ws__app {
+    font-family: var(--font-sans);
+    font-size: var(--step--2);
+    font-weight: var(--weight-medium);
+    letter-spacing: 0.01em;
     color: var(--fg-subtle);
   }
 
-  .ws__title { color: var(--fg-muted); }
-  .ws__count { margin-left: auto; }
+  /* --- panel ------------------------------------------------------------ */
+
+  .ws__panel {
+    padding: 0.85rem 0 1rem;
+    background: linear-gradient(180deg, var(--bg-panel), var(--bg));
+  }
+
+  .ws__legend {
+    font-family: var(--font-sans);
+    font-size: var(--step--2);
+    font-weight: var(--weight-medium);
+    letter-spacing: 0.055em;
+    text-transform: uppercase;
+    color: var(--fg-subtle);
+    padding: 0 1.05rem 0.7rem;
+  }
 
   .ws__list {
     list-style: none;
     margin: 0;
-    padding: 0.5rem 0;
+    padding: 0;
   }
 
+  /* Both lines of a row share one indent, so the names form a single column
+     down the panel and the eye can read them without the metadata. */
   .ws__row {
+    display: grid;
+    gap: 0.02rem;
+    padding: 0.3rem 1.05rem 0.55rem;
+    font-family: var(--font-code);
+    /* Tied to the container: the mock keeps its proportions whether it is in
+       a half-width hero column or the full width of a phone. */
+    font-size: clamp(0.62rem, 3.1cqi, 0.78rem);
+    line-height: 1.45;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .ws__meta {
     display: flex;
     align-items: baseline;
-    gap: 1rem;
-    padding: 0.5rem 1.1rem;
-    font-variant-numeric: tabular-nums;
-    line-height: 1.5;
+    gap: 0.62em;
+    min-width: 0;
   }
 
-  .ws__id {
-    color: var(--fg-subtle);
+  .ws__glyph { flex: none; width: 1ch; }
+  .ws__glyph--working { color: var(--gotham-cyan-lift); }
+  .ws__glyph--idle    { color: var(--fg-subtle); }
+  .ws__glyph--done    { color: var(--state-renamed); }
+
+  /* Right-aligned in a fixed cell so single and double digits share an axis. */
+  .ws__n {
     flex: none;
-    width: 2ch;
+    min-width: 1.6ch;
+    text-align: right;
+    color: var(--accent);
+    font-weight: var(--weight-semi);
   }
 
-  .ws__name {
+  .ws__project {
+    flex: none;
+    color: var(--fg-strong);
+    font-weight: var(--weight-semi);
+  }
+
+  .ws__worktree,
+  .ws__flag {
+    flex: none;
+    color: var(--gotham-orange);
+  }
+
+  /* The one field with no bound on its length, so it is the one that gives. */
+  .ws__since {
+    flex: none;
+    margin-left: auto;
+    padding-left: 0.8em;
+    color: var(--fg-subtle);
+  }
+
+  .ws__branch {
+    color: var(--fg-subtle);
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
-  .ws__name--held {
-    color: var(--state-held);
-    display: flex;
-    align-items: baseline;
-    gap: 0.7rem;
-  }
-
-  .ws__flag {
-    font-family: var(--font-sans);
-    font-size: var(--step--2);
-    letter-spacing: 0.008em;
-    color: var(--fg-subtle);
-  }
-
-  /* The swap: both labels occupy one grid cell, so nothing reflows when the
-     name changes. Final state is the default; the animation only reveals it. */
-  .ws__swap {
+  /* Both names occupy one cell, so the row cannot reflow when it changes. */
+  .ws__label {
     display: grid;
     min-width: 0;
+    padding-left: calc(1ch + 0.62em);
   }
 
-  .ws__swap > .ws__name {
+  .ws__name {
     grid-area: 1 / 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
-  .ws__name--before {
-    color: var(--fg-subtle);
-    opacity: 0;
-  }
+  .ws__name--before { color: var(--fg-subtle); opacity: 0; }
+  .ws__name--after  { color: var(--gotham-base5-lift); opacity: 1; }
 
-  .ws__name--after {
-    color: var(--state-renamed);
-    opacity: 1;
-  }
+  /* A held name keeps full text colour, because a person wrote it and it is
+     the most deliberate thing on the panel. Everything namesync wrote sits a
+     step back from it. The orange flag beside it carries the state; dimming
+     the name as well said "inactive", which is the opposite of true. */
+  .ws__row[data-held='true'] .ws__name--after { color: var(--fg-strong); }
 
   .ws__caption {
-    padding: 0.85rem 1.1rem;
-    border-top: 1px solid var(--border);
+    padding: 0.9rem 0.15rem 0;
     color: var(--fg-subtle);
-    line-height: 1.6;
+    line-height: 1.55;
   }
 
-  /* One orchestrated pass on load: rows start at their old names, then each
-     resolves in turn. Held rows never move. */
+  .ws__caption code {
+    font-family: var(--font-code);
+    font-size: 0.92em;
+    color: var(--fg-muted);
+  }
+
+  /* Below roughly 30 characters of branch the ellipsis is doing more harm
+     than the branch is doing good, so the column leaves. */
+  @container (max-width: 24rem) {
+    .ws__branch { display: none; }
+  }
+
+  /* --- the pass --------------------------------------------------------- */
+
+  /* One orchestrated moment on load, not an effect per row. The resolved
+     state is the default and the animation only reveals it, so a reader who
+     arrives late sees the finished sidebar rather than an empty one. */
   @media (prefers-reduced-motion: no-preference) {
-    .ws__name--before {
+    .ws__row[data-held='false'] .ws__name--before {
       opacity: 1;
-      animation: fade-out 320ms ease forwards;
-      animation-delay: calc(700ms + var(--i) * 180ms);
+      animation: ws-out 300ms var(--ease) forwards;
+      animation-delay: calc(760ms + var(--i) * 170ms);
     }
 
-    .ws__name--after {
+    .ws__row[data-held='false'] .ws__name--after {
       opacity: 0;
-      animation: fade-in 320ms ease forwards;
-      animation-delay: calc(760ms + var(--i) * 180ms);
+      animation: ws-in 300ms var(--ease) forwards;
+      animation-delay: calc(820ms + var(--i) * 170ms);
     }
 
-    .ws__row[data-held='true'] .ws__name--held {
-      animation: pulse-held 400ms ease;
-      animation-delay: calc(700ms + var(--i) * 180ms);
+    /* Held rows do not move. They lift by a hair as the pass reaches them —
+       enough to read as "considered, and left alone". */
+    .ws__row[data-held='true'] .ws__name--after {
+      animation: ws-hold 620ms var(--ease);
+      animation-delay: calc(820ms + var(--i) * 170ms);
     }
   }
 
-  @keyframes fade-out {
-    to { opacity: 0; }
+  @keyframes ws-out { to { opacity: 0; } }
+
+  @keyframes ws-in {
+    from { opacity: 0; transform: translateY(0.3em); }
+    to   { opacity: 1; transform: none; }
   }
 
-  @keyframes fade-in {
-    from { opacity: 0; transform: translateY(0.25em); }
-    to { opacity: 1; transform: none; }
+  @keyframes ws-hold {
+    35% { color: var(--fg-muted); }
   }
-
-  @keyframes pulse-held {
-    50% { color: var(--fg-muted); }
-  }
-
-  @media (max-width: 32rem) {
-    .ws__row { font-size: var(--step--2); }
-  }
-
 </style>

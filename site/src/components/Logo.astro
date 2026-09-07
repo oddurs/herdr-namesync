@@ -1,6 +1,6 @@
 ---
 /**
- * The namesync lockup.
+ * The herdr-namesync lockup.
  *
  * Mark: two staggered arrows, one out and one back — the ASCII `<-` `->` a
  * terminal person already reads as an exchange. The lower arrow carries the
@@ -10,6 +10,12 @@
  * same size, and its optical centre is aligned to the wordmark's x-height
  * rather than to the type's bounding box. Those two things are most of why a
  * lockup reads as drawn rather than assembled.
+ *
+ * Wordmark: `herdr-namesync`, which is the repository, the install command and
+ * what the ecosystem indexes. The prefix is a namespace rather than part of
+ * the name, so it is set at body weight in the muted tone and `namesync`
+ * carries the semibold — the same way a scoped package reads, and the reason
+ * the name still lands on the right half of the word.
  */
 
 interface Props {
@@ -24,7 +30,7 @@ const { size = 'var(--step-0)', markOnly = false, class: className } = Astro.pro
 ---
 
 <span class:list={['lockup', className]} style={`--lockup-size:${size}`}>
-  <svg class="lockup__mark" viewBox="0 0 26 20" role="img" aria-label="namesync">
+  <svg class="lockup__mark" viewBox="0 0 26 20" role="img" aria-label="herdr-namesync">
     <g fill="none" stroke-width="2.9" stroke-linecap="round" stroke-linejoin="round">
       <g class="lockup__out">
         <path d="M23 6H5" />
@@ -36,7 +42,11 @@ const { size = 'var(--step-0)', markOnly = false, class: className } = Astro.pro
       </g>
     </g>
   </svg>
-  {!markOnly && <span class="lockup__word">namesync</span>}
+  {!markOnly && (
+    <span class="lockup__word">
+      <span class="lockup__scope">herdr-</span>namesync
+    </span>
+  )}
 </span>
 
 <style>
@@ -80,6 +90,16 @@ const { size = 'var(--step-0)', markOnly = false, class: className } = Astro.pro
     letter-spacing: -0.017em;
     color: var(--fg-strong);
   }
+
+  /* The namespace, not the name. Set back far enough to let `namesync` carry
+     the lockup, close enough that the whole string still reads as one word —
+     which it has to, because it is what you type to install it. */
+  .lockup__scope {
+    font-weight: var(--weight-regular);
+    color: var(--fg-subtle);
+  }
+
+  .lockup:hover .lockup__scope { color: var(--fg-muted); }
 
   .lockup:hover .lockup__out { stroke: var(--fg-muted); }
   .lockup:hover .lockup__in { stroke: var(--accent-hover); }
