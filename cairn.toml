@@ -160,6 +160,11 @@ name = "v0.4"
 title = "Ground the model"
 due = "2027-03-15"
 
+[[milestone]]
+name = "v0.5"
+title = "First-class herdr plugin"
+due = "2027-04-01"
+
 # ─── Saved views ─────────────────────────────────────────────────────────────
 # `cairn list --view next`, `cairn board --view triage`
 
