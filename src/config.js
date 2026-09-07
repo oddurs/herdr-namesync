@@ -84,6 +84,17 @@ const DEFAULTS = {
     title: { enabled: true },
   },
 
+  /* A source may declare itself costly -- slow, metered, or both. Those are
+     consulted only when the cheap answer has demonstrably failed: the title
+     has gone stale AND the agent is not mid-turn, so the pane shows a settled
+     result rather than a half-written one.
+
+     `deepIntervalMs` is the floor between consultations for one pane. A
+     session that finishes repeatedly while genuinely stale would otherwise
+     bill in a loop. */
+  consultCostlySources: true,
+  deepIntervalMs: 600000,
+
   // Titles that carry no intent. Matched case-insensitively against the whole
   // title after trimming.
   ignoreTitles: [

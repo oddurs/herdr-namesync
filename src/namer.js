@@ -239,6 +239,7 @@ class Namer {
     const cfg = this.cfg;
     const idx = index(snapshot);
     this.panes = idx.panes;
+    this.#beginPass();
     const plans = [];
     const takenNames = new Set(idx.liveAgentNames);
 
@@ -315,15 +316,69 @@ class Namer {
     });
   }
 
+  /* One answer per agent per pass.
+     #vars runs more than once for the same agent -- once for its own name,
+     again for the workspace it leads -- and each run resolved git and consulted
+     sources afresh. That is wasted work, and with a costly source it is worse
+     than wasted: the first call charges the floor and the second falls back,
+     so a single sync produced two different answers for one agent. */
+  #beginPass() {
+    this.pass = new Map();
+  }
+
+  /* Whether a costly source is worth consulting for this agent right now.
+     Three conditions, all necessary:
+
+       stale      the title has survived several state transitions unchanged,
+                  which is namesync's own evidence that the free source failed
+       settled    the agent is not mid-turn, so the pane shows a finished
+                  result rather than something half-written
+       not recent a floor per pane, or a session that finishes repeatedly
+                  while genuinely stale would bill in a loop
+
+     Finishing alone is not enough: a title survives completions unchanged,
+     which is how staleness is measured in the first place. */
+  #deepWanted(agent, now) {
+    if (!this.cfg.consultCostlySources) return false;
+
+    const status = agent.agent_status || 'unknown';
+    if (status === 'working' || status === 'blocked') return false;
+
+    const title = normalize(agent.terminal_title_stripped || '');
+    const { turns } = this.store.titleSeen(
+      agent.pane_id, title, agent.state_change_seq || 0, now,
+    );
+    if (turns < this.cfg.staleAfterTurns) return false;
+
+    return now - this.store.lastDeep(agent.pane_id) >= this.cfg.deepIntervalMs;
+  }
+
   async #vars(agent, ws) {
+    if (this.pass && this.pass.has(agent.pane_id)) return this.pass.get(agent.pane_id);
+    const resolved = await this.#resolveVars(agent, ws);
+    if (this.pass) this.pass.set(agent.pane_id, resolved);
+    return resolved;
+  }
+
+  async #resolveVars(agent, ws) {
     /* Asking rather than reading. The answer is still the terminal title by
        default; the difference is that `Namer` no longer knows that. */
-    const { intent } = await observe(this.sources, {
+    const now = Date.now();
+    const deep = this.#deepWanted(agent, now);
+    const { intent, source, costly } = await observe(this.sources, {
       agent,
       pane: this.panes ? this.panes.get(agent.pane_id) : undefined,
       client: this.client,
       cfg: this.cfg,
+      deep,
     }, this.log);
+
+    // Charge the floor only when a costly source was actually consulted, so a
+    // cheap answer never postpones the next real attempt.
+    if (costly) {
+      this.store.markDeep(agent.pane_id, now);
+      this.log('info', 'consulted ' + source + ' for ' + agent.pane_id);
+    }
     if (!intent) return null;
     /* The foreground process's directory is the more accurate of the two — it
        follows an agent into a worktree — but it is also transient: a pane
@@ -398,6 +453,7 @@ class Namer {
     if (!this.cfg.metadata?.enabled) return 0;
     const idx = index(snapshot);
     this.panes = idx.panes;
+    this.#beginPass();
     const sink = this.sinks.find((x) => x.name === 'herdr' && x.reportMetadata);
     if (!sink) return 0;
     let published = 0;

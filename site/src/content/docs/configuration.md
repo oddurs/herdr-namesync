@@ -55,6 +55,8 @@ watcher.
 | `targets` | Which surfaces get named at all. |
 | `multiAgent` | What to do with a workspace holding several agents: `tab`, `focused` or `skip`. |
 | `respectPluginRoles` | Leave workspaces alone when another plugin has claimed them with a `role` token. herdr's metadata is one flat map where the last writer wins, so naming a claimed space would overwrite that plugin's own labelling. |
+| `consultCostlySources` | Whether a source that declares itself costly may be consulted at all. |
+| `deepIntervalMs` | Floor between costly consultations for one pane. A session that finishes repeatedly while genuinely stale would otherwise bill in a loop. |
 | `showStale` | Publish `$stale`. |
 | `staleAfterTurns` | How many agent state transitions a title may survive unchanged before it is flagged. A working-to-idle cycle is two, so the default of 6 is roughly three completed turns. |
 | `showDuration` | Publish `$since`. This is the only feature that needs a timer; turning it off removes the timer. |
