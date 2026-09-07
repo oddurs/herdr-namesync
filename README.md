@@ -1,15 +1,15 @@
 # namesync
 
-[![ci](https://github.com/oddurs/namesync/actions/workflows/ci.yml/badge.svg)](https://github.com/oddurs/namesync/actions/workflows/ci.yml)
+[![ci](https://github.com/oddurs/herdr-namesync/actions/workflows/ci.yml/badge.svg)](https://github.com/oddurs/herdr-namesync/actions/workflows/ci.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 Names your terminal workspaces after what you are actually doing in them.
 
 A [herdr](https://herdr.dev) plugin.
-**[Documentation](https://oddurs.github.io/namesync/docs/install)** —
-[Install](https://oddurs.github.io/namesync/docs/install) ·
-[How it decides](https://oddurs.github.io/namesync/docs/deciding) ·
-[Configuration](https://oddurs.github.io/namesync/docs/configuration)
+**[Documentation](https://oddurs.github.io/herdr-namesync/docs/install)** —
+[Install](https://oddurs.github.io/herdr-namesync/docs/install) ·
+[How it decides](https://oddurs.github.io/herdr-namesync/docs/deciding) ·
+[Configuration](https://oddurs.github.io/herdr-namesync/docs/configuration)
 
 A herdr plugin that keeps workspace labels, tab labels and agent names in sync
 with the intent of the coding agent running inside them — continuously, without
@@ -96,7 +96,7 @@ anything. Start there.
 ## Install
 
 ```bash
-herdr plugin install oddurs/namesync
+herdr plugin install oddurs/herdr-namesync
 namesync setup --write            # add the sidebar rows herdr needs
 herdr integration install claude  # sharper agent state detection
 ```

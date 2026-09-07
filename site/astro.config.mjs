@@ -4,7 +4,7 @@ import { defineConfig } from 'astro/config';
 export default defineConfig({
   // GitHub project pages. `base` is why internal links go through src/lib/url.
   site: 'https://oddurs.github.io',
-  base: '/namesync',
+  base: '/herdr-namesync',
   trailingSlash: 'ignore',
   markdown: {
     shikiConfig: {

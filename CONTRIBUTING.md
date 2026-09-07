@@ -9,7 +9,7 @@ There is nothing to install. The plugin is dependency-free Node; only the
 documentation site has packages.
 
 ```bash
-git clone git@github.com:oddurs/namesync.git
+git clone git@github.com:oddurs/herdr-namesync.git
 cd namesync
 node test/run.js            # the whole suite, ~1s
 
