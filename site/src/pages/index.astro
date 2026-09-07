@@ -184,6 +184,46 @@ Open source wifi e-reader</code></pre>
 
     <section class="band band--rule">
       <div class="band__inner prose">
+        <h2 class="band__heading">One title, two names</h2>
+        <p>
+          herdr has two naming surfaces and they want opposite things. An agent name is
+          an identifier — herdr requires <code>[a-z][a-z0-9_-]{'{0,31}'}</code> and no two
+          live agents sharing one. A space label is prose. So the same intent lands as
+          two different strings:
+        </p>
+
+        <dl class="split">
+          <div class="split__from">
+            <dt>the agent’s title</dt>
+            <dd><code>app-fix-the-auth-flow</code></dd>
+          </div>
+          <div class="split__row">
+            <dt>agent</dt>
+            <dd>
+              <code>app-fix-the-auth-flow</code>
+              <span>an identifier, kept as one</span>
+            </dd>
+          </div>
+          <div class="split__row">
+            <dt>space</dt>
+            <dd>
+              <code>Fix the auth flow</code>
+              <span>prose — and the line above it already says <em>app</em></span>
+            </dd>
+          </div>
+        </dl>
+
+        <p>
+          A title that arrives already slug-shaped is read as prose on the surfaces that
+          want prose, so the sidebar never ends up with a hyphenated identifier wearing
+          a capital letter. One hyphen never triggers it: <code>well-known</code> and
+          <code>read-only</code> are words, not slugs.
+        </p>
+      </div>
+    </section>
+
+    <section class="band band--rule">
+      <div class="band__inner prose">
         <h2 class="band__heading">Install</h2>
         <pre><code>herdr plugin install oddurs/herdr-namesync
 namesync setup --write            # add the sidebar rows herdr needs
@@ -361,6 +401,51 @@ herdr integration install claude  # sharper agent state detection</code></pre>
       left: 0;
       color: var(--accent);
     }
+  }
+
+  /* One title above, the two names it becomes below. The rule under the source
+     is the fork: everything beneath it descends from the line above it. */
+  .split {
+    margin: 1.8em 0;
+    max-width: min(var(--measure), 100%);
+  }
+
+  .split__from {
+    padding-bottom: 1.05em;
+    border-bottom: 1px solid var(--border-strong);
+  }
+
+  .split__row { padding-top: 1.05em; }
+
+  .split dt {
+    color: var(--fg-muted);
+    font-size: var(--step--1);
+    margin-bottom: 0.3em;
+  }
+
+  .split dd { margin: 0; }
+
+  .split dd code {
+    color: var(--fg-strong);
+    font-size: var(--step-0);
+  }
+
+  .split dd span {
+    display: block;
+    margin-top: 0.25em;
+    color: var(--fg-muted);
+  }
+
+  @media (min-width: 44rem) {
+    .split__from,
+    .split__row {
+      display: grid;
+      grid-template-columns: 9rem minmax(0, 1fr);
+      gap: var(--space-5);
+      align-items: baseline;
+    }
+
+    .split dt { margin-bottom: 0; }
   }
 
   .rules { margin: 1.8em 0; }

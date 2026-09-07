@@ -2,7 +2,7 @@
 id: 47
 title: Show one title becoming two names
 type: feature
-status: backlog
+status: done
 milestone: v0.7
 depends_on:
 - 46
