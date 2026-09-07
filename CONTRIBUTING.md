@@ -10,8 +10,8 @@ documentation site has packages.
 
 ```bash
 git clone git@github.com:oddurs/herdr-namesync.git
-cd namesync
-node test/run.js            # the whole suite, ~1s
+cd herdr-namesync
+node test/run.js            # the whole suite, under a second
 
 herdr plugin link "$PWD"    # run it against a live herdr session
 namesync dry-run            # see what it would do, change nothing

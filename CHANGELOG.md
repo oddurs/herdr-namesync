@@ -15,6 +15,11 @@ Notable changes to namesync. The format follows
 
 ### Changed
 
+- The README, the docs site and `config.example.json` have had a pass for
+  publish: examples that predated the prose rule, a clone path that still said
+  `namesync` after the repository was renamed, three settings that shipped
+  without reaching the example config, and a stale milestone list in
+  `AGENTS.md`.
 - The test suite runs its async tests four at a time instead of firing all
   fifty at once. It was competing with itself for subprocesses: real `git`
   calls were being killed by their own 3s timeout, and a test asserting the
