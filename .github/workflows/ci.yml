@@ -52,6 +52,8 @@ jobs:
         working-directory: site
       - run: cargo clippy --all-targets -- -D warnings
         working-directory: site
+      - run: cargo test
+        working-directory: site
       - run: cargo run --release -- build
         working-directory: site
 

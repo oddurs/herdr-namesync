@@ -43,3 +43,37 @@ impl Ctx {
         format!("{}/{}", self.base, path.trim_start_matches('/'))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_built_url_carries_the_base() {
+        let ctx = Ctx::build("/herdr-namesync");
+        assert_eq!(ctx.url("docs/install"), "/herdr-namesync/docs/install");
+        assert_eq!(ctx.url("/docs/install"), "/herdr-namesync/docs/install");
+        assert_eq!(ctx.url(""), "/herdr-namesync/");
+    }
+
+    #[test]
+    fn a_trailing_slash_on_the_base_is_not_doubled() {
+        assert_eq!(
+            Ctx::build("/herdr-namesync/").url("styles.css"),
+            "/herdr-namesync/styles.css"
+        );
+    }
+
+    #[test]
+    fn served_urls_are_root_relative() {
+        let ctx = Ctx::serve();
+        assert_eq!(ctx.url("docs/install"), "/docs/install");
+        assert_eq!(ctx.url(""), "/");
+    }
+
+    #[test]
+    fn only_the_served_page_carries_the_reload_listener() {
+        assert!(Ctx::serve().live);
+        assert!(!Ctx::build("/herdr-namesync").live);
+    }
+}
