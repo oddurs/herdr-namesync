@@ -1324,6 +1324,59 @@ testAsync('a fresh title never reaches the costly source, whatever the order', a
   assert.strictEqual(calls.length, 0, 'consulted while the title was still fresh');
 });
 
+testAsync('a model-named workspace is not renamed back on the next sync', async () => {
+  /* The oscillation: a costly answer used to survive exactly one rename
+     interval. The next sync was cheap, the cheap source returned the same
+     stale title, the label differed, and it renamed back -- then the floor
+     cleared and it happened again. 509 of 655 renames in one real log were a
+     target returning to a name it already had. */
+  const { source, calls } = countingCostly('Fix the stale data');
+  const store = freshStore();
+  const now = Date.now();
+  store.titleSeen('w1:p1', 'A title from this morning', 1, now);
+  const n = new Namer({
+    cfg: cfg(), store, sinks: [],
+    sources: [createTitleSource(), source],
+  });
+  const snap = snapshot([agent({
+    agent_status: 'idle', state_change_seq: 99,
+    terminal_title_stripped: 'A title from this morning',
+  })]);
+
+  const first = await n.buildPlans(snap);
+  assert.strictEqual(first.find((p) => p.kind === 'workspace').desired, 'Fix the stale data');
+
+  // Whatever happens next must not propose the title again.
+  for (let i = 0; i < 4; i += 1) {
+    const again = await n.buildPlans(snap);
+    assert.strictEqual(again.find((p) => p.kind === 'workspace').desired, 'Fix the stale data',
+      'the stale title took the name back on sync ' + (i + 2));
+  }
+  assert.strictEqual(calls.length, 1, 'asked the model again for a title it had already answered');
+});
+
+testAsync('a revised title takes the name back from the model', async () => {
+  // The other half: the answer stands until the agent speaks again, not for ever.
+  const { source } = countingCostly('Fix the stale data');
+  const store = freshStore();
+  store.titleSeen('w1:p1', 'A title from this morning', 1, Date.now());
+  const n = new Namer({
+    cfg: cfg(), store, sinks: [],
+    sources: [createTitleSource(), source],
+  });
+  await n.buildPlans(snapshot([agent({
+    agent_status: 'idle', state_change_seq: 99,
+    terminal_title_stripped: 'A title from this morning',
+  })]));
+
+  const moved = await n.buildPlans(snapshot([agent({
+    agent_status: 'idle', state_change_seq: 99,
+    terminal_title_stripped: 'Something the agent just wrote',
+  })]));
+  assert.strictEqual(moved.find((p) => p.kind === 'workspace').desired,
+    'Something the agent just wrote');
+});
+
 testAsync('a session-wide ceiling stops the billing, not just the pane floor', async () => {
   /* The per-pane floor scales cost with the number of agents. Ten stale panes
      at the default floor is sixty requests an hour, and the number of agents is

@@ -2,7 +2,7 @@
 id: 76
 title: Similarity cannot tell a rewording from a new task
 type: feature
-status: backlog
+status: done
 milestone: later
 created: 2026-09-08
 updated: 2026-09-08
@@ -56,3 +56,36 @@ it has to be measured against real title pairs rather than invented ones —
 - [ ] A corpus of real consecutive title pairs, labelled by hand
 - [ ] Current behaviour measured against it before anything changes
 - [ ] Any replacement beats it on that corpus, or the item is closed as declined
+
+## Measured, and declined
+
+The item asked for a corpus before anything changed. 239 unique consecutive
+rename pairs came out of the daemon log, 228 of them real intent replacing real
+intent rather than a folder name being adopted.
+
+Similarity of the renames that were allowed through:
+
+    0.0  ################################################ 201
+    0.1  ###  12
+    0.2  ##    6
+    0.3  ##    4
+    0.4  #     1
+    0.5  ##    4
+
+Eighty-eight per cent score zero — not one significant word in common — and
+nothing at all lands between 0.5 and 1.0. The threshold sits at 0.6 in an empty
+region of the distribution, which is the definition of a well-placed one. The
+case this item was filed about, "fix the bug" against "write the tests" at
+0.60, did not occur once in 228 real pairs.
+
+So the metric is not the problem, and moving the threshold would be tuning
+against a case that has never happened.
+
+What the corpus did find is a real one, and the opposite shape: 509 of 655
+renames returned a target to a name it had already held. Not a similarity
+failure — the model's answer was being reverted by the next cheap sync and
+re-obtained ten minutes later, for ever. Filed and fixed as 0079.
+
+Declined. The corpus is the argument for leaving it alone, and it exists now if
+anybody wants to revisit this with different data.
+

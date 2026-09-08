@@ -18,14 +18,14 @@ function stateDir() {
 class Store {
   constructor(file = path.join(stateDir(), 'state.json')) {
     this.file = file;
-    this.data = { authored: {}, locked: {}, lastRenameAt: {}, metadata: {}, stateAt: {}, lastProject: {}, titleAt: {}, lastDeep: {}, deeps: [] };
+    this.data = { authored: {}, locked: {}, lastRenameAt: {}, metadata: {}, stateAt: {}, lastProject: {}, titleAt: {}, lastDeep: {}, deeps: [], deepIntent: {} };
     this.load();
   }
 
   load() {
     try {
       const parsed = JSON.parse(fs.readFileSync(this.file, 'utf8'));
-      this.data = { authored: {}, locked: {}, lastRenameAt: {}, metadata: {}, stateAt: {}, lastProject: {}, titleAt: {}, lastDeep: {}, deeps: [], ...parsed };
+      this.data = { authored: {}, locked: {}, lastRenameAt: {}, metadata: {}, stateAt: {}, lastProject: {}, titleAt: {}, lastDeep: {}, deeps: [], deepIntent: {}, ...parsed };
     } catch { /* first run, or unreadable: defaults stand */ }
     return this;
   }
@@ -114,6 +114,20 @@ class Store {
     return this;
   }
 
+  /* The answer a costly source gave, and the title it was standing in for.
+
+     Without this the answer survives exactly one rename interval: the next
+     sync is cheap, the cheap source returns the same stale title, and the
+     workspace is renamed back. Ten minutes later the floor clears and it
+     happens again -- 509 of 655 renames in one log were a target returning to
+     a name it already had. */
+  deepIntent(paneId) { return this.data.deepIntent[paneId] || null; }
+
+  setDeepIntent(paneId, forTitle, intent) {
+    this.data.deepIntent[paneId] = { forTitle, intent };
+    return this;
+  }
+
   /* How many consultations happened in the last `windowMs`. Used both as the
      ceiling and as what `status` reports, so the number shown is the number
      enforced. */
@@ -140,7 +154,7 @@ class Store {
   forget(id) {
     const owns = (candidate) => candidate === id || candidate.startsWith(id + ':');
 
-    for (const bucket of ['locked', 'lastRenameAt', 'stateAt', 'lastProject', 'titleAt', 'lastDeep']) {
+    for (const bucket of ['locked', 'lastRenameAt', 'stateAt', 'lastProject', 'titleAt', 'lastDeep', 'deepIntent']) {
       for (const key of Object.keys(this.data[bucket])) {
         if (owns(key)) delete this.data[bucket][key];
       }
