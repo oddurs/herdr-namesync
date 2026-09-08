@@ -2,7 +2,7 @@
 id: 71
 title: Say what leaves the machine when the llm source runs
 type: docs
-status: backlog
+status: done
 milestone: v0.9
 created: 2026-09-08
 updated: 2026-09-08

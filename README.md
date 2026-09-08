@@ -127,6 +127,13 @@ consulted only once the title has demonstrably gone stale, and subject to
 exactly the same policy as any other name. Being expensive buys a name no
 authority here.
 
+It also sends the pane's visible contents and your recent prompts to whatever
+endpoint you point it at, unattended, on a timer. Point it at a model on your
+own machine and that goes no further; point it at a hosted one and it is a
+third party reading your screen. [Where names come
+from](https://oddurs.github.io/herdr-namesync/docs/sources) says exactly what
+is transmitted.
+
 ## When it renames
 
 herdr emits `pane.updated` when a pane's stripped title changes, and

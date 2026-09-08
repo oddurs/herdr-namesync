@@ -197,6 +197,14 @@ Open source wifi e-reader" } }
                          free answer has demonstrably failed, and held to exactly the same rules \
                          as any other name. Being expensive buys a name no authority here."
                     }
+                    p {
+                        "That fallback sends the pane’s visible contents and your recent prompts \
+                         to whatever endpoint you point it at, unattended, on a timer. A model on \
+                         your own machine keeps that on your machine; a hosted one is a third \
+                         party reading your screen. "
+                        a href=(ctx.url("docs/sources")) { "What it sends" }
+                        ", in full."
+                    }
                 }
             }
 

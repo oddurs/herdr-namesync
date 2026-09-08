@@ -38,9 +38,38 @@ rate limit still apply. **No name earns authority by being expensive.**
 
 ## The llm source
 
+### What leaves your machine
+
+Before anything else about it. When this source is consulted, namesync sends to
+the endpoint you configured:
+
+- up to `maxChars` characters of the pane's visible content — 4,000 by default,
+  cleaned of chrome and the spinner, which is otherwise whatever the agent has
+  on screen: source, paths, output, and anything else visible at that moment
+- the last few things **you** typed, read from the agent's transcript, in your
+  own words
+- the project name, so the model knows what it is looking at
+
+That happens unattended, on a background timer, once per stale agent per
+`deepIntervalMs`. Nobody is asked at the time.
+
+Whether that matters depends entirely on where you point it. A model running on
+your own machine sends it no further than the machine. A hosted endpoint is a
+third party receiving your screen, under whatever terms you agreed to with
+them, and namesync neither knows nor asks what those are.
+
+There is no redaction. A key echoed into a terminal is on the screen like
+anything else.
+
+If that is not a trade you want to make, leave the source off — it is off by
+default, and everything else here keeps working without it.
+
+### Configuring it
+
 Off unless you configure it. There is no default endpoint, because there is no
 vendor in the code — anything speaking the OpenAI chat-completions shape works,
-including a model running on your own machine.
+including a model running on your own machine, which is the option that makes
+the section above moot.
 
 ```json
 {
