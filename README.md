@@ -59,7 +59,10 @@ that agent has held its current state. The line underneath is what is happening
 right now.
 
 Two of the six are held — someone named them by hand, so namesync will not
-touch them again. That is the half of the job most renamers skip.
+touch them again. Every serious plugin in this category does that much; what
+namesync adds is that it keeps showing you the cost. A held row publishes
+`$locked`, and `status` reports how far the agent has drifted from the name you
+froze, so holding one stays a decision rather than becoming a habit.
 
 The words on the second line are the agent's own. namesync did not write them;
 it decided where they belong and what shape they should take.
@@ -75,15 +78,20 @@ revise it. That is correct for about ten minutes. By the afternoon the label
 describes work that finished before lunch — which is the problem this plugin
 was built for, not a variation on it.
 
+Three are worth naming, because each is better than namesync at something.
+
 | Instead of | They are better when | namesync is better when |
 | --- | --- | --- |
-| [herdr-automatic-rename](https://github.com/qu8n/herdr-automatic-rename) composes a breadcrumb — `api › feat/oauth › nvim` | You want to know **where** a pane is: directory, branch, program | You want to know **what is happening** in it |
-| [herdr-plugin-renamer](https://github.com/wyattjoh/herdr-plugin-renamer) names from the first prompt | One session, one task, short-lived | A session that runs all day and changes subject |
-| [herdr-tab-smart-rename](https://github.com/iurysza/herdr-tab-smart-rename) asks a model per task | You want a model interpreting every task | You want it free by default and a model only when it earns it |
+| [herdr-automatic-rename](https://github.com/qu8n/herdr-automatic-rename) names **every** pane — `api › feat/oauth › nvim` — numbers them `[1]`–`[9]`, and a shell hook fires the instant a command starts | You want your shells, ssh sessions and editors named too, not only your agents | Only the agent panes matter to you, and you want their names to keep up with a session that changes subject |
+| [herdr-plugin-renamer](https://github.com/wyattjoh/herdr-plugin-renamer) names from the agent's first prompt, renames the worktree's git branch too, and runs on-device via Apple FoundationModels | One session, one task — and you want the branch renamed and nothing leaving the machine | A session that runs all day, where the first prompt stopped describing it hours ago |
+| [herdr-tab-smart-rename](https://github.com/iurysza/herdr-tab-smart-rename) names known commands for free and asks a model about the rest, reusing a provider you have already connected in Pi or OpenCode | You want a model interpreting work the agent has not described itself | The agent is already describing its own work, and you want something deciding when to believe it |
 
-The distinction that matters is not what a name is generated from. It is
-whether anything decides **when it should change** — and whether it can tell
-you why it left a name alone.
+All three protect a name you wrote by hand, so that is not the distinction. The
+distinction is that namesync moves a name rather than composing one, and that
+something decides **when it should change** — a debounce, a rate limit, a
+similarity gate, a staleness signal, silence while you are mid-dialog — with
+`dry-run` printing the reason behind every decision it makes and every one it
+declines.
 
 ## Nothing generates the name, unless you ask it to
 

@@ -27,23 +27,36 @@ fn rivals() -> Vec<Rival> {
         Rival {
             name: "herdr-automatic-rename",
             href: "https://github.com/qu8n/herdr-automatic-rename",
-            what: html! { "composes a breadcrumb — " code { "api › feat/oauth › nvim" } },
-            theirs: "You want to know where a pane is: directory, branch, program",
-            ours: "You want to know what is happening in it",
+            what: html! {
+                "names every pane — " code { "api › feat/oauth › nvim" }
+                " — numbers them, and fires the instant a command starts"
+            },
+            theirs: "You want your shells, ssh sessions and editors named too, not only your agents",
+            ours: "Only the agent panes matter, and their names have to keep up with a session that \
+                   changes subject",
         },
         Rival {
             name: "herdr-plugin-renamer",
             href: "https://github.com/wyattjoh/herdr-plugin-renamer",
-            what: html! { "names from the first prompt" },
-            theirs: "One session, one task, short-lived",
-            ours: "A session that runs all day and changes subject",
+            what: html! {
+                "names from the agent’s first prompt, renames the worktree’s branch too, and runs \
+                 on-device"
+            },
+            theirs: "One session, one task — and you want the branch renamed, with nothing leaving \
+                     the machine",
+            ours: "A session that runs all day, where the first prompt stopped describing it hours \
+                   ago",
         },
         Rival {
             name: "herdr-tab-smart-rename",
             href: "https://github.com/iurysza/herdr-tab-smart-rename",
-            what: html! { "asks a model per task" },
-            theirs: "You want a model interpreting every task",
-            ours: "You want it free by default, and a model only when it earns it",
+            what: html! {
+                "names known commands for free, asks a model about the rest, and reuses a provider \
+                 you have already connected"
+            },
+            theirs: "You want a model interpreting work the agent has not described itself",
+            ours: "The agent is already describing its own work, and you want something deciding \
+                   when to believe it",
         },
     ]
 }
@@ -120,8 +133,8 @@ pub fn render(ctx: &Ctx) -> Markup {
                     }
                     p {
                         "That is the problem this plugin was built for, rather than a variation on \
-                         it. Three of them are worth naming, because each is better than namesync \
-                         at something:"
+                         it. Three are worth naming, because each is better than namesync at \
+                         something:"
                     }
 
                     table class="compare" {
@@ -147,9 +160,15 @@ pub fn render(ctx: &Ctx) -> Markup {
                     }
 
                     p {
-                        "The distinction is not what a name is generated from — it is whether \
-                         anything decides when it should change, and whether it can tell you why \
-                         it left a name alone."
+                        "All three protect a name you wrote by hand, so that is not the \
+                         distinction. It is that namesync moves a name rather than composing one, \
+                         and that something decides "
+                        em { "when it should change" }
+                        " — a debounce, a rate limit, a similarity gate, a staleness signal, \
+                         silence while you are mid-dialog — with "
+                        code { "dry-run" }
+                        " printing the reason behind every decision it makes and every one it \
+                         declines."
                     }
                 }
             }

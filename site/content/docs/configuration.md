@@ -129,7 +129,7 @@ workspace label, so a two-line row can carry two different things:
 | `$project` | The repository's name — not the folder name. Resolution order below. |
 | `$branch` | Current branch. |
 | `$intent` | The agent's live title, before any template is applied. |
-| `$n` | The workspace's number — what `prefix+shift+N` jumps to. herdr has no built-in token for this, which is why the sidebar is otherwise not navigable. |
+| `$n` | The workspace's number — what `prefix+shift+N` jumps to. herdr exposes no token for it, so a sidebar row cannot show it without help. Other plugins solve this by writing the number into the label itself; publishing it as a token instead means the row decides where it goes, and the name stays the name. |
 | `$worktree` | The word `worktree` when the agent sits in a linked worktree. Three rows reading `fontina · main` are otherwise identical. |
 | `$since` | How long the agent has been in its current state: `now`, `3m`, `15m`, `3h`, `2d`. Minute precision for the first ten, then five-minute steps, then hours — every change is a metadata write and a sidebar redraw for that agent, so the value gets coarser as it gets less interesting. |
 | `$locked` | `held` when namesync has been told to leave a name alone. A held name behaves completely differently from a live one, so the sidebar should be able to say which it is looking at. |
