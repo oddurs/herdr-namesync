@@ -17,8 +17,10 @@ const viewport = require('../src/viewport');
 const { createLlmSource, usable } = require('../src/sources/llm');
 const envfile = require('../src/envfile');
 const http = require('http');
+const net = require('net');
 const transcript = require('../src/transcript');
 const { resolveSources, observe, createTitleSource } = require('../src/sources');
+const { HerdrApi, HerdrEvents } = require('../src/client');
 const config = require('../src/config');
 
 let passed = 0;
@@ -1460,6 +1462,147 @@ function stubRunner(models = ['local-model']) {
     }));
   });
 }
+
+process.stdout.write('\nsocket contract\n');
+
+/* A stub herdr, behaving the four ways the real one does. Every one of these
+   cost real debugging time, and until now all four were recorded only in prose
+   -- so a herdr upgrade that changed any of them would not have failed a test,
+   it would have quietly stopped renaming things.
+
+   This cannot prove herdr still behaves this way. It proves we still expect it
+   to, which is what turns a silent regression into a red test the day somebody
+   edits the client. */
+function stubHerdr({ backlog = [] } = {}) {
+  const seen = { connections: 0, requests: [], subscriptions: [] };
+  const sockets = new Set();
+  const sockPath = path.join(
+    fs.mkdtempSync(path.join(os.tmpdir(), 'ns-sock-')), 'herdr.sock',
+  );
+
+  const server = net.createServer((socket) => {
+    seen.connections += 1;
+    sockets.add(socket);
+    socket.on('close', () => sockets.delete(socket));
+    socket.on('error', () => {});
+    let subscribed = false;
+    let buffer = '';
+
+    socket.on('data', (chunk) => {
+      buffer += chunk;
+      let nl;
+      while ((nl = buffer.indexOf('\n')) !== -1) {
+        const line = buffer.slice(0, nl).trim();
+        buffer = buffer.slice(nl + 1);
+        if (!line) continue;
+        const msg = JSON.parse(line);
+
+        if (msg.method === 'events.subscribe') {
+          subscribed = true;
+          seen.subscriptions.push(msg.params.subscriptions.map((x) => x.type));
+          socket.write(JSON.stringify({ id: msg.id, result: { subscribed: true } }) + '\n');
+          // herdr replays what happened before you were listening.
+          for (const event of backlog) socket.write(JSON.stringify(event) + '\n');
+          return;
+        }
+
+        if (subscribed) {
+          // A request down a subscribed connection: the server hangs up.
+          socket.destroy();
+          return;
+        }
+
+        seen.requests.push(msg);
+        socket.write(JSON.stringify({ id: msg.id, result: { ok: msg.method } }) + '\n');
+        // One request per connection: herdr closes after answering.
+        socket.end();
+      }
+    });
+  });
+
+  return new Promise((resolve) => {
+    server.listen(sockPath, () => resolve({
+      path: sockPath, seen, server,
+      push: (event) => { for (const s of sockets) s.write(JSON.stringify(event) + '\n'); },
+      close: () => { for (const s of sockets) s.destroy(); server.close(); },
+    }));
+  });
+}
+
+testAsync('a request gets its own connection, every time', async () => {
+  const herdr = await stubHerdr();
+  try {
+    const api = new HerdrApi(herdr.path);
+    await api.request('session.snapshot', {});
+    await api.request('workspace.rename', { workspace_id: 'w1', label: 'x' });
+    await api.request('pane.read', { pane_id: 'w1:p1' });
+    assert.strictEqual(herdr.seen.connections, 3,
+      'reusing a socket for a second request is an EPIPE against real herdr');
+    assert.deepStrictEqual(herdr.seen.requests.map((r) => r.method),
+      ['session.snapshot', 'workspace.rename', 'pane.read']);
+  } finally { herdr.close(); }
+});
+
+testAsync('the server closing after an answer is not an error', async () => {
+  // requestOnce listens for 'close' and rejects on it, so the resolve has to
+  // win the race every time or every call fails intermittently.
+  const herdr = await stubHerdr();
+  try {
+    const api = new HerdrApi(herdr.path);
+    for (let i = 0; i < 20; i += 1) {
+      assert.deepStrictEqual(await api.request('session.snapshot', {}), { ok: 'session.snapshot' });
+    }
+  } finally { herdr.close(); }
+});
+
+testAsync('a subscription holds its own connection and stays open', async () => {
+  const herdr = await stubHerdr();
+  try {
+    const events = new HerdrEvents(herdr.path);
+    const got = [];
+    events.on('event', (e) => got.push(e));
+    await events.subscribe(['pane.updated', 'workspace.closed']);
+
+    // Subscription names use dots; the events that come back use underscores.
+    assert.deepStrictEqual(herdr.seen.subscriptions, [['pane.updated', 'workspace.closed']]);
+
+    herdr.push({ event: 'pane_updated', data: { pane_id: 'w1:p1' } });
+    herdr.push({ event: 'pane_updated', data: { pane_id: 'w1:p2' } });
+    await new Promise((r) => setTimeout(r, 50));
+
+    assert.strictEqual(got.length, 2, 'the subscription did not stay open');
+    assert.strictEqual(got[0].event, 'pane_updated');
+    events.close();
+  } finally { herdr.close(); }
+});
+
+testAsync('herdr replays a backlog the moment you subscribe', async () => {
+  /* Which is why the watcher ignores rename events until its first sync: an
+     old rename replayed on connect would otherwise look like a live hand-edit
+     and lock the workspace for ever. */
+  const herdr = await stubHerdr({
+    backlog: [
+      { event: 'workspace_renamed', data: { workspace_id: 'w1', label: 'from before' } },
+      { event: 'workspace_renamed', data: { workspace_id: 'w2', label: 'also before' } },
+    ],
+  });
+  try {
+    const events = new HerdrEvents(herdr.path);
+    const got = [];
+    events.on('event', (e) => got.push(e));
+    await events.subscribe(['workspace.renamed']);
+    await new Promise((r) => setTimeout(r, 50));
+    assert.strictEqual(got.length, 2, 'the backlog was not delivered');
+    events.close();
+  } finally { herdr.close(); }
+});
+
+testAsync('a missing socket path fails with something a person can read', async () => {
+  await assert.rejects(
+    () => new HerdrApi('').request('session.snapshot', {}),
+    /HERDR_SOCKET_PATH is not set/,
+  );
+});
 
 process.stdout.write('\nlocal models\n');
 
