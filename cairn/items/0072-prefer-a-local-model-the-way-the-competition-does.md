@@ -2,7 +2,7 @@
 id: 72
 title: Prefer a local model, the way the competition does
 type: feature
-status: backlog
+status: done
 milestone: v0.9
 created: 2026-09-08
 updated: 2026-09-08
