@@ -46,6 +46,14 @@ policy is testable without a herdr session, and it should stay that way.
 framework and no dependencies; copy the nearest existing test. Tests must never
 read your real config — use `cfg({ ... })`, which builds from defaults.
 
+**Build the subject the way production builds it.** The llm source could never
+run on a stale title, and shipped that way, because every test that covered it
+wired `sources: [costly, title]` while `resolveSources` wires `[title, llm]`.
+Four tests agreed with the code about something they were both wrong about. If
+production calls a factory, the test should call the same factory rather than
+assembling the result by hand — and `agent()` / `workspace()` model every field
+herdr reports, not only the ones the test under your cursor reads.
+
 ## The site
 
 ```bash

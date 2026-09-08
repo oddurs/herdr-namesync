@@ -2,7 +2,7 @@
 id: 74
 title: The tests were written to the implementation's convenience
 type: bug
-status: backlog
+status: done
 milestone: v0.9
 created: 2026-09-08
 updated: 2026-09-08
