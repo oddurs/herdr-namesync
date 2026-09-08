@@ -31,13 +31,15 @@ Documented, tested, and safe to depend on.
 
 ## later — Someday
 
-`#####·····` 50% · 1 of 2 done
+`###·······` 25% · 1 of 4 done
 
 Good ideas without a date yet.
 
 ### backlog
 
 - [ ] `0024` Measure the tagline as a conditional <sup>feature · p2</sup>
+- [ ] `0076` Similarity cannot tell a rewording from a new task <sup>feature · p2</sup>
+- [ ] `0078` A demo you can see, and an install that is one command <sup>feature · p2</sup>
 
 ### done
 
@@ -142,4 +144,21 @@ One Rust binary that renders the site and serves it live. No Node, no npm, no to
 - [x] `0064` Say how to run the site <sup>docs · p2</sup>
 - [x] `0066` The llm source can never run on a stale title <sup>bug · p0</sup>
 - [x] `0067` The Rust site shipped without tests, and TOML lost its highlighting <sup>bug · p1</sup>
+
+## v0.9 — Say true things
+
+`··········` 0% · 0 of 8 done · due 2027-06-01
+
+The positioning claims things the rivals' own READMEs contradict, and the llm source does not say that your screen leaves the machine. Both are credibility problems before they are anything else.
+
+### backlog
+
+- [ ] `0069` The comparison table misstates two of the three rivals <sup>bug · p0</sup>
+- [ ] `0070` "The half of the job most renamers skip" is not true <sup>bug · p0</sup>
+- [ ] `0071` Say what leaves the machine when the llm source runs <sup>docs · p1</sup>
+- [ ] `0072` Prefer a local model, the way the competition does <sup>feature · p1</sup>
+- [ ] `0073` A budget for consultations, and spend where you can see it <sup>feature · p1</sup>
+- [ ] `0074` The tests were written to the implementation's convenience <sup>bug · p1</sup>
+- [ ] `0075` Nothing tests the socket contract <sup>feature · p1</sup>
+- [ ] `0077` Reconsider the claim that the sidebar is otherwise not navigable <sup>chore · p2</sup>
 
