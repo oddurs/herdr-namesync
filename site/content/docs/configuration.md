@@ -62,6 +62,7 @@ watcher.
 | `showDuration` | Publish `$since`. This is the only feature that needs a timer; turning it off removes the timer. |
 | `durationRefreshMs` | How often to re-check elapsed time. Coarse buckets plus metadata dedup mean a tick usually writes nothing. |
 | `stripProjectPrefix` | Drop a leading project name from the **Space label**, since the sidebar already shows the project on the line above. `ptop-adopt-remaining-lessons` becomes `Adopt remaining lessons`. Never strips the whole name, and never applies to tab labels or agent names. |
+| `maxDeepPerHour` | A ceiling on model consultations per hour across every pane. `deepIntervalMs` is a floor per *pane*, so the bill scales with the number of agents — and the number of agents is the situation this plugin is for. Reaching the ceiling names fewer panes rather than billing more; `namesync status` says how close you are. `0` removes it. |
 | `logLevel` | `error`, `warn`, `info` or `debug`. |
 
 ## Templates

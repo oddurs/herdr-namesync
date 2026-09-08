@@ -48,6 +48,7 @@
   },
   "consultCostlySources": true,
   "deepIntervalMs": 600000,
+  "maxDeepPerHour": 30,
   "viewportLines": 60,
   "ignoreTitles": [
     "claude",

@@ -1260,6 +1260,49 @@ testAsync('a fresh title never reaches the costly source, whatever the order', a
   assert.strictEqual(calls.length, 0, 'consulted while the title was still fresh');
 });
 
+testAsync('a session-wide ceiling stops the billing, not just the pane floor', async () => {
+  /* The per-pane floor scales cost with the number of agents. Ten stale panes
+     at the default floor is sixty requests an hour, and the number of agents is
+     the situation this plugin is for. */
+  const { source, calls } = countingCostly();
+  const store = freshStore();
+  const now = Date.now();
+  for (let i = 0; i < 3; i += 1) store.markDeep('other:p' + i, now);
+  store.titleSeen('w1:p1', 'Fix auth middleware', 1, now);
+  const n = new Namer({
+    cfg: cfg({ maxDeepPerHour: 3 }), store, sinks: [],
+    sources: [createTitleSource(), source],
+  });
+  await n.buildPlans(snapshot([agent({ agent_status: 'idle', state_change_seq: 99 })]));
+  assert.strictEqual(calls.length, 0, 'consulted past the ceiling');
+});
+
+testAsync('the ceiling can be removed', async () => {
+  const { source, calls } = countingCostly();
+  const store = freshStore();
+  const now = Date.now();
+  for (let i = 0; i < 50; i += 1) store.markDeep('other:p' + i, now);
+  store.titleSeen('w1:p1', 'Fix auth middleware', 1, now);
+  const n = new Namer({
+    cfg: cfg({ maxDeepPerHour: 0 }), store, sinks: [],
+    sources: [createTitleSource(), source],
+  });
+  await n.buildPlans(snapshot([agent({ agent_status: 'idle', state_change_seq: 99 })]));
+  assert.strictEqual(calls.length, 1, 'a zero ceiling should not gate anything');
+});
+
+test('consultations are counted in a window, and pruned past a day', () => {
+  const store = freshStore();
+  const now = Date.now();
+  store.markDeep('a', now - 25 * 60 * 60 * 1000);   // yesterday, dropped
+  store.markDeep('b', now - 2 * 60 * 60 * 1000);    // today, outside the hour
+  store.markDeep('c', now - 5 * 60 * 1000);         // this hour
+  store.markDeep('d', now);
+  assert.strictEqual(store.deepsWithin(3600000, now), 2);
+  assert.strictEqual(store.deepsWithin(24 * 60 * 60 * 1000, now), 3, 'the day-old one is pruned');
+  assert.strictEqual(store.lastDeepAnywhere(), now);
+});
+
 testAsync('costly sources can be switched off entirely', async () => {
   const { source, calls } = countingCostly();
   const store = freshStore();
