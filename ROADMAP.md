@@ -128,7 +128,7 @@ One visual and four screens of prose, with the install path four screens down. T
 
 ## v0.8 — A site that builds itself
 
-`##########` 100% · 6 of 6 done · due 2027-05-15
+`##########` 100% · 7 of 7 done · due 2027-05-15
 
 One Rust binary that renders the site and serves it live. No Node, no npm, no toolchain to install.
 
@@ -140,4 +140,5 @@ One Rust binary that renders the site and serves it live. No Node, no npm, no to
 - [x] `0062` A live server with hot reload <sup>feature · p1</sup>
 - [x] `0063` Point CI at cargo and drop the npm toolchain <sup>chore · p1</sup>
 - [x] `0064` Say how to run the site <sup>docs · p2</sup>
+- [x] `0066` The llm source can never run on a stale title <sup>bug · p0</sup>
 

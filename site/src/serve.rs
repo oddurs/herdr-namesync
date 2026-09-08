@@ -14,7 +14,7 @@ use crate::site::Site;
 use anyhow::{Context, Result};
 use axum::Router;
 use axum::extract::{Path as UrlPath, State};
-use axum::http::{StatusCode, header};
+use axum::http::{HeaderValue, StatusCode, header};
 use axum::response::sse::{Event, KeepAlive, Sse};
 use axum::response::{Html, IntoResponse, Redirect, Response};
 use axum::routing::get;
@@ -25,6 +25,7 @@ use std::sync::Arc;
 use tokio::sync::watch;
 use tokio_stream::StreamExt;
 use tokio_stream::wrappers::WatchStream;
+use tower_http::set_header::SetResponseHeaderLayer;
 
 struct App {
     root: PathBuf,
@@ -155,6 +156,16 @@ pub async fn run(root: &Path, port: u16) -> Result<()> {
         .route("/docs/{slug}", get(doc))
         .route("/_live", get(live))
         .fallback_service(tower_http::services::ServeDir::new(root.join("public")))
+        // Nothing here may be cached. Without a directive and without a
+        // validator the browser falls back to heuristic caching, which is a
+        // reasonable guess for the open web and exactly wrong for a server
+        // whose entire job is to show the file you just saved -- the reload
+        // fires, the page reloads, and the memory cache serves the version
+        // from before the edit.
+        .layer(SetResponseHeaderLayer::overriding(
+            header::CACHE_CONTROL,
+            HeaderValue::from_static("no-store, must-revalidate"),
+        ))
         .layer(tower_http::compression::CompressionLayer::new())
         .with_state(app);
 
