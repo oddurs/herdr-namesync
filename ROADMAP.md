@@ -147,13 +147,9 @@ One Rust binary that renders the site and serves it live. No Node, no npm, no to
 
 ## v0.9 — Say true things
 
-`#########·` 88% · 7 of 8 done · due 2027-06-01
+`##########` 100% · 8 of 8 done · due 2027-06-01
 
 The positioning claims things the rivals' own READMEs contradict, and the llm source does not say that your screen leaves the machine. Both are credibility problems before they are anything else.
-
-### backlog
-
-- [ ] `0075` Nothing tests the socket contract <sup>feature · p1</sup>
 
 ### done
 
@@ -163,5 +159,6 @@ The positioning claims things the rivals' own READMEs contradict, and the llm so
 - [x] `0072` Prefer a local model, the way the competition does <sup>feature · p1</sup>
 - [x] `0073` A budget for consultations, and spend where you can see it <sup>feature · p1</sup>
 - [x] `0074` The tests were written to the implementation's convenience <sup>bug · p1</sup>
+- [x] `0075` Nothing tests the socket contract <sup>feature · p1</sup>
 - [x] `0077` Reconsider the claim that the sidebar is otherwise not navigable <sup>chore · p2</sup>
 
