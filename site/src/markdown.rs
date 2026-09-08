@@ -167,8 +167,10 @@ mod tests {
             .split('<')
             .map(|chunk| chunk.split_once('>').map_or(chunk, |(_, rest)| rest))
             .collect();
-        assert!(text.contains("--write"), "dashes were smartened in code: {text}");
+        assert!(
+            text.contains("--write"),
+            "dashes were smartened in code: {text}"
+        );
         assert!(render("`--undo`\n").unwrap().contains("--undo"));
     }
 }
-
