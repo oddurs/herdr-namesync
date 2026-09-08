@@ -231,15 +231,77 @@ test('no-ops when the name already matches', () => {
 });
 
 process.stdout.write('\nnamer\n');
+/* Every field herdr 0.8.2 actually reports, not only the ones a given test
+   reads. A fixture that models a subset lets the code depend on something the
+   tests can never contradict -- and six of these are read somewhere in `src`
+   while being absent here: `name`, `focused`, `tokens`, `terminal_title`,
+   `agent_session` and the workspace's `worktree`.
+
+   Captured from a live `session.snapshot`. AGENT_FIELDS below is the canary:
+   when herdr adds or renames one, the assertion beside it is what notices. */
 const agent = (over = {}) => ({
-  pane_id: 'w1:p1', tab_id: 'w1:t1', workspace_id: 'w1', agent: 'claude',
-  agent_status: 'working', terminal_title_stripped: 'Fix auth middleware',
-  cwd: '/Users/x/Code/app', foreground_cwd: '/Users/x/Code/app', ...over,
+  pane_id: 'w1:p1',
+  tab_id: 'w1:t1',
+  workspace_id: 'w1',
+  terminal_id: 't-1',
+  agent: 'claude',
+  agent_session: null,
+  agent_status: 'working',
+  name: '',
+  focused: false,
+  revision: 1,
+  state_change_seq: 0,
+  terminal_title: 'Fix auth middleware',
+  terminal_title_stripped: 'Fix auth middleware',
+  cwd: '/Users/x/Code/app',
+  foreground_cwd: '/Users/x/Code/app',
+  tokens: {},
+  ...over,
 });
+
+const workspace = (over = {}) => ({
+  workspace_id: 'w1',
+  number: 1,
+  label: 'app',
+  active_tab_id: 'w1:t1',
+  agent_status: 'working',
+  focused: false,
+  pane_count: 1,
+  tab_count: 1,
+  worktree: false,
+  tokens: {},
+  ...over,
+});
+
+const tab = (over = {}) => ({
+  tab_id: 'w1:t1',
+  workspace_id: 'w1',
+  number: 1,
+  label: 'app',
+  agent_status: 'working',
+  focused: false,
+  pane_count: 1,
+  ...over,
+});
+
 const snapshot = (agents, workspaces) => ({
-  workspaces: workspaces || [{ workspace_id: 'w1', number: 1, label: 'app' }],
-  tabs: [{ tab_id: 'w1:t1', label: 'app' }, { tab_id: 'w1:t2', label: 'app' }],
+  workspaces: workspaces || [workspace()],
+  tabs: [tab(), tab({ tab_id: 'w1:t2', number: 2 })],
   panes: [], agents,
+});
+
+/* What a live herdr reports, so a fixture that quietly drifts from it fails
+   here rather than in production. Update deliberately, after checking a real
+   snapshot -- not to make this pass. */
+const AGENT_FIELDS = ['agent', 'agent_session', 'agent_status', 'cwd', 'focused',
+  'foreground_cwd', 'name', 'pane_id', 'revision', 'state_change_seq', 'tab_id',
+  'terminal_id', 'terminal_title', 'terminal_title_stripped', 'tokens', 'workspace_id'];
+const WORKSPACE_FIELDS = ['active_tab_id', 'agent_status', 'focused', 'label', 'number',
+  'pane_count', 'tab_count', 'tokens', 'workspace_id', 'worktree'];
+
+test('the fixtures model every field herdr reports', () => {
+  assert.deepStrictEqual(Object.keys(agent()).sort(), AGENT_FIELDS);
+  assert.deepStrictEqual(Object.keys(workspace()).sort(), WORKSPACE_FIELDS);
 });
 
 testAsync('plans a workspace and agent rename', async () => {
@@ -1400,6 +1462,41 @@ function stubRunner(models = ['local-model']) {
 }
 
 process.stdout.write('\nlocal models\n');
+
+testAsync('the real source order lets a stale title fall through to the model', async () => {
+  /* The test that was missing. Every costly-source test built its own
+     `[costly, title]` array while `resolveSources` builds `[title, llm]`, so
+     the ordering that ships was never exercised and the llm source could not
+     run for its entire life. This one takes the order from `resolveSources`
+     and asks `observe` the same question the namer asks. */
+  const stub = await stubModel('Rewrite the parser');
+  try {
+    const sources = await resolveSources(
+      cfg({ sources: { llm: { enabled: true, endpoint: stub.url, model: 'm' } } }),
+      { client: paneClient('some screen') },
+    );
+    assert.deepStrictEqual(sources.map((x) => x.name), ['title', 'llm'],
+      'production order changed; this test is now checking the wrong thing');
+
+    const stale = await observe(sources, {
+      agent: { pane_id: 'w1:p1', terminal_title_stripped: 'A title from this morning' },
+      client: paneClient('some screen'),
+      cfg: cfg(),
+      deep: true,
+    });
+    assert.strictEqual(stale.intent, 'Rewrite the parser', 'the title short-circuited the chain');
+    assert.strictEqual(stale.consulted, 'llm');
+
+    const fresh = await observe(sources, {
+      agent: { pane_id: 'w1:p1', terminal_title_stripped: 'A title from this morning' },
+      client: paneClient('some screen'),
+      cfg: cfg(),
+      deep: false,
+    });
+    assert.strictEqual(fresh.intent, 'A title from this morning');
+    assert.strictEqual(fresh.consulted, null, 'consulted a costly source while the title was fresh');
+  } finally { stub.server.close(); }
+});
 
 testAsync('a local runner is found without any configuration', async () => {
   const llm = require('../src/sources/llm');
