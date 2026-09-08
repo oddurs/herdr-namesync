@@ -18,14 +18,14 @@ function stateDir() {
 class Store {
   constructor(file = path.join(stateDir(), 'state.json')) {
     this.file = file;
-    this.data = { authored: {}, locked: {}, lastRenameAt: {}, metadata: {}, stateAt: {}, lastProject: {}, titleAt: {}, lastDeep: {} };
+    this.data = { authored: {}, locked: {}, lastRenameAt: {}, metadata: {}, stateAt: {}, lastProject: {}, titleAt: {}, lastDeep: {}, deeps: [] };
     this.load();
   }
 
   load() {
     try {
       const parsed = JSON.parse(fs.readFileSync(this.file, 'utf8'));
-      this.data = { authored: {}, locked: {}, lastRenameAt: {}, metadata: {}, stateAt: {}, lastProject: {}, titleAt: {}, lastDeep: {}, ...parsed };
+      this.data = { authored: {}, locked: {}, lastRenameAt: {}, metadata: {}, stateAt: {}, lastProject: {}, titleAt: {}, lastDeep: {}, deeps: [], ...parsed };
     } catch { /* first run, or unreadable: defaults stand */ }
     return this;
   }
@@ -100,7 +100,32 @@ class Store {
      consultations lives here rather than in the source, so every costly source
      inherits it rather than each one having to remember. */
   lastDeep(paneId) { return this.data.lastDeep[paneId] || 0; }
-  markDeep(paneId, at = Date.now()) { this.data.lastDeep[paneId] = at; return this; }
+  markDeep(paneId, at = Date.now()) {
+    this.data.lastDeep[paneId] = at;
+    /* Every consultation, not just the last one per pane. The per-pane floor
+       cannot answer "how many calls has this made today", which is the
+       question somebody paying for them actually has. Timestamps rather than
+       a counter, so a window can be asked for after the fact. */
+    this.data.deeps = (this.data.deeps || []).concat(at);
+    // A day is the longest window anything asks about; older entries are only
+    // a file that grows.
+    const cutoff = at - 24 * 60 * 60 * 1000;
+    this.data.deeps = this.data.deeps.filter((t) => t >= cutoff);
+    return this;
+  }
+
+  /* How many consultations happened in the last `windowMs`. Used both as the
+     ceiling and as what `status` reports, so the number shown is the number
+     enforced. */
+  deepsWithin(windowMs, now = Date.now()) {
+    const from = now - windowMs;
+    return (this.data.deeps || []).filter((t) => t >= from).length;
+  }
+
+  lastDeepAnywhere() {
+    const all = this.data.deeps || [];
+    return all.length ? all[all.length - 1] : 0;
+  }
 
   metadata(id) { return this.data.metadata[id]; }
   setMetadata(id, value) { this.data.metadata[id] = value; return this; }

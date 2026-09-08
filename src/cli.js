@@ -8,6 +8,7 @@ const { Store, stateDir } = require('./state');
 const { HerdrApi } = require('./client');
 const { Namer } = require('./namer');
 const { resolveSinks } = require('./sinks');
+const naming = require('./naming');
 const { resolveSources } = require('./sources');
 const { LOCAL_RUNNERS } = require('./sources/llm');
 // A local runner needs no key, so the missing-key warning does not apply to it.
@@ -196,6 +197,22 @@ const COMMANDS = {
           out.push('              ' + (local
             ? 'on this machine via ' + local + ' — nothing leaves it'
             : 'a remote endpoint — pane contents and your prompts are sent there'));
+
+          /* What it has actually cost. A background process making metered
+             calls should be able to answer this without anybody reading a log. */
+          const hour = store.deepsWithin(3600000);
+          const day = store.deepsWithin(24 * 60 * 60 * 1000);
+          const ceiling = cfg.maxDeepPerHour;
+          out.push('              consulted ' + hour + ' time(s) this hour, '
+            + day + ' in the last 24h'
+            + (ceiling > 0 ? '  (ceiling ' + ceiling + '/hour)' : '  (no ceiling)'));
+          const last = store.lastDeepAnywhere();
+          if (last) {
+            out.push('              last ' + naming.formatSince(Date.now() - last) + ' ago');
+          }
+          if (ceiling > 0 && hour >= ceiling) {
+            out.push('              ceiling reached — titles stand until the hour rolls');
+          }
         }
         if (llm && llm.enabled && !names.includes('llm')) {
           out.push('              llm off: no endpoint configured, and nothing '

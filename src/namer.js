@@ -358,6 +358,19 @@ class Namer {
     );
     if (turns < this.cfg.staleAfterTurns) return false;
 
+    /* A ceiling across the whole session, not just this pane. The per-pane
+       floor scales the cost with the number of agents, and the number of
+       agents is exactly the situation this plugin exists for -- ten stale
+       panes on a ten-minute floor is sixty requests an hour with nothing
+       anywhere saying so. Reaching it names fewer panes rather than billing
+       more. */
+    const ceiling = this.cfg.maxDeepPerHour;
+    if (ceiling > 0 && this.store.deepsWithin(3600000, now) >= ceiling) {
+      this.log('info', 'consultation ceiling reached (' + ceiling + '/hour), '
+        + 'keeping the title for ' + agent.pane_id);
+      return false;
+    }
+
     return now - this.store.lastDeep(agent.pane_id) >= this.cfg.deepIntervalMs;
   }
 

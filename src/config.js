@@ -123,6 +123,13 @@ const DEFAULTS = {
   consultCostlySources: true,
   deepIntervalMs: 600000,
 
+  /* A ceiling on consultations per hour across every pane. `deepIntervalMs` is
+     a floor per pane, so the bill scales with the number of agents -- and the
+     number of agents is the situation this plugin is for. Generous enough that
+     an ordinary session never reaches it; low enough that a runaway one stops.
+     0 removes the ceiling. */
+  maxDeepPerHour: 30,
+
   // How many rows to read when a source needs to see the pane. Agents run on
   // the alternate screen, so anything past the visible rows returns nothing.
   viewportLines: 60,

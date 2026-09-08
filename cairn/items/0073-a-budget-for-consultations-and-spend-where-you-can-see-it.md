@@ -2,7 +2,7 @@
 id: 73
 title: A budget for consultations, and spend where you can see it
 type: feature
-status: backlog
+status: done
 milestone: v0.9
 created: 2026-09-08
 updated: 2026-09-08

@@ -180,9 +180,16 @@ Three conditions, all of them:
 - the pane has not been consulted inside `deepIntervalMs`
 
 Finishing alone is not enough: a title survives completions unchanged, which is
-how staleness is measured in the first place. The floor is charged only when a
-consultation actually happens, so a cheap answer never postpones the next real
-attempt.
+how staleness is measured in the first place. The floor is charged when a
+consultation is *made*, not when it succeeds — a model that answers `unknown`
+has cost what it cost, and asking again immediately is the loop the floor
+exists to stop.
+
+`deepIntervalMs` is per pane, so with ten stale agents it permits sixty
+requests an hour. `maxDeepPerHour` is the ceiling across all of them, 30 by
+default. Reaching it means fewer panes get named, not a larger bill.
+`namesync status` reports consultations this hour and over the last day, so the
+cost is visible without reading a log.
 
 ### What comes back
 
