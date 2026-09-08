@@ -1200,6 +1200,66 @@ testAsync('a cheap answer does not postpone the next real attempt', async () => 
   assert.strictEqual(calls.length, 0);
 });
 
+testAsync('a stale title steps aside for a costly source', async () => {
+  /* The order production actually uses. Every other test here puts the costly
+     source first, which is why this went unnoticed: `observe` returned on the
+     first non-empty answer, the title is never empty on a stale agent, and the
+     llm source was unreachable in exactly the case it exists for. */
+  const { source, calls } = countingCostly();
+  const store = freshStore();
+  store.titleSeen('w1:p1', 'Fix auth middleware', 1, Date.now());
+  const n = new Namer({
+    cfg: cfg(), store, sinks: [],
+    sources: [createTitleSource(), source],
+  });
+  const plans = await n.buildPlans(snapshot([agent({ agent_status: 'idle', state_change_seq: 99 })]));
+  assert.strictEqual(calls.length, 1, 'the costly source was never asked');
+  assert.strictEqual(plans.find((p) => p.kind === 'workspace').desired, 'from the expensive one');
+});
+
+testAsync('a costly source that says nothing leaves the title standing', async () => {
+  const store = freshStore();
+  store.titleSeen('w1:p1', 'Fix auth middleware', 1, Date.now());
+  const silent = { name: 'silent', costly: true, available: () => true, observe: async () => '' };
+  const n = new Namer({
+    cfg: cfg(), store, sinks: [],
+    sources: [createTitleSource(), silent],
+  });
+  const plans = await n.buildPlans(snapshot([agent({ agent_status: 'idle', state_change_seq: 99 })]));
+  assert.strictEqual(plans.find((p) => p.kind === 'workspace').desired, 'Fix auth middleware');
+});
+
+testAsync('an expensive silence still charges the floor', async () => {
+  // It cost what it cost. Treating "no answer" as "not consulted" would ask
+  // again on the next sync, which is the billing loop the floor exists to stop.
+  const calls = [];
+  const silent = {
+    name: 'silent', costly: true, available: () => true,
+    observe: async () => { calls.push(1); return ''; },
+  };
+  const store = freshStore();
+  store.titleSeen('w1:p1', 'Fix auth middleware', 1, Date.now());
+  const n = new Namer({
+    cfg: cfg(), store, sinks: [],
+    sources: [createTitleSource(), silent],
+  });
+  const snap = snapshot([agent({ agent_status: 'idle', state_change_seq: 99 })]);
+  await n.buildPlans(snap);
+  await n.buildPlans(snap);
+  await n.buildPlans(snap);
+  assert.strictEqual(calls.length, 1, 'billed again inside the floor');
+});
+
+testAsync('a fresh title never reaches the costly source, whatever the order', async () => {
+  const { source, calls } = countingCostly();
+  const n = new Namer({
+    cfg: cfg(), store: freshStore(), sinks: [],
+    sources: [createTitleSource(), source],
+  });
+  await n.buildPlans(snapshot([agent()]));
+  assert.strictEqual(calls.length, 0, 'consulted while the title was still fresh');
+});
+
 testAsync('costly sources can be switched off entirely', async () => {
   const { source, calls } = countingCostly();
   const store = freshStore();

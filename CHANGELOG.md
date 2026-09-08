@@ -6,6 +6,21 @@ Notable changes to namesync. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- The `llm` source could never run on a stale title, which is the only thing it
+  was built for. `observe` returned the first non-empty answer and the title is
+  never empty on a stale agent, so the fallback was unreachable and the source
+  had never been consulted once. A cheap answer is now held as a fallback while
+  a costly source takes its turn, and the title is still there if the model
+  declines, errors or times out.
+- The floor is charged when a costly source is *asked*, not when it answers. A
+  model that replies `unknown` has still cost what it cost, and treating that as
+  "not consulted" asked it again on the next sync.
+- The dev server sends `Cache-Control: no-store`. Without a directive or a
+  validator the browser cached heuristically, so a live reload could fire and
+  then redraw the page from before the edit.
+
 ### Changed
 
 - The documentation site is a Rust binary rather than an Astro project. One

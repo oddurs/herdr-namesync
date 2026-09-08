@@ -373,7 +373,7 @@ class Namer {
        default; the difference is that `Namer` no longer knows that. */
     const now = Date.now();
     const deep = this.#deepWanted(agent, now);
-    const { intent, source, costly } = await observe(this.sources, {
+    const { intent, source, consulted } = await observe(this.sources, {
       agent,
       pane: this.panes ? this.panes.get(agent.pane_id) : undefined,
       client: this.client,
@@ -381,11 +381,14 @@ class Namer {
       deep,
     }, this.log);
 
-    // Charge the floor only when a costly source was actually consulted, so a
-    // cheap answer never postpones the next real attempt.
-    if (costly) {
+    /* Charge the floor when a costly source was actually asked, so a cheap
+       answer never postpones the next real attempt -- and an expensive one
+       that came back empty is not asked again immediately. `consulted` is the
+       source that was billed, which is not always the source that won. */
+    if (consulted) {
       this.store.markDeep(agent.pane_id, now);
-      this.log('info', 'consulted ' + source + ' for ' + agent.pane_id);
+      this.log('info', 'consulted ' + consulted + ' for ' + agent.pane_id
+        + (source === consulted ? '' : ' (kept ' + source + ')'));
     }
     if (!intent) return null;
     /* The foreground process's directory is the more accurate of the two — it
