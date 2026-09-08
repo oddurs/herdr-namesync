@@ -2,7 +2,7 @@
 id: 70
 title: '"The half of the job most renamers skip" is not true'
 type: bug
-status: backlog
+status: done
 milestone: v0.9
 created: 2026-09-08
 updated: 2026-09-08

@@ -2,7 +2,7 @@
 id: 77
 title: Reconsider the claim that the sidebar is otherwise not navigable
 type: chore
-status: backlog
+status: done
 milestone: v0.9
 created: 2026-09-08
 updated: 2026-09-08

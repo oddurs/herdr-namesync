@@ -136,7 +136,7 @@ pub fn panel() -> Markup {
 
             dl class="ws__key t-label" {
                 div { dt class="ws__key-n" { "1" }
-                      dd { "the key that jumps there — herdr has no token for it" } }
+                      dd { "the key that jumps there — herdr exposes no token for it" } }
                 div { dt class="ws__key-project" { "fontina" }
                       dd { "the repository, never the folder it sits in" } }
                 div { dt class="ws__key-flag" { "worktree" }
