@@ -31,19 +31,19 @@ Documented, tested, and safe to depend on.
 
 ## later — Someday
 
-`###·······` 25% · 1 of 4 done
+`#####·····` 50% · 2 of 4 done
 
 Good ideas without a date yet.
 
 ### backlog
 
 - [ ] `0024` Measure the tagline as a conditional <sup>feature · p2</sup>
-- [ ] `0076` Similarity cannot tell a rewording from a new task <sup>feature · p2</sup>
 - [ ] `0078` A demo you can see, and an install that is one command <sup>feature · p2</sup>
 
 ### done
 
 - [x] `0010` Ask herdr for state_changed_at <sup>chore · p2</sup>
+- [x] `0076` Similarity cannot tell a rewording from a new task <sup>feature · p2</sup>
 
 ## v0.2 — Make the policy legible
 
@@ -147,7 +147,7 @@ One Rust binary that renders the site and serves it live. No Node, no npm, no to
 
 ## v0.9 — Say true things
 
-`##########` 100% · 8 of 8 done · due 2027-06-01
+`##########` 100% · 9 of 9 done · due 2027-06-01
 
 The positioning claims things the rivals' own READMEs contradict, and the llm source does not say that your screen leaves the machine. Both are credibility problems before they are anything else.
 
@@ -161,4 +161,5 @@ The positioning claims things the rivals' own READMEs contradict, and the llm so
 - [x] `0074` The tests were written to the implementation's convenience <sup>bug · p1</sup>
 - [x] `0075` Nothing tests the socket contract <sup>feature · p1</sup>
 - [x] `0077` Reconsider the claim that the sidebar is otherwise not navigable <sup>chore · p2</sup>
+- [x] `0079` A model-generated name is reverted by the next sync, forever <sup>bug · p0</sup>
 

@@ -385,6 +385,19 @@ class Namer {
     /* Asking rather than reading. The answer is still the terminal title by
        default; the difference is that `Namer` no longer knows that. */
     const now = Date.now();
+    const title = normalize(agent.terminal_title_stripped || agent.terminal_title || '');
+
+    /* An answer obtained because the title had gone stale stands until the
+       title changes. Otherwise it survives one rename interval: the next sync
+       is cheap, the cheap source returns the same stale title, and the label is
+       renamed back -- then the floor clears and the whole thing repeats. The
+       premise of the fallback is that the agent stopped describing its work, so
+       whatever described it instead holds until the agent speaks again. */
+    const held = this.store.deepIntent(agent.pane_id);
+    if (held && held.forTitle === title && held.intent) {
+      return this.#varsFrom(agent, ws, held.intent);
+    }
+
     const deep = this.#deepWanted(agent, now);
     const { intent, source, consulted } = await observe(this.sources, {
       agent,
@@ -400,10 +413,22 @@ class Namer {
        source that was billed, which is not always the source that won. */
     if (consulted) {
       this.store.markDeep(agent.pane_id, now);
+      /* Recorded against the title it replaced, whatever the answer was. An
+         empty answer is worth remembering too: re-asking on the next sync is
+         the loop the floor exists to stop. */
+      this.store.setDeepIntent(agent.pane_id, title, intent || '');
       this.log('info', 'consulted ' + consulted + ' for ' + agent.pane_id
         + (source === consulted ? '' : ' (kept ' + source + ')'));
     }
     if (!intent) return null;
+    return this.#varsFrom(agent, ws, intent);
+  }
+
+  /* Everything a template needs, once the intent is settled. Split out so the
+     stored answer and a freshly observed one go down the same path -- the
+     project, branch and worktree of a pane do not depend on which source named
+     it. */
+  async #varsFrom(agent, ws, intent) {
     /* The foreground process's directory is the more accurate of the two — it
        follows an agent into a worktree — but it is also transient: a pane
        reports "/" while a command starts, and a stray `cd /tmp` would rename
