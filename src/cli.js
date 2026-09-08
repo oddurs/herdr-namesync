@@ -9,6 +9,10 @@ const { HerdrApi } = require('./client');
 const { Namer } = require('./namer');
 const { resolveSinks } = require('./sinks');
 const { resolveSources } = require('./sources');
+const { LOCAL_RUNNERS } = require('./sources/llm');
+// A local runner needs no key, so the missing-key warning does not apply to it.
+const local = (source) => Boolean(source && typeof source.where === 'function'
+  && source.where().local);
 const { Daemon } = require('./daemon');
 const { planOrder, applyOrder } = require('./grouping');
 const setup = require('./setup');
@@ -181,10 +185,23 @@ const COMMANDS = {
         out.push('  sources     ' + (names.join(', ') || 'none'));
 
         const llm = cfg.sources && cfg.sources.llm;
+        const llmSource = sources.find((x) => x.name === 'llm');
+        if (llmSource && typeof llmSource.where === 'function') {
+          /* Where the pane contents actually go. Worth a line of its own: the
+             difference between a model on this machine and one on somebody
+             else's is the whole of the privacy question, and it is not
+             something to make a person infer from a URL they set last month. */
+          const { endpoint, model, local } = llmSource.where();
+          out.push('              llm -> ' + endpoint + '  (' + model + ')');
+          out.push('              ' + (local
+            ? 'on this machine via ' + local + ' — nothing leaves it'
+            : 'a remote endpoint — pane contents and your prompts are sent there'));
+        }
         if (llm && llm.enabled && !names.includes('llm')) {
-          const missing = [!llm.endpoint && 'endpoint', !llm.model && 'model'].filter(Boolean);
-          out.push('              llm off: no ' + (missing.join(' or ') || 'reason given'));
-        } else if (llm && llm.enabled && !process.env[llm.apiKeyEnv || 'NAMESYNC_API_KEY']) {
+          out.push('              llm off: no endpoint configured, and nothing '
+            + 'answering locally on ' + LOCAL_RUNNERS.map((r) => r.name).join(', '));
+        } else if (llm && llm.enabled && !local(llmSource)
+          && !process.env[llm.apiKeyEnv || 'NAMESYNC_API_KEY']) {
           /* Not fatal -- a local endpoint needs no key -- but a remote one
              will answer 401 on every call, and the fallback to the title
              makes that look like nothing happening. */

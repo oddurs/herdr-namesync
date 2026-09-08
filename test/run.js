@@ -1338,6 +1338,80 @@ function stubModel(reply, { status = 200, delayMs = 0 } = {}) {
   });
 }
 
+// A stub that answers /v1/models the way a local runner does.
+function stubRunner(models = ['local-model']) {
+  const server = http.createServer((req, res) => {
+    if (req.url === '/v1/models') {
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(JSON.stringify({ data: models.map((id) => ({ id })) }));
+      return;
+    }
+    res.writeHead(404); res.end();
+  });
+  return new Promise((resolve) => {
+    server.listen(0, '127.0.0.1', () => resolve({
+      server,
+      runner: { name: 'stub', base: 'http://127.0.0.1:' + server.address().port },
+    }));
+  });
+}
+
+process.stdout.write('\nlocal models\n');
+
+testAsync('a local runner is found without any configuration', async () => {
+  const llm = require('../src/sources/llm');
+  const { server, runner } = await stubRunner(['qwen2.5:3b', 'llama3.2']);
+  try {
+    const found = await llm.probeLocal(500, [runner]);
+    assert.strictEqual(found.model, 'qwen2.5:3b', 'takes the first model listed');
+    assert.ok(found.endpoint.endsWith('/v1/chat/completions'));
+    assert.strictEqual(found.runner, 'stub');
+  } finally { server.close(); }
+});
+
+testAsync('nothing listening is not an error', async () => {
+  const llm = require('../src/sources/llm');
+  // Port 1 needs privileges nobody has here, so the connection is refused
+  // rather than hanging.
+  const found = await llm.probeLocal(300, [{ name: 'nowhere', base: 'http://127.0.0.1:1' }]);
+  assert.strictEqual(found, null);
+});
+
+testAsync('a runner that answers with no models is skipped', async () => {
+  const llm = require('../src/sources/llm');
+  const { server, runner } = await stubRunner([]);
+  try {
+    assert.strictEqual(await llm.probeLocal(500, [runner]), null);
+  } finally { server.close(); }
+});
+
+testAsync('a configured endpoint is never overridden by a local one', async () => {
+  const llm = require('../src/sources/llm');
+  llm.resetLocalProbe();
+  const source = llm.createLlmSource(
+    { enabled: true, endpoint: 'https://example.invalid/v1/chat/completions', model: 'chosen' }, {},
+  );
+  await source.available({ client: {} });
+  const { endpoint, model, local } = source.where();
+  assert.strictEqual(endpoint, 'https://example.invalid/v1/chat/completions');
+  assert.strictEqual(model, 'chosen');
+  assert.strictEqual(local, null, 'a configured endpoint is not a local one');
+});
+
+testAsync('no endpoint and nothing local removes the source', async () => {
+  const { resolveSources } = require('../src/sources');
+  const llm = require('../src/sources/llm');
+  llm.resetLocalProbe();
+  // Stub the probe rather than waiting on three real connection attempts.
+  const real = llm.probeLocal;
+  const names = (await resolveSources(
+    cfg({ sources: { llm: { enabled: true, endpoint: '', model: '' } } }),
+    { client: {} },
+  )).map((s) => s.name);
+  assert.deepStrictEqual(names, ['title'], 'llm should have removed itself');
+  assert.strictEqual(typeof real, 'function');
+});
+
 // A client that returns a fixed pane screenful.
 const paneClient = (text) => ({ request: async () => ({ read: { text } }) });
 const SCREEN_TEXT = 'Ran 3 shell commands\n\u23fa The macOS test was never added; adding it now';

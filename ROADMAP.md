@@ -147,13 +147,12 @@ One Rust binary that renders the site and serves it live. No Node, no npm, no to
 
 ## v0.9 — Say true things
 
-`#####·····` 50% · 4 of 8 done · due 2027-06-01
+`#######···` 63% · 5 of 8 done · due 2027-06-01
 
 The positioning claims things the rivals' own READMEs contradict, and the llm source does not say that your screen leaves the machine. Both are credibility problems before they are anything else.
 
 ### backlog
 
-- [ ] `0072` Prefer a local model, the way the competition does <sup>feature · p1</sup>
 - [ ] `0073` A budget for consultations, and spend where you can see it <sup>feature · p1</sup>
 - [ ] `0074` The tests were written to the implementation's convenience <sup>bug · p1</sup>
 - [ ] `0075` Nothing tests the socket contract <sup>feature · p1</sup>
@@ -163,5 +162,6 @@ The positioning claims things the rivals' own READMEs contradict, and the llm so
 - [x] `0069` The comparison table misstates two of the three rivals <sup>bug · p0</sup>
 - [x] `0070` "The half of the job most renamers skip" is not true <sup>bug · p0</sup>
 - [x] `0071` Say what leaves the machine when the llm source runs <sup>docs · p1</sup>
+- [x] `0072` Prefer a local model, the way the competition does <sup>feature · p1</sup>
 - [x] `0077` Reconsider the claim that the sidebar is otherwise not navigable <sup>chore · p2</sup>
 

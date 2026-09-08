@@ -13,9 +13,14 @@ const { normalize } = require('../naming');
  *
  * So generation becomes possible, and never becomes default:
  *
- *   - off unless an endpoint is configured. No key, no calls, no change.
+ *   - off unless you enable it. No consent, no calls, no change.
+ *   - a model on your own machine before one on somebody else's. With no
+ *     endpoint configured this looks for Ollama, LM Studio and llama.cpp on
+ *     their default ports and uses whichever answers, so the working setup
+ *     needs no key, no endpoint and no model id -- and nothing leaves the
+ *     machine. A configured endpoint still wins.
  *   - no vendor in the code. Anything speaking the OpenAI chat-completions
- *     shape works, which includes Ollama, LM Studio and llama.cpp locally.
+ *     shape works.
  *   - the key is read from an environment variable named in config, never
  *     stored in it.
  *   - costly, so the gate in Namer applies: consulted only when the title has
@@ -50,9 +55,62 @@ function usable(text) {
   return t;
 }
 
+/* Runners that speak the OpenAI shape on a well-known port. Ordered by how
+   likely somebody is to already have one running rather than by preference:
+   they are all the same interface, and the first that answers is as good as
+   any other.
+
+   Localhost only, and by IP rather than by name -- "localhost" resolves to
+   ::1 first on some systems, where nothing is listening. */
+const LOCAL_RUNNERS = [
+  { name: 'ollama', base: 'http://127.0.0.1:11434' },
+  { name: 'lm-studio', base: 'http://127.0.0.1:1234' },
+  { name: 'llama.cpp', base: 'http://127.0.0.1:8080' },
+];
+
+/* Asked once and remembered. This runs while the plugin is deciding which
+   sources exist, which happens on every config load, and three connection
+   attempts per load would be three too many. */
+let localProbe = null;
+
+// `runners` is a parameter so a test can point this at a stub rather than at
+// whatever happens to be listening on the developer's machine.
+async function probeLocal(timeoutMs = 500, runners = LOCAL_RUNNERS) {
+  for (const runner of runners) {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      const res = await fetch(runner.base + '/v1/models', { signal: controller.signal });
+      clearTimeout(timer);
+      if (!res.ok) continue;
+      const body = await res.json();
+      // Whichever model it lists first. Naming a workspace is a small job and
+      // any model a person bothered to pull is over-qualified for it.
+      const model = body && Array.isArray(body.data) && body.data[0] && body.data[0].id;
+      if (!model) continue;
+      return { endpoint: runner.base + '/v1/chat/completions', model, runner: runner.name };
+    } catch {
+      // Not listening, or not speaking this shape. Try the next.
+    }
+  }
+  return null;
+}
+
+// Exposed so `status` can say what would be used, and so a test can reset it.
+function resetLocalProbe() { localProbe = null; }
+
+async function findLocal() {
+  if (!localProbe) localProbe = probeLocal();
+  return localProbe;
+}
+
 function createLlmSource(cfg = {}, root = {}) {
-  const endpoint = cfg.endpoint || '';
-  const model = cfg.model || '';
+  /* Resolved rather than read. A configured endpoint wins outright; without
+     one, whatever is listening locally is used instead. `available` settles
+     this before the source is ever consulted. */
+  let endpoint = cfg.endpoint || '';
+  let model = cfg.model || '';
+  let local = null;
   const keyEnv = cfg.apiKeyEnv || 'NAMESYNC_API_KEY';
   const timeoutMs = cfg.timeoutMs || 8000;
   /* 24 was enough for a label and a silent failure for anyone who picked a
@@ -76,9 +134,22 @@ function createLlmSource(cfg = {}, root = {}) {
     name: 'llm',
     costly: true,
 
-    // An endpoint is the opt-in. Without one there is nothing to call and the
-    // source removes itself rather than failing later.
-    available: ({ client } = {}) => Boolean(endpoint && model && client),
+    /* Settles where this is pointing, and removes the source if the answer is
+       nowhere. Configured endpoint first; a local runner otherwise. */
+    async available({ client } = {}) {
+      if (!client) return false;
+      if (!endpoint || !model) {
+        const found = await findLocal();
+        if (!found) return false;
+        endpoint = endpoint || found.endpoint;
+        model = model || found.model;
+        local = found.runner;
+      }
+      return Boolean(endpoint && model);
+    },
+
+    // What `status` prints, so somebody can see where their screen is going.
+    where: () => ({ endpoint, model, local }),
 
     async observe({ client, agent }) {
       /* What the person asked for beats what the screen shows. herdr reports
@@ -163,4 +234,7 @@ function createLlmSource(cfg = {}, root = {}) {
   };
 }
 
-module.exports = { createLlmSource, usable, PROMPT };
+module.exports = {
+  createLlmSource, usable, PROMPT,
+  probeLocal, findLocal, resetLocalProbe, LOCAL_RUNNERS,
+};

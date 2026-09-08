@@ -66,10 +66,22 @@ default, and everything else here keeps working without it.
 
 ### Configuring it
 
-Off unless you configure it. There is no default endpoint, because there is no
-vendor in the code — anything speaking the OpenAI chat-completions shape works,
-including a model running on your own machine, which is the option that makes
-the section above moot.
+Off unless you turn it on. Turning it on is the whole of the configuration if
+you already run a model locally:
+
+```json
+{ "sources": { "llm": { "enabled": true } } }
+```
+
+With no endpoint set, namesync looks for Ollama, LM Studio and llama.cpp on
+their usual ports and uses the first that answers, with the first model it
+lists. No key, no endpoint, no model id — and nothing leaves the machine, which
+is the option that makes the section above moot.
+
+`namesync status` says which endpoint is in use and whether it is local.
+
+To point somewhere else, set it explicitly. A configured endpoint always wins:
+
 
 ```json
 {
