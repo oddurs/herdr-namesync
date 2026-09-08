@@ -12,6 +12,8 @@ A [herdr](https://herdr.dev) plugin.
 [How it decides](https://oddurs.github.io/herdr-namesync/docs/deciding) ·
 [Configuration](https://oddurs.github.io/herdr-namesync/docs/configuration)
 
+![A herdr sidebar before and after namesync: six spaces named after their directories on the left, named after the work on the right](docs/sidebar.svg)
+
 namesync keeps workspace labels, tab labels and agent names in sync with what
 the coding agent inside them is actually doing — continuously, and with no LLM
 call, API key or account.
@@ -191,16 +193,25 @@ the side that knows how wide the column is.
 ## Install
 
 ```bash
-herdr plugin install oddurs/herdr-namesync
-namesync setup --write            # add the sidebar rows herdr needs
+herdr plugin install oddurs/herdr-namesync && namesync setup --write
+```
+
+That is the whole install. `setup --write` is the half that makes anything
+visible, so it is on the same line rather than in a step somebody can miss —
+and if you skip it anyway, `namesync status` and the watcher's log both say so
+rather than leaving you with a plugin that appears to do nothing.
+
+One more, worth having whichever agent you use:
+
+```bash
 herdr integration install claude  # sharper agent state detection
 ```
 
-The middle step matters: namesync publishes `$project`, `$branch`, `$since` and
-`$n`, but herdr renders none of them until the sidebar asks, and `herdr config`
-has no `set` for a plugin to do it with.
+`setup` matters because namesync publishes `$project`, `$branch`, `$since` and
+`$n`, and herdr renders none of them until the sidebar asks — while `herdr
+config` has no `set` for a plugin to do it with.
 
-So `setup` is as small a guest as it can be. It prints the rows and changes
+It is still as small a guest as it can be. It prints the rows and changes
 nothing without `--write`. It backs up your config first. It refuses outright
 if you already have a sidebar layout — that one is yours. What it does add is
 fenced, so running it twice is a no-op and

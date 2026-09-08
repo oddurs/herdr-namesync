@@ -6,6 +6,7 @@ const { Store, stateDir } = require('./state');
 const { Namer } = require('./namer');
 const { resolveSinks } = require('./sinks');
 const { resolveSources } = require('./sources');
+const setup = require('./setup');
 const config = require('./config');
 const { normalize } = require('./naming');
 
@@ -72,6 +73,15 @@ class Daemon {
 
   async start() {
     this.log('info', 'starting (pid ' + process.pid + ')');
+    /* Said once at startup rather than every sync. A watcher that renames
+       nothing visible looks identical to one that is not running. */
+    try {
+      const layout = setup.plan();
+      if (layout.action === 'append' || layout.action === 'missing') {
+        this.log('warn', 'herdr has no [ui.sidebar.*] rows, so nothing this '
+          + 'publishes will be visible — run `namesync setup --write`');
+      }
+    } catch { /* an unreadable herdr config is not a reason not to start */ }
     process.on('SIGTERM', () => this.stop());
     process.on('SIGINT', () => this.stop());
     await this.#connectLoop();

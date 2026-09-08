@@ -185,6 +185,19 @@ const COMMANDS = {
         const names = sources.map((s) => s.name);
         out.push('  sources     ' + (names.join(', ') || 'none'));
 
+        /* Installed, running, publishing -- and invisible, because herdr
+           renders none of it until the sidebar asks. That is the single most
+           common way this plugin looks broken, and it used to be diagnosable
+           only by knowing to run `setup`. */
+        const layout = setup.plan();
+        if (layout.action === 'append' || layout.action === 'missing') {
+          out.push('');
+          out.push('  the sidebar shows none of this');
+          out.push('    herdr renders $project, $branch and $n only when a row asks for');
+          out.push('    them, and your config has no [ui.sidebar.*] rows at all.');
+          out.push('    fix:  namesync setup --write');
+        }
+
         const llm = cfg.sources && cfg.sources.llm;
         const llmSource = sources.find((x) => x.name === 'llm');
         if (llmSource && typeof llmSource.where === 'function') {

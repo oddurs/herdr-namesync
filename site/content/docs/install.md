@@ -8,8 +8,11 @@ namesync needs herdr 0.8 or newer and Node 18 or newer. It has no npm
 dependencies and nothing to build.
 
 ```bash
-herdr plugin install oddurs/herdr-namesync
+herdr plugin install oddurs/herdr-namesync && namesync setup --write
 ```
+
+The second half is not optional and the next section explains why. If you
+install without it, `namesync status` and the watcher's log both say so.
 
 ## Show it in the sidebar
 

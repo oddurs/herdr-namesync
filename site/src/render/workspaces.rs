@@ -7,19 +7,19 @@
 
 use maud::{Markup, html};
 
-struct Row {
-    n: &'static str,
-    state: &'static str,
-    project: &'static str,
-    branch: &'static str,
-    worktree: bool,
-    since: &'static str,
-    before: &'static str,
-    after: &'static str,
-    held: bool,
+pub struct Row {
+    pub n: &'static str,
+    pub state: &'static str,
+    pub project: &'static str,
+    pub branch: &'static str,
+    pub worktree: bool,
+    pub since: &'static str,
+    pub before: &'static str,
+    pub after: &'static str,
+    pub held: bool,
 }
 
-const ROWS: &[Row] = &[
+pub const ROWS: &[Row] = &[
     Row {
         n: "1",
         state: "working",
@@ -89,7 +89,7 @@ const ROWS: &[Row] = &[
 ];
 
 /// herdr's own state glyphs.
-fn glyph(state: &str) -> &'static str {
+pub fn glyph(state: &str) -> &'static str {
     match state {
         "idle" => "○",
         "done" => "✓",
