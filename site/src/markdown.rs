@@ -18,9 +18,12 @@ use syntect::util::LinesWithEndings;
 
 const CLASS_STYLE: ClassStyle = ClassStyle::SpacedPrefixed { prefix: "tok-" };
 
+/// syntect's bundled set plus `two-face`'s, because the bundled one does not
+/// include TOML -- and TOML is what herdr's config is written in, so it is the
+/// language these documents fence with most after the shell.
 fn syntaxes() -> &'static SyntaxSet {
     static SYNTAXES: OnceLock<SyntaxSet> = OnceLock::new();
-    SYNTAXES.get_or_init(SyntaxSet::load_defaults_newlines)
+    SYNTAXES.get_or_init(two_face::syntax::extra_newlines)
 }
 
 /// Languages the documents actually fence with, mapped to what syntect calls
@@ -94,3 +97,78 @@ pub fn render(source: &str) -> Result<String> {
     pulldown_cmark::html::push_html(&mut out, events.into_iter());
     Ok(out)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn highlights_a_known_language() {
+        let html = render("```bash\ncd site && cargo run\n```\n").unwrap();
+        assert!(html.contains("tok-"), "no tokens emitted: {html}");
+        assert!(html.starts_with("<pre>"), "{html}");
+    }
+
+    #[test]
+    fn highlights_every_language_the_documents_fence_with() {
+        // The fences actually in use. TOML in particular is worth pinning:
+        // it is the one the previous toolchain needed a separate grammar for.
+        for lang in ["bash", "sh", "js", "json", "toml"] {
+            assert!(syntax_for(lang).is_some(), "no syntax for `{lang}`");
+        }
+    }
+
+    #[test]
+    fn an_unknown_language_is_not_an_error() {
+        // A block nobody coloured is still a readable block -- and it is still
+        // escaped, which is why the source text is not what comes back.
+        let html = render("```nosuchlanguage\nlet x = a < b;\n```\n").unwrap();
+        assert!(html.contains("let x = a &lt; b;"), "{html}");
+        assert!(!html.contains("tok-"), "unexpectedly highlighted: {html}");
+    }
+
+    #[test]
+    fn a_plain_fence_is_left_alone() {
+        let html = render("```\nnamesync dry-run\n```\n").unwrap();
+        assert!(html.contains("namesync dry-run"));
+        assert!(!html.contains("tok-"));
+    }
+
+    #[test]
+    fn code_is_escaped_rather_than_executed() {
+        let html = render("```\n<script>alert(1)</script>\n```\n").unwrap();
+        assert!(!html.contains("<script>"), "unescaped: {html}");
+        assert!(html.contains("&lt;script&gt;"), "{html}");
+    }
+
+    #[test]
+    fn renders_tables() {
+        let html = render("| a | b |\n| --- | --- |\n| 1 | 2 |\n").unwrap();
+        assert!(html.contains("<table>"), "{html}");
+    }
+
+    #[test]
+    fn smart_punctuation_is_on() {
+        // The prose is written expecting it. `--` is an en dash and `---` an
+        // em dash, which is what the previous toolchain did too.
+        assert!(render("one -- two\n").unwrap().contains('\u{2013}'));
+        assert!(render("one --- two\n").unwrap().contains('\u{2014}'));
+    }
+
+    #[test]
+    fn a_flag_inside_code_keeps_its_dashes() {
+        // The documents are full of `--write` and `--apply`, and an en dash
+        // there would be a command that does not run.
+        // Highlighting splits a line across spans, so compare the text, not
+        // the markup.
+        let html = render("```bash\nnamesync setup --write\n```\n").unwrap();
+        let text = html.replace("</span>", "").replace('\u{2013}', "[EN]");
+        let text: String = text
+            .split('<')
+            .map(|chunk| chunk.split_once('>').map_or(chunk, |(_, rest)| rest))
+            .collect();
+        assert!(text.contains("--write"), "dashes were smartened in code: {text}");
+        assert!(render("`--undo`\n").unwrap().contains("--undo"));
+    }
+}
+

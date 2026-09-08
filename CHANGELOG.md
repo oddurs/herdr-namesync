@@ -17,6 +17,10 @@ Notable changes to namesync. The format follows
 - The floor is charged when a costly source is *asked*, not when it answers. A
   model that replies `unknown` has still cost what it cost, and treating that as
   "not consulted" asked it again on the next sync.
+- TOML code blocks lost their highlighting in the move off Shiki: syntect's
+  bundled syntaxes do not include it, and the `tok-` classes I checked for came
+  from the `json` and `bash` blocks on the same page. `two-face` supplies it,
+  and a test now asserts every language the documents fence with resolves.
 - The dev server sends `Cache-Control: no-store`. Without a directive or a
   validator the browser cached heuristically, so a live reload could fire and
   then redraw the page from before the edit.
