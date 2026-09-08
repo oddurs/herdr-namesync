@@ -31,19 +31,19 @@ Documented, tested, and safe to depend on.
 
 ## later — Someday
 
-`#####·····` 50% · 2 of 4 done
+`########··` 75% · 3 of 4 done
 
 Good ideas without a date yet.
 
 ### backlog
 
 - [ ] `0024` Measure the tagline as a conditional <sup>feature · p2</sup>
-- [ ] `0078` A demo you can see, and an install that is one command <sup>feature · p2</sup>
 
 ### done
 
 - [x] `0010` Ask herdr for state_changed_at <sup>chore · p2</sup>
 - [x] `0076` Similarity cannot tell a rewording from a new task <sup>feature · p2</sup>
+- [x] `0078` A demo you can see, and an install that is one command <sup>feature · p2</sup>
 
 ## v0.2 — Make the policy legible
 

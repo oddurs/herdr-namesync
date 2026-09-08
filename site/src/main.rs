@@ -7,6 +7,7 @@
 
 mod build;
 mod content;
+mod demo;
 mod markdown;
 mod render;
 mod serve;
@@ -56,6 +57,13 @@ enum Command {
         #[arg(long, short, default_value_t = 4321)]
         port: u16,
     },
+
+    /// Redraw the before-and-after asset the README shows, from the same
+    /// session the landing page draws.
+    Demo {
+        #[arg(long, default_value = "../docs/sidebar.svg")]
+        out: PathBuf,
+    },
 }
 
 fn main() -> Result<()> {
@@ -72,6 +80,14 @@ fn main() -> Result<()> {
                 root.join(out)
             };
             build::run(&root, &out, &base)
+        }
+        Command::Demo { out } => {
+            let out = if out.is_absolute() {
+                out
+            } else {
+                root.join(out)
+            };
+            demo::write(&out)
         }
         Command::Serve { port } => tokio::runtime::Builder::new_multi_thread()
             .enable_all()

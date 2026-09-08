@@ -60,6 +60,7 @@ herdr reports, not only the ones the test under your cursor reads.
 cd site
 cargo run -- serve      # http://127.0.0.1:4321, reloads on change
 cargo run -- build      # static HTML into site/dist
+cargo run -- demo       # redraw docs/sidebar.svg for the README
 ```
 
 Two modes, one renderer. `serve` renders each request from the files on disk

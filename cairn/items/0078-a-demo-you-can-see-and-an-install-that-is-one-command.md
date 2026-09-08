@@ -2,7 +2,7 @@
 id: 78
 title: A demo you can see, and an install that is one command
 type: feature
-status: backlog
+status: done
 milestone: later
 created: 2026-09-08
 updated: 2026-09-08
