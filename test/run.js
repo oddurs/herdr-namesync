@@ -8,8 +8,9 @@ const { execFileSync } = require('child_process');
 const naming = require('../src/naming');
 const { decide, SKIP } = require('../src/policy');
 const { Store } = require('../src/state');
-const { Namer, leadAgent, gitInfo, gitCache, detectProject,
+const { Namer, leadAgent, gitInfo, gitCache, gitChanges, trunk, detectProject,
   repoNameFromUrl, manifestName } = require('../src/namer');
+const { openPullRequests, pullCache } = require('../src/github');
 const { planOrder, isClaimed } = require('../src/grouping');
 const { isUselessCwd } = require('../src/namer');
 const setup = require('../src/setup');
@@ -384,6 +385,53 @@ testAsync('detectProject resolves a repo from a subdirectory', async () => {
   assert.notStrictEqual(here, 'test', 'should name the repo, not the subdir');
 });
 
+/* A repository with one commit on its trunk, so a branch can be measured
+   against it. Author identity is passed on the command line rather than read
+   from the developer's config, which a CI runner does not have. */
+function commitRepo({ trunkName = 'main' } = {}) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ns-work-'));
+  const run = (...args) => execFileSync('git', ['-C', dir, '-c', 'user.name=t', '-c', 'user.email=t@t',
+    ...args], { stdio: 'ignore' });
+  run('init', '-q', '-b', trunkName);
+  fs.writeFileSync(path.join(dir, 'a.txt'), 'a\n');
+  run('add', 'a.txt');
+  run('commit', '-q', '-m', 'first');
+  return { dir, run };
+}
+
+testAsync('a clean checkout on the trunk has nothing to report', async () => {
+  const { dir } = commitRepo();
+  assert.deepStrictEqual(await gitChanges(dir), { dirty: 0, unmerged: 0 });
+});
+
+testAsync('uncommitted paths and unmerged commits are counted separately', async () => {
+  const { dir, run } = commitRepo();
+  run('checkout', '-q', '-b', 'feat/x');
+  fs.writeFileSync(path.join(dir, 'b.txt'), 'b\n');
+  run('add', 'b.txt');
+  run('commit', '-q', '-m', 'second');
+  fs.writeFileSync(path.join(dir, 'c.txt'), 'c\n');   // untracked
+  fs.writeFileSync(path.join(dir, 'a.txt'), 'aa\n');  // modified
+  assert.deepStrictEqual(await gitChanges(dir), { dirty: 2, unmerged: 1 });
+});
+
+testAsync('master is a trunk too, and origin wins over a local branch of the same name', async () => {
+  const { dir, run } = commitRepo({ trunkName: 'master' });
+  assert.strictEqual(await trunk(dir), 'refs/heads/master');
+  // A remote-tracking master that is behind: the unpushed commit counts.
+  run('update-ref', 'refs/remotes/origin/master', 'HEAD');
+  fs.writeFileSync(path.join(dir, 'b.txt'), 'b\n');
+  run('add', 'b.txt');
+  run('commit', '-q', '-m', 'unpushed');
+  assert.strictEqual(await trunk(dir), 'refs/remotes/origin/master');
+  assert.deepStrictEqual(await gitChanges(dir), { dirty: 0, unmerged: 1 });
+});
+
+testAsync('outside a repository the counts are unknown, not zero', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ns-nogit-'));
+  assert.deepStrictEqual(await gitChanges(dir), { dirty: null, unmerged: null });
+});
+
 testAsync('gitInfo caches per directory instead of respawning git', async () => {
   gitCache.clear();
   const t0 = Date.now();
@@ -422,6 +470,82 @@ testAsync('publishMetadata sends project, branch and intent once each', async ()
   // Unchanged tokens must not be republished on every sync.
   assert.strictEqual(await n.publishMetadata(snap), 0);
   assert.strictEqual(sent.length, 2, 'republished identical metadata');
+});
+
+testAsync('publishMetadata says what has not landed, and nothing when it all has', async () => {
+  const sent = [];
+  const sink = { name: 'herdr', apply: async () => true,
+    reportMetadata: async (kind, id, tokens) => { sent.push({ kind, tokens }); return true; } };
+  const { dir, run } = commitRepo();
+  gitCache.clear();
+  let open = 0;
+  const n = new Namer({ cfg: cfg(), store: freshStore(), sinks: [sink], pullRequests: async () => open });
+
+  await n.publishMetadata(snapshot([agent({ cwd: dir, foreground_cwd: dir })]));
+  let ws = sent.find((x) => x.kind === 'workspace');
+  assert.strictEqual(ws.tokens.dirty, null, 'a clean tree publishes nothing');
+  assert.strictEqual(ws.tokens.unmerged, null);
+  assert.strictEqual(ws.tokens.prs, null, 'zero open pull requests is silence, not "0"');
+
+  run('checkout', '-q', '-b', 'feat/y');
+  fs.writeFileSync(path.join(dir, 'b.txt'), 'b\n');
+  run('add', 'b.txt');
+  run('commit', '-q', '-m', 'second');
+  fs.writeFileSync(path.join(dir, 'c.txt'), 'c\n');
+  open = 3;
+  gitCache.clear();
+  sent.length = 0;
+  await n.publishMetadata(snapshot([agent({ cwd: dir, foreground_cwd: dir })]));
+  ws = sent.find((x) => x.kind === 'workspace');
+  const pane = sent.find((x) => x.kind === 'pane');
+  assert.strictEqual(ws.tokens.dirty, '●1');
+  assert.strictEqual(ws.tokens.unmerged, '↑1');
+  assert.strictEqual(ws.tokens.prs, '⇄3');
+  // The Agents panel reads pane metadata, so it needs the same three.
+  assert.deepStrictEqual([pane.tokens.dirty, pane.tokens.unmerged, pane.tokens.prs], ['●1', '↑1', '⇄3']);
+});
+
+testAsync('the pull request lookup is asked per repository and is off by config', async () => {
+  const sent = [];
+  const sink = { name: 'herdr', apply: async () => true,
+    reportMetadata: async (kind, id, tokens) => { sent.push({ kind, tokens }); return true; } };
+  const { dir } = commitRepo();
+  gitCache.clear();
+  const asked = [];
+  const n = new Namer({ cfg: cfg({ showPullRequests: false, showChanges: false }),
+    store: freshStore(), sinks: [sink], pullRequests: async (root) => { asked.push(root); return 9; } });
+  fs.writeFileSync(path.join(dir, 'c.txt'), 'c\n');
+  await n.publishMetadata(snapshot([agent({ cwd: dir, foreground_cwd: dir })]));
+  assert.strictEqual(asked.length, 0, 'showPullRequests: false must not call gh');
+  const ws = sent.find((x) => x.kind === 'workspace');
+  assert.strictEqual(ws.tokens.prs, null);
+  assert.strictEqual(ws.tokens.dirty, null, 'showChanges: false must not count');
+});
+
+testAsync('openPullRequests remembers an answer, a failure, and shares an in-flight ask', async () => {
+  pullCache.clear();
+  let calls = 0;
+  const exec = async () => { calls += 1; return '4'; };
+  const t0 = 1000;
+  // Every pane of one repository asks in the same sync; one process serves all.
+  const [a, b] = await Promise.all([
+    openPullRequests('/r', '/r/wt1', { now: t0, ttlMs: 100, exec }),
+    openPullRequests('/r', '/r/wt2', { now: t0, ttlMs: 100, exec }),
+  ]);
+  assert.deepStrictEqual([a, b, calls], [4, 4, 1]);
+  assert.strictEqual(await openPullRequests('/r', '/r', { now: t0 + 50, ttlMs: 100, exec }), 4);
+  assert.strictEqual(calls, 1, 'inside the ttl nothing is spawned');
+  assert.strictEqual(await openPullRequests('/r', '/r', { now: t0 + 150, ttlMs: 100, exec }), 4);
+  assert.strictEqual(calls, 2, 'past the ttl it asks again');
+
+  // A machine without gh: the failure is held for a full ttl, not retried per sync.
+  pullCache.clear();
+  let failures = 0;
+  const broken = async () => { failures += 1; return null; };
+  assert.strictEqual(await openPullRequests('/q', '/q', { now: t0, ttlMs: 100, exec: broken }), null);
+  assert.strictEqual(await openPullRequests('/q', '/q', { now: t0 + 10, ttlMs: 100, exec: broken }), null);
+  assert.strictEqual(failures, 1);
+  assert.strictEqual(await openPullRequests('', '', { exec: broken }), null, 'no repository, no ask');
 });
 
 testAsync('publishMetadata reports an agent count only when ambiguous', async () => {
@@ -816,13 +940,23 @@ function tmpConfig(body) {
 
 test('the blocks reference only tokens namesync publishes', () => {
   const text = setup.blocks();
-  for (const t of ['$n', '$project', '$worktree', '$locked', '$stale', '$since', '$age']) {
+  for (const t of ['$n', '$project', '$worktree', '$locked', '$stale', '$since',
+    '$dirty', '$unmerged', '$prs']) {
     assert.ok(text.includes(t), 'missing ' + t);
   }
-  // branch and git_status are herdr built-ins for Space rows; $branch is the
-  // metadata one, needed because Agent rows have no built-in for it.
-  assert.ok(text.includes('{ token = "$branch"') || text.includes('"$since"'));
   assert.ok(!/\$(state_age|role|foo)/.test(text), 'references a token we do not publish');
+});
+
+test('the top line shows work that has not landed, not the branch and its age', () => {
+  const text = setup.blocks();
+  const spaces = text.slice(text.indexOf('[ui.sidebar.spaces]'));
+  // Six rows reading "main 17h" said nothing; the space is for $dirty,
+  // $unmerged and $prs, each absent at zero so a landed checkout stays quiet.
+  for (const gone of ['"branch"', '"git_status"', '"$age"']) {
+    assert.ok(!spaces.includes(gone), 'still shows ' + gone);
+  }
+  assert.ok(spaces.indexOf('"$dirty"') < spaces.indexOf('"$unmerged"'));
+  assert.ok(spaces.indexOf('"$unmerged"') < spaces.indexOf('"$prs"'));
 });
 
 test('an existing layout is never overwritten', () => {

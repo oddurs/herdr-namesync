@@ -26,6 +26,9 @@ rows. All values are strings or absent — never empty strings.
 | `project` | both | The repository's name. Origin remote, then any other remote, then the project's own manifest, then the folder — in that order, at whichever directory turns out to be the project root. | stable |
 | `branch` | both | Current git branch. | stable |
 | `worktree` | both | The literal string `worktree` when the pane sits in a linked worktree. Absent otherwise. | stable |
+| `dirty` | both | `●` followed by the number of paths the working tree has changed and not committed. Absent when the tree is clean or git could not say. | stable |
+| `unmerged` | both | `↑` followed by the number of commits on HEAD that the trunk does not have: on a branch, what its pull request would carry; on the trunk, what is unpushed. The trunk is `origin/HEAD`, then `origin/main` or `origin/master`, then the local branch of either name. Absent at zero. | stable |
+| `prs` | both | `⇄` followed by the number of pull requests open on the repository, asked of `gh` on a slow clock. Absent at zero, and absent when `gh` is missing or not logged in. | stable |
 | `n` | both | The workspace's number — what `prefix+shift+N` selects. | stable |
 | `intent` | workspace | The agent's live title, before any template is applied. | stable |
 | `since` | both | How long the agent has held its **current state**. Resets on every transition, so it answers "who has been blocked longest". | stable |
@@ -42,6 +45,11 @@ rows. All values are strings or absent — never empty strings.
 **Degrade, never fail.** Every token can be absent — namesync may not be
 installed, may be disabled, or may not have resolved a value yet. Fall back to
 what herdr itself knows: a workspace always has a `label`.
+
+**Do not parse `dirty`, `unmerged` or `prs` for the number.** The glyph is
+part of the value so a sidebar row can show it without help, and a token that
+is absent at zero is what lets a landed checkout stay quiet. A consumer that
+wants the count should ask git.
 
 **Do not parse `since` or `age`.** They are human-facing buckets, not
 durations: minute precision for ten minutes, then five-minute steps, then

@@ -7,6 +7,7 @@ const { render, slugify, uniqueAgentName, normalize, prose, stripProject, format
 const { decide } = require('./policy');
 const { isClaimed } = require('./grouping');
 const { createTitleSource, observe } = require('./sources');
+const { openPullRequests } = require('./github');
 
 function git(cwd, args) {
   return new Promise((resolve) => {
@@ -17,6 +18,42 @@ function git(cwd, args) {
 
 const gitBranch = (cwd) => git(cwd, ['rev-parse', '--abbrev-ref', 'HEAD']);
 
+/* The branch work lands on, in the order it should be trusted: what origin
+   says its default is, then the conventional names on origin, then the same
+   names locally for a repository with no remote. for-each-ref sorts its
+   output by name rather than by pattern, so the choice is made here. */
+const TRUNK_REFS = [
+  'refs/remotes/origin/HEAD', 'refs/remotes/origin/main', 'refs/remotes/origin/master',
+  'refs/heads/main', 'refs/heads/master',
+];
+
+async function trunk(cwd) {
+  const found = await git(cwd, ['for-each-ref', '--format=%(refname)', ...TRUNK_REFS]);
+  if (!found) return null;
+  const have = new Set(found.split('\n'));
+  return TRUNK_REFS.find((r) => have.has(r)) || null;
+}
+
+/* Work that has not left the machine, as two counts.
+
+   `dirty` is paths the working tree has changed and not committed. `unmerged`
+   is commits on HEAD that the trunk does not have: on a feature branch, what
+   the pull request would carry; on the trunk itself, what has not been pushed.
+   Either is null when git could not say, which is different from zero.
+
+   --no-optional-locks matters: the agent in this pane runs git constantly,
+   and a status that refreshes the index would contend with it for the lock. */
+async function gitChanges(cwd) {
+  const [status, base] = await Promise.all([
+    git(cwd, ['--no-optional-locks', 'status', '--porcelain']),
+    trunk(cwd),
+  ]);
+  const dirty = status == null ? null : status.split('\n').filter(Boolean).length;
+  const ahead = base ? await git(cwd, ['rev-list', '--count', base + '..HEAD']) : null;
+  const unmerged = ahead == null || !/^\d+$/.test(ahead) ? null : Number(ahead);
+  return { dirty, unmerged };
+}
+
 /* Git answers are cached per directory. A sync resolves project and branch for
    every workspace, and buildPlans and publishMetadata each ask, so without this
    a single title change spawns two processes per workspace twice over.
@@ -24,21 +61,29 @@ const gitBranch = (cwd) => git(cwd, ['rev-parse', '--abbrev-ref', 'HEAD']);
 const GIT_TTL_MS = 15000;
 const gitCache = new Map();
 
-async function gitInfo(cwd, now = Date.now()) {
-  if (isUselessCwd(cwd)) return { project: '', branch: '', worktree: false };
+const NO_GIT = { project: '', branch: '', worktree: false, root: '', dirty: null, unmerged: null };
+
+// `changes` is whether to count uncommitted and unmerged work, which costs
+// two more git processes per directory and is the part a user may turn off.
+async function gitInfo(cwd, now = Date.now(), { changes = true } = {}) {
+  if (isUselessCwd(cwd)) return NO_GIT;
   const hit = gitCache.get(cwd);
   if (hit && now - hit.at < GIT_TTL_MS) return hit.value;
 
-  const [project, branch, gitDir, commonDir] = await Promise.all([
+  const [project, branch, gitDir, commonDir, work] = await Promise.all([
     detectProject(cwd),
     gitBranch(cwd),
     git(cwd, ['rev-parse', '--path-format=absolute', '--git-dir']),
     git(cwd, ['rev-parse', '--path-format=absolute', '--git-common-dir']),
+    changes ? gitChanges(cwd) : { dirty: null, unmerged: null },
   ]);
   // A linked worktree has its own git dir but shares the common one. Worth
   // surfacing: three rows reading "fontina · main" are otherwise identical.
   const worktree = Boolean(gitDir && commonDir && gitDir !== commonDir);
-  const value = { project: project || '', branch: branch || '', worktree };
+  // The repository every worktree of it shares, so the pull request count is
+  // asked once per repository rather than once per checkout.
+  const root = commonDir ? (path.basename(commonDir) === '.git' ? path.dirname(commonDir) : commonDir) : '';
+  const value = { project: project || '', branch: branch || '', worktree, root, ...work };
   gitCache.set(cwd, { at: now, value });
 
   // Bounded: one entry per working directory in the session.
@@ -232,10 +277,12 @@ function leadAgent(agentsInWorkspace, mode) {
 }
 
 class Namer {
-  constructor({ cfg, store, sinks, sources, client, log = () => {} }) {
+  constructor({ cfg, store, sinks, sources, client, log = () => {}, pullRequests = openPullRequests }) {
     this.cfg = cfg;
     this.store = store;
     this.sinks = sinks;
+    // Injectable, because the real one talks to GitHub.
+    this.pullRequests = pullRequests;
     /* Where names come from. Defaults to the agent's own title, which is what
        namesync has always used and what it should keep using while it works. */
     this.sources = sources && sources.length ? sources : [createTitleSource()];
@@ -437,14 +484,14 @@ class Namer {
        not stop being true because a shell wandered. */
     const candidates = [agent.foreground_cwd, agent.cwd].filter((c) => !isUselessCwd(c));
     let cwd = '';
-    let info = { project: '', branch: '', worktree: false };
+    let info = NO_GIT;
     for (const candidate of candidates) {
-      const resolved = await gitInfo(candidate);
+      const resolved = await gitInfo(candidate, Date.now(), { changes: this.cfg.showChanges });
       if (resolved.project) { cwd = candidate; info = resolved; break; }
       if (!cwd) { cwd = candidate; info = resolved; }
     }
 
-    let { project, branch, worktree } = info;
+    let { project, branch, worktree, root, dirty, unmerged } = info;
     if (project) {
       this.store.setLastProject(agent.pane_id, project);
     } else {
@@ -459,6 +506,10 @@ class Namer {
       dirName: repo,
       branch: branch || '',
       worktree: worktree ? 'worktree' : '',
+      root: root || '',
+      cwd,
+      dirty,
+      unmerged,
       // Both directories, because detection may resolve either and herdr may
       // label from either.
       paneDir: agent.cwd ? path.basename(agent.cwd) : '',
@@ -550,6 +601,18 @@ class Namer {
       return formatSince(now - title(a).at);
     };
 
+    /* Work that has not landed, as three glyphs. Each is absent at zero so a
+       clean, merged, unqueued checkout says nothing at all -- the row is for
+       what still needs doing. `↑` is what herdr's own git_status uses for
+       commits ahead, so the two read the same way when both are shown. */
+    const dirty = (v) => (this.cfg.showChanges && v.dirty ? '●' + v.dirty : null);
+    const unmerged = (v) => (this.cfg.showChanges && v.unmerged ? '↑' + v.unmerged : null);
+    const prs = async (v) => {
+      if (!this.cfg.showPullRequests || !v.root) return null;
+      const n = await this.pullRequests(v.root, v.cwd, { now, ttlMs: this.cfg.pullRequestRefreshMs });
+      return n ? '⇄' + n : null;
+    };
+
     for (const [workspaceId, agentsHere] of idx.byWorkspace) {
       const ws = idx.workspaces.get(workspaceId);
       if (!ws) continue;
@@ -572,6 +635,9 @@ class Namer {
           project: v.project || null,
           worktree: v.worktree || null,
           branch: v.branch || null,
+          dirty: dirty(v),
+          unmerged: unmerged(v),
+          prs: await prs(v),
           since: duration(a),
           age: age(a),
           agent: v.agent || null,
@@ -592,6 +658,9 @@ class Namer {
         project: v.project || null,
         worktree: v.worktree || null,
         branch: v.branch || null,
+        dirty: dirty(v),
+        unmerged: unmerged(v),
+        prs: await prs(v),
         intent: v.intent || null,
         since: duration(lead),
         age: age(lead),
@@ -657,4 +726,4 @@ class Namer {
 
 module.exports = { Namer, index, leadAgent, gitBranch, detectProject,
   findProjectRoot, repoNameFromUrl, manifestName, remoteName, isUselessCwd,
-  gitInfo, gitCache };
+  gitInfo, gitCache, gitChanges, trunk };

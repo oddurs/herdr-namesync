@@ -6,6 +6,16 @@ Notable changes to namesync. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `$dirty`, `$unmerged` and `$prs`: uncommitted paths, commits the trunk does
+  not have, and pull requests open on the repository. The rows `setup` writes
+  show them on the Spaces line where the branch and `$age` used to be, since
+  six rows reading `main 17h` distinguished nothing. Each is absent at zero.
+  The pull request count is the first lookup that leaves the machine — it
+  asks `gh`, on a five-minute clock, and `showPullRequests: false` turns it
+  off.
+
 ### Fixed
 
 - The `llm` source could never run on a stale title, which is the only thing it

@@ -271,8 +271,8 @@ page.
 
 herdr sidebar rows hold several lines, and namesync publishes display-only
 metadata so each line can carry something different: `$project`, `$branch`,
-`$intent`, `$n`, `$worktree`, `$since`, `$age`, `$locked`, `$stale`, `$agent`
-and `$agents`.
+`$intent`, `$n`, `$worktree`, `$dirty`, `$unmerged`, `$prs`, `$since`, `$age`,
+`$locked`, `$stale`, `$agent` and `$agents`.
 
 ```toml
 [ui.sidebar.agents]
@@ -289,6 +289,12 @@ now. Putting the workspace label on both wastes one of them.
 `$project` is the repository's identity, not the folder it sits in — resolved
 from the `origin` remote, then the project's own manifest, then the folder,
 worktree-aware throughout. Those disagree more often than you would expect.
+
+Six spaces all reading `main 17h` say nothing, so the rows `setup` writes put
+what has not landed there instead: `●3` is three uncommitted paths, `↑2` is
+two commits the trunk does not have, `⇄4` is four pull requests open on the
+repository. Each is absent at zero, so the checkout that still owes something
+is the one that stands out.
 
 Agent rows resolve `$name` from **pane** metadata; Space rows resolve it from
 **workspace** metadata. namesync publishes both, because a row whose tokens are
