@@ -18,14 +18,14 @@ function stateDir() {
 class Store {
   constructor(file = path.join(stateDir(), 'state.json')) {
     this.file = file;
-    this.data = { authored: {}, locked: {}, lastRenameAt: {}, metadata: {}, stateAt: {}, lastProject: {}, titleAt: {}, lastDeep: {}, deeps: [], deepIntent: {} };
+    this.data = { authored: {}, locked: {}, lastRenameAt: {}, metadata: {}, stateAt: {}, lastProject: {}, titleAt: {}, lastDeep: {}, deeps: [], deepIntent: {}, summary: {}, summaries: [] };
     this.load();
   }
 
   load() {
     try {
       const parsed = JSON.parse(fs.readFileSync(this.file, 'utf8'));
-      this.data = { authored: {}, locked: {}, lastRenameAt: {}, metadata: {}, stateAt: {}, lastProject: {}, titleAt: {}, lastDeep: {}, deeps: [], deepIntent: {}, ...parsed };
+      this.data = { authored: {}, locked: {}, lastRenameAt: {}, metadata: {}, stateAt: {}, lastProject: {}, titleAt: {}, lastDeep: {}, deeps: [], deepIntent: {}, summary: {}, summaries: [], ...parsed };
     } catch { /* first run, or unreadable: defaults stand */ }
     return this;
   }
@@ -141,6 +141,21 @@ class Store {
     return all.length ? all[all.length - 1] : 0;
   }
 
+  /* The second line: the model's last description of a pane, the window it
+     described (as a hash, so an unchanged screen is never re-asked), and
+     when. Timestamps of every ask alongside, for the hourly ceiling. */
+  summary(paneId) { return this.data.summary[paneId] || null; }
+  setSummary(paneId, value) { this.data.summary[paneId] = value; return this; }
+  markSummary(at = Date.now()) {
+    const cutoff = at - 24 * 60 * 60 * 1000;
+    this.data.summaries = (this.data.summaries || []).concat(at).filter((t) => t >= cutoff);
+    return this;
+  }
+  summariesWithin(windowMs, now = Date.now()) {
+    const from = now - windowMs;
+    return (this.data.summaries || []).filter((t) => t >= from).length;
+  }
+
   metadata(id) { return this.data.metadata[id]; }
   setMetadata(id, value) { this.data.metadata[id] = value; return this; }
 
@@ -154,7 +169,7 @@ class Store {
   forget(id) {
     const owns = (candidate) => candidate === id || candidate.startsWith(id + ':');
 
-    for (const bucket of ['locked', 'lastRenameAt', 'stateAt', 'lastProject', 'titleAt', 'lastDeep', 'deepIntent']) {
+    for (const bucket of ['locked', 'lastRenameAt', 'stateAt', 'lastProject', 'titleAt', 'lastDeep', 'deepIntent', 'summary']) {
       for (const key of Object.keys(this.data[bucket])) {
         if (owns(key)) delete this.data[bucket][key];
       }

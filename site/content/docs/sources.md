@@ -201,6 +201,37 @@ An endpoint that errors or times out is logged and skipped; the title is used
 instead. A source failing is never a reason to stop naming the rest of the
 session.
 
+## The second line
+
+The name on the first line is deliberately slow: debounced, rate limited, held
+when you wrote it. The line under it is the opposite. `$summary` is a
+description rather than a name, so no policy applies, and a description is
+only worth having while it is fresh.
+
+Fresh means a small window, not a long memory. The model is given the last
+thing you asked and the last twenty lines on screen, nothing older:
+
+```
+They asked: dont merge the out binaries
+
+On screen:
+⏺ One render output slipped into tracking: the poster image under web/static/video.
+  Untracking it and ignoring that folder, then merging.
+```
+
+and answers in one line of at most ten words — *Untracking render outputs
+before merging* — which the sidebar shows until either the screen changes and
+the model answers again, or the agent revises its own title, whichever comes
+last.
+
+It costs nothing while nothing happens. The window is hashed and an unchanged
+screen is never re-asked; a pane is asked at most once per
+`summary.intervalMs`; `summary.maxPerHour` caps every pane together. The
+same endpoint, key and timeout as the naming source, so pointing the `llm`
+source at a model on your own machine keeps this on your machine too. Without
+a usable `llm` source the token is the agent's title, which is what the second
+line showed before.
+
 ## What namesync will not do
 
 herdr can send a prompt to a running agent. namesync could therefore ask an

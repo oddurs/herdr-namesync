@@ -8,6 +8,7 @@ const { decide } = require('./policy');
 const { isClaimed } = require('./grouping');
 const { createTitleSource, observe } = require('./sources');
 const { openPullRequests } = require('./github');
+const { createSummarizer } = require('./summary');
 
 function git(cwd, args) {
   return new Promise((resolve) => {
@@ -540,6 +541,27 @@ class Namer {
     return { kind, id, current, desired, verdict, agent: agent.pane_id, vars };
   }
 
+  /* Ask the model what each agent is doing right now, from a small window
+     of the freshest context. Nothing here names anything: the answer is a
+     token the sidebar's second line shows, and it goes through no policy.
+     Needs the llm source; without one the line falls back to the title. */
+  async refreshSummaries(snapshot) {
+    if (!this.cfg.summary?.enabled || !this.cfg.metadata?.enabled) return 0;
+    const source = this.sources.find((s) => s.name === 'llm' && typeof s.ask === 'function');
+    if (!source || !this.client) return 0;
+    const idx = index(snapshot);
+    const agents = [];
+    for (const [workspaceId, agentsHere] of idx.byWorkspace) {
+      const ws = idx.workspaces.get(workspaceId);
+      if (!ws || (this.cfg.respectPluginRoles && isClaimed(ws))) continue;
+      agents.push(...agentsHere);
+    }
+    const summarizer = createSummarizer({ cfg: this.cfg, store: this.store, source, log: this.log });
+    const updated = await summarizer.refresh({ client: this.client, agents });
+    this.store.save();
+    return updated;
+  }
+
   /* Display-only metadata for the sidebar.
 
      Published to both surfaces, because herdr resolves them from different
@@ -605,6 +627,20 @@ class Namer {
        clean, merged, unqueued checkout says nothing at all -- the row is for
        what still needs doing. `↑` is what herdr's own git_status uses for
        commits ahead, so the two read the same way when both are shown. */
+    /* The second line. The model's description when it is newer than the
+       agent's own title, the title otherwise -- whichever was said last is
+       the freshest thing known. A title namesync would never use as a name
+       ("Claude Code", "zsh") is no description either, so a description
+       beats it at any age. */
+    const ignored = new Set((this.cfg.ignoreTitles || []).map((t) => String(t).toLowerCase()));
+    const summary = (a) => {
+      const t = normalize(a.terminal_title_stripped || '');
+      const s = this.store.summary(a.pane_id);
+      const junk = !t || ignored.has(t.toLowerCase());
+      if (s && s.text && (junk || s.at >= title(a).at)) return s.text;
+      return junk ? null : t;
+    };
+
     const dirty = (v) => (this.cfg.showChanges && v.dirty ? '●' + v.dirty : null);
     const unmerged = (v) => (this.cfg.showChanges && v.unmerged ? '↑' + v.unmerged : null);
     const prs = async (v) => {
@@ -638,6 +674,7 @@ class Namer {
           dirty: dirty(v),
           unmerged: unmerged(v),
           prs: await prs(v),
+          summary: summary(a),
           since: duration(a),
           age: age(a),
           agent: v.agent || null,
@@ -662,6 +699,7 @@ class Namer {
         unmerged: unmerged(v),
         prs: await prs(v),
         intent: v.intent || null,
+        summary: summary(lead),
         since: duration(lead),
         age: age(lead),
         agent: v.agent || null,

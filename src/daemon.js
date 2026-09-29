@@ -266,6 +266,12 @@ class Daemon {
     const applied = await namer.apply(plans);
     this.renames += applied.length;
 
+    // Before the tokens go out, so the second line carries this sync's answer
+    // rather than the last one's.
+    const summarised = await namer.refreshSummaries(snapshot)
+      .catch((err) => { this.log('warn', 'summary: ' + err.message); return 0; });
+    if (summarised) this.log('info', 'summarised ' + summarised + ' pane(s)');
+
     // Independent of renaming: the project is still worth publishing when the
     // title has not moved.
     const published = await namer.publishMetadata(snapshot);
