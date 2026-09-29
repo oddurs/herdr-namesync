@@ -6,6 +6,13 @@ Notable changes to namesync. The format follows
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-09-28
+
+The second line, and what has not landed. The sidebar's top line stopped
+saying `main 17h` on every row and started saying what still needs to leave
+the machine; the line under it stopped repeating a title set this morning and
+started saying what you last asked for.
+
 ### Added
 
 - `$summary`, and the managed rows show it on the second line of both panels.
@@ -16,8 +23,10 @@ Notable changes to namesync. The format follows
   the agent's title. A cairn item or milestone named in the ask or on screen
   supersedes the model: the line is the item's own title, and nothing is
   asked. Asked only when the window changes, at most once per
-  `summary.intervalMs` per pane, never past `summary.maxPerHour`. It is a
-  description, not a name, so no policy touches it.
+  `summary.intervalMs` per pane, never past `summary.maxPerHour`; reaching
+  the ceiling is logged and `status` shows the count. It is a description,
+  not a name, so no policy touches it. To have it without model-written
+  names on the first line, set `consultCostlySources: false`.
 - `$dirty`, `$unmerged` and `$prs`: uncommitted paths, commits the trunk does
   not have, and pull requests open on the repository. The rows `setup` writes
   show them on the Spaces line where the branch and `$age` used to be, since
@@ -25,25 +34,13 @@ Notable changes to namesync. The format follows
   The pull request count is the first lookup that leaves the machine — it
   asks `gh`, on a five-minute clock, and `showPullRequests: false` turns it
   off.
-
-### Fixed
-
-- The `llm` source could never run on a stale title, which is the only thing it
-  was built for. `observe` returned the first non-empty answer and the title is
-  never empty on a stale agent, so the fallback was unreachable and the source
-  had never been consulted once. A cheap answer is now held as a fallback while
-  a costly source takes its turn, and the title is still there if the model
-  declines, errors or times out.
-- The floor is charged when a costly source is *asked*, not when it answers. A
-  model that replies `unknown` has still cost what it cost, and treating that as
-  "not consulted" asked it again on the next sync.
-- TOML code blocks lost their highlighting in the move off Shiki: syntect's
-  bundled syntaxes do not include it, and the `tok-` classes I checked for came
-  from the `json` and `bash` blocks on the same page. `two-face` supplies it,
-  and a test now asserts every language the documents fence with resolves.
-- The dev server sends `Cache-Control: no-store`. Without a directive or a
-  validator the browser cached heuristically, so a live reload could fire and
-  then redraw the page from before the edit.
+- `maxDeepPerHour`, a ceiling on model consultations across every pane, and
+  `status` reports consultations this hour and over the last day, so the bill
+  is visible without reading a log.
+- With no endpoint configured, the `llm` source looks for Ollama, LM Studio
+  and llama.cpp on their default ports and uses whichever answers, so a
+  working setup needs no key, no endpoint and no model id, and nothing leaves
+  the machine. A configured endpoint still wins.
 
 ### Changed
 
@@ -57,16 +54,10 @@ Notable changes to namesync. The format follows
   are all required and orders must be unique — which immediately caught
   `internals` and `sources` both claiming order 6, a tie Astro had been
   breaking on filesystem order.
-
-### Fixed
-
-- A Space label built from a slug-shaped title kept the slug, so the sidebar
-  read `Adopt-remaining-lessons`. `{intent}` on a Space or tab label now reads
-  such a title as prose. Agent names are identifiers and are unaffected, and
-  `{intent-slug}` still yields a slug wherever it is asked for.
-
-### Changed
-
+- The landing page argues rather than describes: why another renamer, which
+  three are better at what, what leaves the machine when a model is used, and
+  what namesync will not do. The comparison table now says true things about
+  the rivals, and the hero is drawn from a real session.
 - The README, the docs site and `config.example.json` have had a pass for
   publish: examples that predated the prose rule, a clone path that still said
   `namesync` after the repository was renamed, three settings that shipped
@@ -79,7 +70,35 @@ Notable changes to namesync. The format follows
   times faster.
 - Detection tests build their own fixture repository instead of asking the
   namesync checkout about itself, so an assertion says which source answered
-  rather than which two happened to agree.
+  rather than which two happened to agree. The socket contract is tested
+  against a stub herdr rather than only written down.
+
+### Fixed
+
+- The `llm` source could never run on a stale title, which is the only thing it
+  was built for. `observe` returned the first non-empty answer and the title is
+  never empty on a stale agent, so the fallback was unreachable and the source
+  had never been consulted once. A cheap answer is now held as a fallback while
+  a costly source takes its turn, and the title is still there if the model
+  declines, errors or times out.
+- A model's answer was undone by the next sync, for ever. Nothing recorded
+  that the name had replaced the title, so thirty seconds later the same stale
+  title renamed it back, and ten minutes later the model was asked again.
+  The answer now stands until the title changes.
+- The floor is charged when a costly source is *asked*, not when it answers. A
+  model that replies `unknown` has still cost what it cost, and treating that as
+  "not consulted" asked it again on the next sync.
+- A Space label built from a slug-shaped title kept the slug, so the sidebar
+  read `Adopt-remaining-lessons`. `{intent}` on a Space or tab label now reads
+  such a title as prose. Agent names are identifiers and are unaffected, and
+  `{intent-slug}` still yields a slug wherever it is asked for.
+- TOML code blocks lost their highlighting in the move off Shiki: syntect's
+  bundled syntaxes do not include it, and the `tok-` classes I checked for came
+  from the `json` and `bash` blocks on the same page. `two-face` supplies it,
+  and a test now asserts every language the documents fence with resolves.
+- The dev server sends `Cache-Control: no-store`. Without a directive or a
+  validator the browser cached heuristically, so a live reload could fire and
+  then redraw the page from before the edit.
 
 ## [0.2.0] — 2026-09-07
 
