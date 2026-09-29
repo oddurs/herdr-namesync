@@ -237,7 +237,27 @@ class Daemon {
     }, delay);
   }
 
+  /* One sync at a time. A sync that asks a model for fifteen panes takes
+     half a minute, and an event arriving meanwhile used to start a second
+     one alongside it: both saw no summary yet, both asked, and every pane
+     was paid for twice. A sync requested during another is run once after
+     it, which is all the event needed. */
   async sync() {
+    if (this.inflight) {
+      this.again = true;
+      return this.inflight;
+    }
+    this.inflight = this.#sync().finally(() => {
+      this.inflight = null;
+      if (this.again) {
+        this.again = false;
+        this.schedule(250);
+      }
+    });
+    return this.inflight;
+  }
+
+  async #sync() {
     if (!this.api) return [];
 
     const winner = this.#supersededBy();

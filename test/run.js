@@ -2177,6 +2177,24 @@ testAsync('the summary sends the same request shape as the naming source', async
   } finally { server.close(); delete process.env.NS_TEST_KEY; }
 });
 
+testAsync('two syncs at once become one now and one after', async () => {
+  const { Daemon } = require('../src/daemon');
+  const d = new Daemon({ logFile: path.join(os.tmpdir(), 'ns-daemon-' + Date.now() + '.log') });
+  d.store = freshStore();
+  let snapshots = 0;
+  d.api = {
+    snapshot: async () => { snapshots += 1; await new Promise((r) => setTimeout(r, 30)); return { snapshot: { workspaces: [], tabs: [], panes: [], agents: [] } }; },
+    request: async () => ({}),
+    close() {},
+  };
+  await Promise.all([d.sync(), d.sync(), d.sync()]);
+  assert.strictEqual(snapshots, 1, 'overlapping syncs must share one pass');
+  assert.ok(d.timer, 'the event that arrived mid-sync gets its own pass afterwards');
+  await new Promise((r) => setTimeout(r, 400));
+  assert.strictEqual(snapshots, 2, 'exactly one follow-up, however many asked');
+  d.stop();
+});
+
 process.stdout.write('\nwhat the person asked for\n');
 
 function tmpTranscript(entries) {
