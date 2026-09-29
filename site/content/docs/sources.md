@@ -232,6 +232,11 @@ source at a model on your own machine keeps this on your machine too. Without
 a usable `llm` source the token is the agent's title, which is what the second
 line showed before.
 
+Enabling the `llm` source also lets it *name* things, once a title has gone
+stale. If you want the second line described and the first line left to the
+agent, set `consultCostlySources: false`: the source stays usable for the
+summary and is never asked for a name.
+
 ## What namesync will not do
 
 herdr can send a prompt to a running agent. namesync could therefore ask an

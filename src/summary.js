@@ -62,15 +62,19 @@ function createSummarizer({ cfg, store, source, log = () => {} }) {
     return parts.join('\n\n').slice(-maxChars);
   }
 
-  async function refreshOne(client, agent, now) {
+  // Which panes have something new to say, without spending anything yet.
+  async function due(client, agent, now) {
     const text = await window(client, agent);
-    if (!text) return false;
+    if (!text) return null;
     const hash = crypto.createHash('sha1').update(text).digest('hex').slice(0, 16);
     const prev = store.summary(agent.pane_id);
-    if (prev && prev.hash === hash) return false;
-    if (prev && now - prev.at < intervalMs) return false;
-    if (maxPerHour > 0 && store.summariesWithin(3600000, now) >= maxPerHour) return false;
+    if (prev && prev.hash === hash) return null;
+    if (prev && now - prev.at < intervalMs) return null;
+    return { agent, text, hash, prev };
+  }
 
+  async function ask({ agent, text, hash, prev }, now) {
+    if (maxPerHour > 0 && store.summariesWithin(3600000, now) >= maxPerHour) return false;
     // Charged when asked, not when answered: a declined ask still cost it.
     store.markSummary(now);
     const project = agent.tokens && agent.tokens.project;
@@ -86,22 +90,36 @@ function createSummarizer({ cfg, store, source, log = () => {} }) {
   }
 
   return {
-    /* Every agent, a few at a time. A pane that fails is logged and skipped;
-       one unreadable screen is no reason to leave the rest stale. */
+    /* Two phases, because the two halves scale differently. Screens are read
+       one pane at a time: the socket is one request per connection, and
+       reading several panes at once made herdr drop writes (EPIPE) and let
+       reads time out. The model is then asked a few at a time, which is
+       where the waiting actually is. A pane that fails is logged and
+       skipped; one unreadable screen is no reason to leave the rest stale. */
     async refresh({ client, agents, now = Date.now(), concurrency = 3 }) {
+      const pending = [];
+      for (const agent of agents) {
+        try {
+          const item = await due(client, agent, now);
+          if (item) pending.push(item);
+        } catch (err) {
+          log('warn', 'summary for ' + agent.pane_id + ': ' + err.message);
+        }
+      }
+
       let updated = 0;
       let next = 0;
       const worker = async () => {
-        while (next < agents.length) {
-          const agent = agents[next]; next += 1;
+        while (next < pending.length) {
+          const item = pending[next]; next += 1;
           try {
-            if (await refreshOne(client, agent, now)) updated += 1;
+            if (await ask(item, now)) updated += 1;
           } catch (err) {
-            log('warn', 'summary for ' + agent.pane_id + ': ' + err.message);
+            log('warn', 'summary for ' + item.agent.pane_id + ': ' + err.message);
           }
         }
       };
-      await Promise.all(Array.from({ length: Math.min(concurrency, agents.length) }, worker));
+      await Promise.all(Array.from({ length: Math.min(concurrency, pending.length) }, worker));
       return updated;
     },
   };
