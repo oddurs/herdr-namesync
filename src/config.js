@@ -71,8 +71,13 @@ const DEFAULTS = {
      asked and the last few lines on screen, nothing older. Asked only when
      that window changes, at most once per intervalMs per pane, and never past
      maxPerHour across all of them. Needs the llm source to be usable; with no
-     model the line shows the agent's title instead. */
-  summary: { enabled: true, lines: 20, intervalMs: 90000, maxPerHour: 120, maxChars: 1500 },
+     model the line shows the agent's title instead.
+
+     The ceiling is sized for a busy desk: fifteen active agents can change
+     their screens every minute, and a ceiling that fits a quiet afternoon
+     went silent within half an hour of one. Each ask is a few hundred tokens
+     on a small model. */
+  summary: { enabled: true, lines: 20, intervalMs: 60000, maxPerHour: 600, maxChars: 1500 },
 
   // Publish $n, $project, $worktree, $branch, $dirty, $unmerged, $prs, $intent,
   // $summary, $agent and $agents to the herdr sidebar as display-only tokens, so a two-line row can show the project on

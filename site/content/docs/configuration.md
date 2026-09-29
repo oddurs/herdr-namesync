@@ -66,8 +66,8 @@ watcher.
 | `pullRequestRefreshMs` | How often to ask again. A failure is held for the same interval, so a machine without `gh` does not spawn a process per sync. |
 | `summary.enabled` | Publish `$summary` from the model. Needs the `llm` source to be usable; without one the token is the title. To have descriptions without model-written names, keep `consultCostlySources: false`. |
 | `summary.lines` | How many screen lines the model sees, 20 by default. Small on purpose: this is "what now", not "what has this session been about". |
-| `summary.intervalMs` | Floor between asks for one pane. An unchanged screen is never re-asked regardless. |
-| `summary.maxPerHour` | Ceiling across every pane. 0 removes it. |
+| `summary.intervalMs` | Floor between asks for one pane, a minute by default. An unchanged screen is never re-asked regardless. |
+| `summary.maxPerHour` | Ceiling across every pane, 600 by default: fifteen busy agents can change their screens every minute, and a smaller ceiling went silent within half an hour. Reaching it is logged, and `status` shows the count. 0 removes it. |
 | `summary.maxChars` | Longest window sent, counted from the end. |
 | `stripProjectPrefix` | Drop a leading project name from the **Space label**, since the sidebar already shows the project on the line above. `ptop-adopt-remaining-lessons` becomes `Adopt remaining lessons`. Never strips the whole name, and never applies to tab labels or agent names. |
 | `maxDeepPerHour` | A ceiling on model consultations per hour across every pane. `deepIntervalMs` is a floor per *pane*, so the bill scales with the number of agents — and the number of agents is the situation this plugin is for. Reaching the ceiling names fewer panes rather than billing more; `namesync status` says how close you are. `0` removes it. |
