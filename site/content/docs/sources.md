@@ -204,11 +204,22 @@ session.
 ## The second line
 
 The name on the first line is deliberately slow: debounced, rate limited, held
-when you wrote it. The line under it is the opposite. `$summary` is a
-description rather than a name, so no policy applies, and a description is
-only worth having while it is fresh.
+when you wrote it. The line under it is the opposite. `$summary` is what you
+last asked for, in a few words: a reminder rather than a name, so no policy
+applies, and a reminder is only worth having while it is current.
 
-Fresh means a small window, not a long memory. The model is given the last
+It is the ask, not the activity. Scanning twelve panes, the question is "what
+am I asking each of these to do"; what the agent is doing about it is on the
+screen when you get there. So the model is told to condense your request and
+to use the screen only to make sense of it.
+
+A tracked item supersedes the model. If the ask or the screen names a cairn
+item or milestone the repository knows — `do 0042`, `finish v0.3`, an agent
+running `cairn claim 0057` — the line is that item's own title, `0042 Attach
+to a terminal`, read from the item files, and nothing is asked. An item beats
+its milestone, and the last item mentioned on screen is the current one.
+
+Current means a small window, not a long memory. The model is given the last
 thing you asked and the last twenty lines on screen, nothing older:
 
 ```
@@ -219,10 +230,9 @@ On screen:
   Untracking it and ignoring that folder, then merging.
 ```
 
-and answers in one line of at most ten words — *Untracking render outputs
-before merging* — which the sidebar shows until either the screen changes and
-the model answers again, or the agent revises its own title, whichever comes
-last.
+and answers in at most six words — *Keep the binaries out of the merge* —
+which the sidebar shows until either the screen changes and the model answers
+again, or the agent revises its own title, whichever comes last.
 
 It costs nothing while nothing happens. The window is hashed and an unchanged
 screen is never re-asked; a pane is asked at most once per

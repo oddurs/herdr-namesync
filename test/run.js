@@ -12,6 +12,7 @@ const { Namer, leadAgent, gitInfo, gitCache, gitChanges, trunk, detectProject,
   repoNameFromUrl, manifestName } = require('../src/namer');
 const { openPullRequests, pullCache } = require('../src/github');
 const { createSummarizer, usableSummary } = require('../src/summary');
+const cairn = require('../src/cairn');
 const { planOrder, isClaimed } = require('../src/grouping');
 const { isUselessCwd } = require('../src/namer');
 const setup = require('../src/setup');
@@ -1976,12 +1977,12 @@ testAsync('a generated name has no more authority than a title', async () => {
 
 process.stdout.write('\nthe second line\n');
 
-test('a summary may be longer than a name, but still one line', () => {
-  assert.strictEqual(usableSummary('"Rendering the 1080p pass and fixing the loop."'),
-    'Rendering the 1080p pass and fixing the loop');
+test('a summary is a glance, not a sentence', () => {
+  assert.strictEqual(usableSummary('"Keep the binaries out of the merge."'), 'Keep the binaries out of the merge');
   assert.strictEqual(usableSummary('unknown'), '');
   assert.strictEqual(usableSummary('It looks like the agent is waiting'), '');
-  assert.strictEqual(usableSummary('one two three four five six seven eight nine ten eleven twelve thirteen'), '');
+  assert.strictEqual(usableSummary('one two three four five six seven eight nine'), '', 'nine words is a sentence');
+  assert.strictEqual(usableSummary('Rendering the 1080p validation pass and then fixing the loop'), '', 'too long to glance at');
 });
 
 /* A model that records what it was asked, so a test can say how often the
@@ -2041,6 +2042,53 @@ testAsync('the hourly ceiling holds across panes, and a declined ask keeps the o
   assert.notStrictEqual(store.summary('w1:p1').hash, undefined);
   assert.strictEqual(await loose.refresh({ client: paneClient('y'), agents: [agent()], now: 7000 }), 0);
   assert.strictEqual(asked.length, 2, 'a screen the model declined is not asked about again until it changes');
+});
+
+/* A repository with a small backlog, so a reference can be resolved. */
+function cairnRepo() {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ns-cairn-'));
+  fs.writeFileSync(path.join(root, 'cairn.toml'), '[project]\nname = "x"\ndir = "cairn/items"\n');
+  const dir = path.join(root, 'cairn', 'items');
+  fs.mkdirSync(dir, { recursive: true });
+  const item = (file, fm) => fs.writeFileSync(path.join(dir, file),
+    '---\n' + Object.entries(fm).map(([k, v]) => k + ': ' + v).join('\n') + '\n---\n\nbody\n');
+  item('0042-attach-to-a-terminal.md', { id: 42, title: 'Attach to a terminal', type: 'bug' });
+  item('0050-first-usable-version.md', { id: 50, key: 'v0.1', title: 'First usable version', type: 'milestone' });
+  return root;
+}
+
+test('a cairn reference in the ask or on screen resolves to the item', () => {
+  const root = cairnRepo();
+  cairn.cache.clear();
+  assert.strictEqual(cairn.cairnLine(root, { ask: 'do 0042 next' }), '0042 Attach to a terminal');
+  assert.strictEqual(cairn.cairnLine(root, { ask: 'finish milestone v0.1' }), 'v0.1 First usable version');
+  assert.strictEqual(cairn.cairnLine(root, { screen: 'cairn claim 0050\n...\ncairn claim 0042' }),
+    '0042 Attach to a terminal', 'the last item claimed on screen is the current one');
+  assert.strictEqual(cairn.cairnLine(root, { ask: 'work on v0.1', screen: 'Refs: 0042' }),
+    '0042 Attach to a terminal', 'an item is more specific than its milestone');
+  assert.strictEqual(cairn.cairnLine(root, { ask: 'fix the 0099 bug' }), '', 'an id the backlog does not know is not a reference');
+  assert.strictEqual(cairn.cairnLine(root, { ask: 'rendered 1080 frames at 42 fps' }), '', 'plain numbers are not ids');
+  assert.strictEqual(cairn.cairnLine('/nowhere', { ask: 'do 0042' }), '', 'no repository, no backlog');
+});
+
+testAsync('a tracked item supersedes the model, and costs nothing', async () => {
+  const root = cairnRepo();
+  cairn.cache.clear();
+  const { root: txRoot, id } = tmpTranscript([said('take 0042 and ship it')]);
+  const { asked, source } = fakeModel(['Never used']);
+  const store = freshStore();
+  const s = createSummarizer({ cfg: cfg({ summary: { transcriptRoot: txRoot, intervalMs: 0 } }), store, source });
+  const a = agent({ agent_session: { kind: 'id', value: id } });
+  const roots = new Map([['w1:p1', root]]);
+  assert.strictEqual(await s.refresh({ client: paneClient('working'), agents: [a], roots }), 0);
+  assert.strictEqual(asked.length, 0, 'the item is the answer; the model is not asked');
+  assert.strictEqual(store.summary('w1:p1').text, '0042 Attach to a terminal');
+  assert.strictEqual(store.summariesWithin(3600000), 0, 'nothing was charged');
+
+  // Without a reference in the window, the model is asked as before.
+  const b = agent({ pane_id: 'w1:p2' });
+  assert.strictEqual(await s.refresh({ client: paneClient('just working'), agents: [b], roots }), 1);
+  assert.strictEqual(asked.length, 1);
 });
 
 testAsync('screens are read one pane at a time, and only then is the model asked in parallel', async () => {
