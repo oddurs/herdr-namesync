@@ -43,6 +43,19 @@ const DEFAULTS = {
   showDuration: true,
   durationRefreshMs: 30000,
 
+  /* Publish $dirty and $unmerged: uncommitted paths, and commits the trunk
+     does not have yet. Together they answer "is there work here that has not
+     landed", which is what distinguishes six rows all reading "main". Costs
+     two git processes per directory, cached for a few seconds. */
+  showChanges: true,
+
+  /* Publish $prs: how many pull requests the repository has open. This is the
+     one lookup that leaves the machine -- it asks `gh`, with your own login,
+     for a count -- so it has its own, slower clock. Absent when gh is missing
+     or not logged in, and never retried more often than the refresh. */
+  showPullRequests: true,
+  pullRequestRefreshMs: 300000,
+
   // Drop a leading project name from the workspace label, since the sidebar
   // already shows the project on its own line.
   stripProjectPrefix: true,
@@ -53,8 +66,8 @@ const DEFAULTS = {
   // overwrite that plugin's own labelling.
   respectPluginRoles: true,
 
-  // Publish $n, $project, $worktree, $branch, $intent, $agent and $agents to the herdr
-  // sidebar as display-only tokens, so a two-line row can show the project on
+  // Publish $n, $project, $worktree, $branch, $dirty, $unmerged, $prs, $intent,
+  // $agent and $agents to the herdr sidebar as display-only tokens, so a two-line row can show the project on
   // one line and the live intent on the other.
   metadata: { enabled: true },
 

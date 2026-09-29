@@ -43,24 +43,29 @@ function configPath() {
 
 /* Two lines that age differently: identity on top, live intent underneath.
  * Colour carries the hierarchy rather than repeating it — brightest for the
- * project, muted for the branch, and the accent for what is happening now. */
+ * project, warm for what has not landed, and the accent for what is
+ * happening now. The branch and the age used to sit on the top line; six
+ * rows reading "main 17h" told you nothing, so the space went to whether
+ * there is work here that still needs to leave the machine. */
 function blocks({ accent = '#33859d', bright = '#d3ebe9', muted = '#888ba5',
   live = '#599caa', warn = '#edb54b', held = '#d26939' } = {}) {
   return `${BEGIN}
-# Added by namesync. $project, $branch, $worktree, $locked, $since and $n are
-# published by the plugin; herdr has no built-in token for any of them.
-# $locked marks a name namesync has been told to leave alone; $stale marks
-# one the agent appears to have stopped maintaining. $since is time in the
-# current agent state; $age is how long the intent has been the current one.
+# Added by namesync. $project, $worktree, $locked, $stale, $dirty, $unmerged,
+# $prs, $since and $n are published by the plugin; herdr has no built-in
+# token for any of them. $locked marks a name namesync has been told to leave
+# alone; $stale marks one the agent appears to have stopped maintaining.
+# $dirty is uncommitted paths, $unmerged is commits the trunk does not have,
+# $prs is pull requests open on the repository -- each absent at zero, so a
+# landed checkout says nothing. $since is time in the current agent state.
 [ui.sidebar.agents]
 rows = [
-  ["state_icon", { token = "$n", fg = "${accent}", bold = true }, { token = "$project", fg = "${bright}", bold = true }, { token = "$worktree", fg = "${held}" }, { token = "$locked", fg = "${held}" }, { token = "$stale", fg = "${muted}" }, { token = "$since", fg = "${muted}" }],
+  ["state_icon", { token = "$n", fg = "${accent}", bold = true }, { token = "$project", fg = "${bright}", bold = true }, { token = "$worktree", fg = "${held}" }, { token = "$locked", fg = "${held}" }, { token = "$stale", fg = "${muted}" }, { token = "$dirty", fg = "${warn}" }, { token = "$unmerged", fg = "${accent}" }, { token = "$prs", fg = "${live}" }, { token = "$since", fg = "${muted}" }],
   [{ token = "terminal_title_stripped", fg = "${live}" }],
 ]
 
 [ui.sidebar.spaces]
 rows = [
-  ["state_icon", { token = "$n", fg = "${accent}", bold = true }, { token = "$project", fg = "${bright}", bold = true }, { token = "$worktree", fg = "${held}" }, { token = "$locked", fg = "${held}" }, { token = "branch", fg = "${muted}" }, { token = "git_status", fg = "${warn}" }, { token = "$age", fg = "${muted}" }],
+  ["state_icon", { token = "$n", fg = "${accent}", bold = true }, { token = "$project", fg = "${bright}", bold = true }, { token = "$worktree", fg = "${held}" }, { token = "$locked", fg = "${held}" }, { token = "$stale", fg = "${muted}" }, { token = "$dirty", fg = "${warn}" }, { token = "$unmerged", fg = "${accent}" }, { token = "$prs", fg = "${live}" }],
   [{ token = "workspace", fg = "${live}" }],
 ]
 ${END}

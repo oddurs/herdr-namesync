@@ -61,6 +61,9 @@ watcher.
 | `staleAfterTurns` | How many agent state transitions a title may survive unchanged before it is flagged. A working-to-idle cycle is two, so the default of 6 is roughly three completed turns. |
 | `showDuration` | Publish `$since`. This is the only feature that needs a timer; turning it off removes the timer. |
 | `durationRefreshMs` | How often to re-check elapsed time. Coarse buckets plus metadata dedup mean a tick usually writes nothing. |
+| `showChanges` | Publish `$dirty` and `$unmerged`. Two more git processes per directory, cached for a few seconds. |
+| `showPullRequests` | Publish `$prs`. The one lookup that leaves the machine: it asks `gh`, with your own login, for the repository's open pull request count. Absent when `gh` is missing or not logged in. |
+| `pullRequestRefreshMs` | How often to ask again. A failure is held for the same interval, so a machine without `gh` does not spawn a process per sync. |
 | `stripProjectPrefix` | Drop a leading project name from the **Space label**, since the sidebar already shows the project on the line above. `ptop-adopt-remaining-lessons` becomes `Adopt remaining lessons`. Never strips the whole name, and never applies to tab labels or agent names. |
 | `maxDeepPerHour` | A ceiling on model consultations per hour across every pane. `deepIntervalMs` is a floor per *pane*, so the bill scales with the number of agents — and the number of agents is the situation this plugin is for. Reaching the ceiling names fewer panes rather than billing more; `namesync status` says how close you are. `0` removes it. |
 | `logLevel` | `error`, `warn`, `info` or `debug`. |
@@ -132,6 +135,9 @@ workspace label, so a two-line row can carry two different things:
 | `$intent` | The agent's live title, before any template is applied. |
 | `$n` | The workspace's number — what `prefix+shift+N` jumps to. herdr exposes no token for it, so a sidebar row cannot show it without help. Other plugins solve this by writing the number into the label itself; publishing it as a token instead means the row decides where it goes, and the name stays the name. |
 | `$worktree` | The word `worktree` when the agent sits in a linked worktree. Three rows reading `fontina · main` are otherwise identical. |
+| `$dirty` | `●3`: three paths changed and not committed. Absent when the tree is clean. |
+| `$unmerged` | `↑2`: two commits the trunk does not have — what the branch's pull request would carry, or on the trunk itself, what is unpushed. The same arrow herdr's own `git_status` uses for commits ahead. Absent at zero. |
+| `$prs` | `⇄4`: four pull requests open on the repository, counted with `gh` every five minutes. Absent at zero, and absent without `gh`. |
 | `$since` | How long the agent has been in its current state: `now`, `3m`, `15m`, `3h`, `2d`. Minute precision for the first ten, then five-minute steps, then hours — every change is a metadata write and a sidebar redraw for that agent, so the value gets coarser as it gets less interesting. |
 | `$locked` | `held` when namesync has been told to leave a name alone. A held name behaves completely differently from a live one, so the sidebar should be able to say which it is looking at. |
 | `$stale` | `stale` when the agent has not revised its title across several state transitions — it has finished and started work repeatedly without changing its description of it. |
@@ -195,9 +201,13 @@ rows = [
 Colour carries the hierarchy rather than repeating it: Gotham `base7` for the
 project, mauve for the branch, blue for the live intent underneath.
 
-`$since` belongs in the Agents panel and `$age` in the Spaces panel, which is
-the same divide as everything else: Agents answers what needs you now, Spaces
-answers what this place is. The rows `namesync setup` writes do exactly that.
+`$since` belongs in the Agents panel, which answers what needs you now. The
+Spaces panel answers what this place is — and for six spaces all on `main`,
+the branch and how long it has sat there say nothing, so the rows `namesync
+setup` writes put `$dirty`, `$unmerged` and `$prs` there instead. Each is
+absent at zero, so a checkout with nothing left to land stays quiet, and the
+one that still has uncommitted work or an open pull request is the one that
+stands out. `$branch` and `$age` are still published for a row that wants them.
 
 The point of the split is that the two lines age differently. The project and
 branch are stable identity. The title underneath is whatever the agent is
