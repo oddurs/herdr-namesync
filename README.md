@@ -290,10 +290,11 @@ now. Putting the workspace label on both wastes one of them.
 from the `origin` remote, then the project's own manifest, then the folder,
 worktree-aware throughout. Those disagree more often than you would expect.
 
-The second line is `$summary`: what the agent is doing right now, in one
-line. With the `llm` source configured it is a model's description from the
-last thing you asked and the last twenty lines on screen, refreshed whenever
-that changes and never when it does not. Without one it is the agent's title.
+The second line is `$summary`: what you last asked for, in a few words. With
+the `llm` source configured a model condenses the last thing you said to the
+agent, using the screen only to make sense of it, refreshed whenever the
+screen changes and never when it does not. Without one it is the agent's
+title.
 
 Six spaces all reading `main 17h` say nothing, so the rows `setup` writes put
 what has not landed there instead: `●3` is three uncommitted paths, `↑2` is
