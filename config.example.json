@@ -20,6 +20,13 @@
   "stripProjectPrefix": true,
   "respectPluginRoles": true,
   "envFile": null,
+  "summary": {
+    "enabled": true,
+    "lines": 20,
+    "intervalMs": 90000,
+    "maxPerHour": 120,
+    "maxChars": 1500
+  },
   "metadata": {
     "enabled": true
   },
