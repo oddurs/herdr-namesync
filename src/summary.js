@@ -55,7 +55,15 @@ const PROMPT = [
 function usableSummary(text) {
   const t = normalize(String(text || '').replace(/^["'`]+|["'`.]+$/g, ''));
   if (!t || /^unknown$/i.test(t)) return '';
-  if (t.split(/\s+/).length > 8 || t.length > 60) return '';
+  const words = t.split(/\s+/).length;
+  if (words > 8 || t.length > 60) return '';
+  /* A fragment: one word, or a bracket or quote that never closes. That is
+     a piece of the window handed back, not a request condensed. */
+  if (words < 2) return '';
+  for (const [open, close] of [['(', ')'], ['[', ']'], ['{', '}']]) {
+    if (t.split(open).length !== t.split(close).length) return '';
+  }
+  if ((t.match(/"/g) || []).length % 2) return '';
   if (/^(i |sorry|as an|the screen|it (looks|seems)|based on)/i.test(t)) return '';
   /* A small model with nothing to condense sometimes condenses the
      instructions instead. Anything in the prompt's own vocabulary is that,
