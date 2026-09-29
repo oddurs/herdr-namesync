@@ -2035,6 +2035,14 @@ testAsync('the hourly ceiling holds across panes, and a declined ask keeps the o
   assert.strictEqual(asked.length, 1, 'the second pane waited for the ceiling');
   assert.strictEqual(store.summariesWithin(3600000, 5000), 1);
 
+  // Reaching the ceiling is said, once per pass, rather than looking like a feature that stopped.
+  const said = [];
+  const capped = createSummarizer({ cfg: cfg({ summary: { intervalMs: 0, maxPerHour: 1 } }), store, source,
+    log: (l, m) => said.push(l + ' ' + m) });
+  assert.strictEqual(await capped.refresh({ client: paneClient('z'), agents: [agent()], now: 5500 }), 0);
+  assert.strictEqual(asked.length, 1);
+  assert.ok(said.some((m) => /warn summary ceiling reached: 1/.test(m)), said.join('|'));
+
   const loose = createSummarizer({ cfg: cfg({ summary: { intervalMs: 0, maxPerHour: 0 } }), store, source });
   assert.strictEqual(await loose.refresh({ client: paneClient('y'), agents: [agent()], now: 6000 }), 0);
   assert.strictEqual(asked.length, 2);
@@ -2068,6 +2076,9 @@ test('a cairn reference in the ask or on screen resolves to the item', () => {
     '0042 Attach to a terminal', 'an item is more specific than its milestone');
   assert.strictEqual(cairn.cairnLine(root, { ask: 'fix the 0099 bug' }), '', 'an id the backlog does not know is not a reference');
   assert.strictEqual(cairn.cairnLine(root, { ask: 'rendered 1080 frames at 42 fps' }), '', 'plain numbers are not ids');
+  assert.strictEqual(cairn.cairnLine(root, { screen: 'requires herdr v0.1 or later' }), '',
+    'a version on screen is not a milestone');
+  assert.strictEqual(cairn.cairnLine(root, { screen: 'closing milestone v0.1' }), 'v0.1 First usable version');
   assert.strictEqual(cairn.cairnLine('/nowhere', { ask: 'do 0042' }), '', 'no repository, no backlog');
 });
 

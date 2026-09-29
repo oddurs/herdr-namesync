@@ -223,6 +223,17 @@ const COMMANDS = {
           if (last) {
             out.push('              last ' + naming.formatSince(Date.now() - last) + ' ago');
           }
+          /* The second line's own meter, on its own clock. */
+          if (cfg.summary && cfg.summary.enabled) {
+            const asked = store.summariesWithin(3600000);
+            const cap = cfg.summary.maxPerHour;
+            out.push('              second line: ' + asked + ' asked this hour'
+              + (cap > 0 ? '  (ceiling ' + cap + '/hour)' : '  (no ceiling)'));
+            if (cap > 0 && asked >= cap) {
+              out.push('              at the ceiling: it stops refreshing until that clears'
+                + ' -- raise summary.maxPerHour');
+            }
+          }
           if (ceiling > 0 && hour >= ceiling) {
             out.push('              ceiling reached — titles stand until the hour rolls');
           }

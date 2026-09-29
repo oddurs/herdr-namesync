@@ -63,8 +63,8 @@ function usableSummary(text) {
 function createSummarizer({ cfg, store, source, log = () => {} }) {
   const settings = cfg.summary || {};
   const lines = settings.lines || 20;
-  const intervalMs = settings.intervalMs == null ? 90000 : settings.intervalMs;
-  const maxPerHour = settings.maxPerHour == null ? 120 : settings.maxPerHour;
+  const intervalMs = settings.intervalMs == null ? 60000 : settings.intervalMs;
+  const maxPerHour = settings.maxPerHour == null ? 600 : settings.maxPerHour;
   const maxChars = settings.maxChars || 1500;
   const transcriptRoot = settings.transcriptRoot || undefined;
 
@@ -97,8 +97,10 @@ function createSummarizer({ cfg, store, source, log = () => {} }) {
     return { agent, text, hash, prev };
   }
 
+  const atCeiling = (now) => maxPerHour > 0 && store.summariesWithin(3600000, now) >= maxPerHour;
+
   async function ask({ agent, text, hash, prev }, now) {
-    if (maxPerHour > 0 && store.summariesWithin(3600000, now) >= maxPerHour) return false;
+    if (atCeiling(now)) return false;
     // Charged when asked, not when answered: a declined ask still cost it.
     store.markSummary(now);
     const project = agent.tokens && agent.tokens.project;
@@ -129,6 +131,14 @@ function createSummarizer({ cfg, store, source, log = () => {} }) {
         } catch (err) {
           log('warn', 'summary for ' + agent.pane_id + ': ' + err.message);
         }
+      }
+
+      /* Said once per pass, not once per pane, and not never: a ceiling that
+         is reached silently looks exactly like a feature that stopped. */
+      if (pending.length && atCeiling(now)) {
+        log('warn', 'summary ceiling reached: ' + maxPerHour + ' asks this hour; the second'
+          + ' line stops refreshing until it clears (summary.maxPerHour)');
+        return 0;
       }
 
       let updated = 0;

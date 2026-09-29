@@ -74,7 +74,12 @@ function items(root, now = Date.now()) {
    comes first and the last mention on screen wins, because an agent working
    through a backlog names the current item most recently. */
 const ITEM_REF = /(?:\bcairn\s+(?:claim|show|set|close|release|next|start)\s+|\bitems?\s*#?\s*|\b(?:refs?|fixes|closes)[:\s]+#?|\bid\s*[:=]?\s*|\b)(0\d{2,}|\d{3,})\b/gi;
+/* A version-shaped word is a milestone key only when the backlog has it --
+   and on screen, only when the word "milestone" is in front of it, because a
+   screen says "herdr v0.9.1" and "v1.0 launch" all day. In the ask, the bare
+   key is trusted: "finish v0.3" is how a person says it. */
 const MILESTONE_REF = /\b(?:milestone\s+)?(v\d+(?:\.\d+)+)\b/gi;
+const MILESTONE_REF_STRICT = /\bmilestone\s+(v\d+(?:\.\d+)+)\b/gi;
 
 function lastMatch(re, text) {
   let found = null;
@@ -87,8 +92,8 @@ function itemIn(index, text) {
   return (ref && index.byId.get(Number(ref))) || null;
 }
 
-function milestoneIn(index, text) {
-  const ref = text && lastMatch(MILESTONE_REF, text);
+function milestoneIn(index, text, { strict = false } = {}) {
+  const ref = text && lastMatch(strict ? MILESTONE_REF_STRICT : MILESTONE_REF, text);
   return (ref && index.byKey.get(ref.toLowerCase())) || null;
 }
 
@@ -99,7 +104,7 @@ function cairnLine(root, { ask = '', screen = '' } = {}, now = Date.now()) {
   const index = items(root, now);
   if (!index) return '';
   const item = itemIn(index, ask) || itemIn(index, screen)
-    || milestoneIn(index, ask) || milestoneIn(index, screen);
+    || milestoneIn(index, ask) || milestoneIn(index, screen, { strict: true });
   if (!item) return '';
   return (item.key || item.padded) + ' ' + item.title;
 }

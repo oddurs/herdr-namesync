@@ -23,8 +23,8 @@
   "summary": {
     "enabled": true,
     "lines": 20,
-    "intervalMs": 90000,
-    "maxPerHour": 120,
+    "intervalMs": 60000,
+    "maxPerHour": 600,
     "maxChars": 1500
   },
   "metadata": {
