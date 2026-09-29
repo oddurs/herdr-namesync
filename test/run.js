@@ -1984,6 +1984,9 @@ test('a summary is a glance, not a sentence', () => {
   assert.strictEqual(usableSummary('one two three four five six seven eight nine'), '', 'nine words is a sentence');
   assert.strictEqual(usableSummary('Condense the request to six words'), '', 'the prompt read back is not an answer');
   assert.strictEqual(usableSummary('Summarize the agent screen'), '');
+  assert.strictEqual(usableSummary('expand)'), '', 'a fragment of the window is not an answer');
+  assert.strictEqual(usableSummary('Rename (and lock'), '');
+  assert.strictEqual(usableSummary('fix it'), 'fix it', 'two words can be the whole request');
   assert.strictEqual(usableSummary('Rendering the 1080p validation pass and then fixing the loop'), '', 'too long to glance at');
 });
 
@@ -2015,7 +2018,7 @@ testAsync('the window is one ask and a screenful, and nothing older', async () =
 });
 
 testAsync('an unchanged screen is never re-asked; a changed one waits for the interval', async () => {
-  const { asked, source } = fakeModel(['First', 'Second']);
+  const { asked, source } = fakeModel(['First answer', 'Second answer']);
   const store = freshStore();
   const s = createSummarizer({ cfg: cfg({ summary: { intervalMs: 1000 } }), store, source });
   const t0 = 1000000;
@@ -2025,7 +2028,7 @@ testAsync('an unchanged screen is never re-asked; a changed one waits for the in
   await s.refresh({ client: paneClient('screen B'), agents: [agent()], now: t0 + 500 });
   assert.strictEqual(asked.length, 1, 'changed, but inside the interval');
   assert.strictEqual(await s.refresh({ client: paneClient('screen B'), agents: [agent()], now: t0 + 1500 }), 1);
-  assert.strictEqual(store.summary('w1:p1').text, 'Second');
+  assert.strictEqual(store.summary('w1:p1').text, 'Second answer');
 });
 
 testAsync('the hourly ceiling holds across panes, and a declined ask keeps the old line', async () => {
