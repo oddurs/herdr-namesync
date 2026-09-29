@@ -64,7 +64,7 @@ watcher.
 | `showChanges` | Publish `$dirty` and `$unmerged`. Two more git processes per directory, cached for a few seconds. |
 | `showPullRequests` | Publish `$prs`. The one lookup that leaves the machine: it asks `gh`, with your own login, for the repository's open pull request count. Absent when `gh` is missing or not logged in. |
 | `pullRequestRefreshMs` | How often to ask again. A failure is held for the same interval, so a machine without `gh` does not spawn a process per sync. |
-| `summary.enabled` | Publish `$summary` from the model. Needs the `llm` source to be usable; without one the token is the title. |
+| `summary.enabled` | Publish `$summary` from the model. Needs the `llm` source to be usable; without one the token is the title. To have descriptions without model-written names, keep `consultCostlySources: false`. |
 | `summary.lines` | How many screen lines the model sees, 20 by default. Small on purpose: this is "what now", not "what has this session been about". |
 | `summary.intervalMs` | Floor between asks for one pane. An unchanged screen is never re-asked regardless. |
 | `summary.maxPerHour` | Ceiling across every pane. 0 removes it. |

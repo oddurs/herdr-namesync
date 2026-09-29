@@ -2043,6 +2043,25 @@ testAsync('the hourly ceiling holds across panes, and a declined ask keeps the o
   assert.strictEqual(asked.length, 2, 'a screen the model declined is not asked about again until it changes');
 });
 
+testAsync('screens are read one pane at a time, and only then is the model asked in parallel', async () => {
+  let reading = 0; let mostReads = 0; let asking = 0; let mostAsks = 0;
+  const client = { request: async (m, { pane_id }) => {
+    reading += 1; mostReads = Math.max(mostReads, reading);
+    await new Promise((r) => setTimeout(r, 5));
+    reading -= 1; return { read: { text: 'screen of ' + pane_id } };
+  } };
+  const source = { name: 'llm', ask: async () => {
+    asking += 1; mostAsks = Math.max(mostAsks, asking);
+    await new Promise((r) => setTimeout(r, 5));
+    asking -= 1; return 'Doing something';
+  } };
+  const s = createSummarizer({ cfg: cfg(), store: freshStore(), source });
+  const four = ['w1:p1', 'w1:p2', 'w1:p3', 'w1:p4'].map((pane_id) => agent({ pane_id }));
+  assert.strictEqual(await s.refresh({ client, agents: four }), 4);
+  assert.strictEqual(mostReads, 1, 'herdr drops writes when several panes are read at once');
+  assert.strictEqual(mostAsks, 3, 'the waiting is on the model, so that part runs a few at a time');
+});
+
 testAsync('$summary is whichever was said last, the model or the agent', async () => {
   const sent = [];
   const sink = { name: 'herdr', apply: async () => true,
