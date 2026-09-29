@@ -57,6 +57,10 @@ function usableSummary(text) {
   if (!t || /^unknown$/i.test(t)) return '';
   if (t.split(/\s+/).length > 8 || t.length > 60) return '';
   if (/^(i |sorry|as an|the screen|it (looks|seems)|based on)/i.test(t)) return '';
+  /* A small model with nothing to condense sometimes condenses the
+     instructions instead. Anything in the prompt's own vocabulary is that,
+     not a request anyone made. */
+  if (/\b(condens\w*|six words|the request|preamble|imperative|summari[sz]e|the screen)\b/i.test(t)) return '';
   return t;
 }
 

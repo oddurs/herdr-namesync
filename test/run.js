@@ -1982,6 +1982,8 @@ test('a summary is a glance, not a sentence', () => {
   assert.strictEqual(usableSummary('unknown'), '');
   assert.strictEqual(usableSummary('It looks like the agent is waiting'), '');
   assert.strictEqual(usableSummary('one two three four five six seven eight nine'), '', 'nine words is a sentence');
+  assert.strictEqual(usableSummary('Condense the request to six words'), '', 'the prompt read back is not an answer');
+  assert.strictEqual(usableSummary('Summarize the agent screen'), '');
   assert.strictEqual(usableSummary('Rendering the 1080p validation pass and then fixing the loop'), '', 'too long to glance at');
 });
 
@@ -2179,7 +2181,12 @@ testAsync('the summary sends the same request shape as the naming source', async
 
 testAsync('two syncs at once become one now and one after', async () => {
   const { Daemon } = require('../src/daemon');
-  const d = new Daemon({ logFile: path.join(os.tmpdir(), 'ns-daemon-' + Date.now() + '.log') });
+  /* A daemon stands down when the pid file names another process, and on a
+     developer's machine it does: the real watcher. Point it at an empty dir. */
+  const stateDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ns-state-'));
+  const hadEnv = process.env.HERDR_PLUGIN_STATE_DIR;
+  process.env.HERDR_PLUGIN_STATE_DIR = stateDir;
+  const d = new Daemon({ logFile: path.join(stateDir, 'daemon.log') });
   d.store = freshStore();
   let snapshots = 0;
   d.api = {
@@ -2193,6 +2200,7 @@ testAsync('two syncs at once become one now and one after', async () => {
   await new Promise((r) => setTimeout(r, 400));
   assert.strictEqual(snapshots, 2, 'exactly one follow-up, however many asked');
   d.stop();
+  if (hadEnv === undefined) delete process.env.HERDR_PLUGIN_STATE_DIR; else process.env.HERDR_PLUGIN_STATE_DIR = hadEnv;
 });
 
 process.stdout.write('\nwhat the person asked for\n');
