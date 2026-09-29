@@ -39,14 +39,14 @@ const PROMPT = [
   'agent has on screen.',
   '',
   'Reply with the request condensed to at most six words: what they asked',
-  'for, in their words, not what the agent did about it. Imperative, no',
-  'quotes, no trailing punctuation, no preamble. "dont merge the out binaries"',
-  'becomes "Keep the binaries out of the merge"; "can you make the tests pass',
-  'on macOS too" becomes "Make tests pass on macOS".',
+  'for, keeping their own nouns, not what the agent did about it. Imperative,',
+  'as if telling the agent. Drop pleasantries, reasoning and hedges. No',
+  'quotes, no trailing punctuation, no preamble.',
   '',
   'Use the screen only to understand the request. If there is no request,',
   'condense what the screen shows the agent was asked to do, in the same',
-  'form. If nothing can be told, reply exactly: unknown',
+  'form. Never invent a request: if nothing can be told, reply exactly:',
+  'unknown',
 ].join('\n');
 
 // Short, because it sits under a name and has to be read at a glance. A
