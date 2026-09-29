@@ -23,7 +23,10 @@ says what was happening this morning.
 
 ## Proposal
 
-`$summary`: a description rather than a name, so no policy applies.
+`$summary`: the person's last request condensed to a few words. A reminder
+rather than a name, so no policy applies. The ask, not the activity: scanning
+twelve panes, the question is "what am I asking each of these to do", and what
+the agent is doing about it is on the screen when you get there.
 
 - The model is given a small window of the freshest context, the last thing
   the person asked and the last twenty lines on screen, nothing older. More
@@ -48,3 +51,4 @@ says what was happening this morning.
 - [x] `$summary` is whichever was said last, and a junk title never beats a description
 - [x] Off by config, off without a model, forgotten with the pane
 - [x] The managed rows show `$summary` on the second line of both panels
+- [x] A cairn item or milestone in the window supersedes the model, free

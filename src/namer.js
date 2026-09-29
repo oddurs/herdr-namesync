@@ -556,8 +556,16 @@ class Namer {
       if (!ws || (this.cfg.respectPluginRoles && isClaimed(ws))) continue;
       agents.push(...agentsHere);
     }
+    /* Which repository each pane is in, so a tracked item can be looked up.
+       Same cache and same options as the metadata pass, so this costs no
+       extra git and does not evict the counts that pass needs. */
+    const roots = new Map();
+    for (const a of agents) {
+      const cwd = [a.foreground_cwd, a.cwd].find((c) => !isUselessCwd(c));
+      if (cwd) roots.set(a.pane_id, (await gitInfo(cwd, Date.now(), { changes: this.cfg.showChanges })).root);
+    }
     const summarizer = createSummarizer({ cfg: this.cfg, store: this.store, source, log: this.log });
-    const updated = await summarizer.refresh({ client: this.client, agents });
+    const updated = await summarizer.refresh({ client: this.client, agents, roots });
     this.store.save();
     return updated;
   }

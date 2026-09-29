@@ -138,7 +138,7 @@ workspace label, so a two-line row can carry two different things:
 | `$project` | The repository's name — not the folder name. Resolution order below. |
 | `$branch` | Current branch. |
 | `$intent` | The agent's live title, before any template is applied. |
-| `$summary` | What the agent is doing right now, in one line. A model's description from the last thing you asked and the last few lines on screen, when the `llm` source is usable and its answer is newer than the title; the title otherwise. Never a name, so no policy applies. |
+| `$summary` | What you last asked for, in a few words. A model condenses the last thing you said to the agent, using the screen only to make sense of it, when the `llm` source is usable and its answer is newer than the title; the title otherwise. Never a name, so no policy applies. |
 | `$n` | The workspace's number — what `prefix+shift+N` jumps to. herdr exposes no token for it, so a sidebar row cannot show it without help. Other plugins solve this by writing the number into the label itself; publishing it as a token instead means the row decides where it goes, and the name stays the name. |
 | `$worktree` | The word `worktree` when the agent sits in a linked worktree. Three rows reading `fontina · main` are otherwise identical. |
 | `$dirty` | `●3`: three paths changed and not committed. Absent when the tree is clean. |
@@ -208,8 +208,8 @@ Colour carries the hierarchy rather than repeating it: Gotham `base7` for the
 project, mauve for the branch, blue for the live intent underneath.
 
 The second line is `$summary` on both panels. Without a model it is the
-agent's own title, which is what it showed before; with one it is a fresh
-description of the work, refreshed whenever the screen changes. [Where names
+agent's own title, which is what it showed before; with one it is your last
+request in a few words, refreshed whenever the screen changes. [Where names
 come from](sources) says what the model is given.
 
 `$since` belongs in the Agents panel, which answers what needs you now. The

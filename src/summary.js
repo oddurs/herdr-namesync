@@ -3,19 +3,31 @@ const crypto = require('crypto');
 const { readPane } = require('./viewport');
 const { readAsks } = require('./transcript');
 const { normalize } = require('./naming');
+const { cairnLine } = require('./cairn');
 
-/* The second line of a sidebar row: what the agent is doing *right now*.
+/* The second line of a sidebar row: what the person last asked for, in a
+ * few words.
  *
  * The name on the first line is deliberately slow -- debounced, rate limited,
  * held when a human wrote it. This line is the opposite. It is never a name,
- * so no policy applies; it is a description, and a description is only worth
- * having while it is fresh.
+ * so no policy applies; it is a reminder of the request, and a reminder is
+ * only worth having while it is current.
  *
- * Fresh means a small window, not a long memory. The model sees the last
+ * It is the ask, not the activity. "What am I asking the computer to do" is
+ * the question someone scanning twelve panes has; what the agent is doing
+ * about it is on the screen when they get there. So the model is told to
+ * condense the request and to use the screen only to make sense of it.
+ *
+ * A tracked item supersedes all of that. "do 0042" already names the work
+ * better than any condensation of the sentence, so a cairn item or
+ * milestone referenced in the window becomes the line as it is, from the
+ * repository's own item files, and the model is not asked.
+ *
+ * Current means a small window, not a long memory. The model sees the last
  * thing the person asked and the last few lines on screen, nothing older.
  * More context was measured for the naming source and made answers worse
- * (see sources/llm.js); for a "what now" line it would also make them slower
- * to change, which is the one thing this line must not be.
+ * (see sources/llm.js); here it would also make the line slower to change,
+ * which is the one thing it must not be.
  *
  * Cost is bounded three ways: the window is hashed and an unchanged screen is
  * never re-asked, a pane is asked at most once per `intervalMs`, and
@@ -23,23 +35,27 @@ const { normalize } = require('./naming');
  */
 
 const PROMPT = [
-  'Below is the most recent screen of one coding agent, and the last thing the',
-  'developer asked it.',
+  'Below is the last thing a developer asked a coding agent, and what the',
+  'agent has on screen.',
   '',
-  'Reply with one line saying what the agent is doing right now: at most ten',
-  'words, present tense, no quotes, no trailing punctuation, no preamble.',
-  'Describe the work, not the tool -- "Fixing the worktree branch test", not',
-  '"Running commands".',
+  'Reply with the request condensed to at most six words: what they asked',
+  'for, in their words, not what the agent did about it. Imperative, no',
+  'quotes, no trailing punctuation, no preamble. "dont merge the out binaries"',
+  'becomes "Keep the binaries out of the merge"; "can you make the tests pass',
+  'on macOS too" becomes "Make tests pass on macOS".',
   '',
-  'If the screen does not say, reply exactly: unknown',
+  'Use the screen only to understand the request. If there is no request,',
+  'condense what the screen shows the agent was asked to do, in the same',
+  'form. If nothing can be told, reply exactly: unknown',
 ].join('\n');
 
-// Longer than a name may be, still one line. A model that explains itself
-// instead of answering is rejected rather than shown.
+// Short, because it sits under a name and has to be read at a glance. A
+// model that explains itself instead of answering is rejected rather than
+// shown.
 function usableSummary(text) {
   const t = normalize(String(text || '').replace(/^["'`]+|["'`.]+$/g, ''));
   if (!t || /^unknown$/i.test(t)) return '';
-  if (t.split(/\s+/).length > 12 || t.length > 80) return '';
+  if (t.split(/\s+/).length > 8 || t.length > 60) return '';
   if (/^(i |sorry|as an|the screen|it (looks|seems)|based on)/i.test(t)) return '';
   return t;
 }
@@ -56,19 +72,27 @@ function createSummarizer({ cfg, store, source, log = () => {} }) {
   async function window(client, agent) {
     const asks = readAsks(agent, { limit: 1, root: transcriptRoot });
     const { body } = await readPane(client, agent.pane_id, { lines });
+    const ask = asks.length ? asks[0].slice(0, 400) : '';
+    const screen = body.slice(-lines).join('\n');
     const parts = [];
-    if (asks.length) parts.push('They asked: ' + asks[0].slice(0, 400));
-    if (body.length) parts.push('On screen:\n' + body.slice(-lines).join('\n'));
-    return parts.join('\n\n').slice(-maxChars);
+    if (ask) parts.push('They asked: ' + ask);
+    if (screen) parts.push('On screen:\n' + screen);
+    return { ask, screen, text: parts.join('\n\n').slice(-maxChars) };
   }
 
-  // Which panes have something new to say, without spending anything yet.
-  async function due(client, agent, now) {
-    const text = await window(client, agent);
+  /* Which panes have something new to say, without spending anything yet.
+     A pane whose window names a tracked item is answered here, for free. */
+  async function due(client, agent, now, roots) {
+    const { ask, screen, text } = await window(client, agent);
     if (!text) return null;
     const hash = crypto.createHash('sha1').update(text).digest('hex').slice(0, 16);
     const prev = store.summary(agent.pane_id);
     if (prev && prev.hash === hash) return null;
+    const tracked = cairnLine(roots.get(agent.pane_id), { ask, screen }, now);
+    if (tracked) {
+      if (!prev || prev.text !== tracked) store.setSummary(agent.pane_id, { hash, at: now, text: tracked, tracked: true });
+      return null;
+    }
     if (prev && now - prev.at < intervalMs) return null;
     return { agent, text, hash, prev };
   }
@@ -81,7 +105,7 @@ function createSummarizer({ cfg, store, source, log = () => {} }) {
     const system = project
       ? PROMPT + '\n\nThe repository is called "' + project + '". Do not put its name in the line.'
       : PROMPT;
-    const answer = usableSummary(await source.ask(system, text, { maxTokens: 48 }));
+    const answer = usableSummary(await source.ask(system, text, { maxTokens: 32 }));
     /* The hash is recorded either way, so a screen the model could not read
        is not asked about again until it changes. The previous text stays:
        an old description beats an empty line. */
@@ -96,11 +120,11 @@ function createSummarizer({ cfg, store, source, log = () => {} }) {
        reads time out. The model is then asked a few at a time, which is
        where the waiting actually is. A pane that fails is logged and
        skipped; one unreadable screen is no reason to leave the rest stale. */
-    async refresh({ client, agents, now = Date.now(), concurrency = 3 }) {
+    async refresh({ client, agents, roots = new Map(), now = Date.now(), concurrency = 3 }) {
       const pending = [];
       for (const agent of agents) {
         try {
-          const item = await due(client, agent, now);
+          const item = await due(client, agent, now, roots);
           if (item) pending.push(item);
         } catch (err) {
           log('warn', 'summary for ' + agent.pane_id + ': ' + err.message);
