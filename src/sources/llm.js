@@ -130,9 +130,59 @@ function createLlmSource(cfg = {}, root = {}) {
   const transcriptRoot = cfg.transcriptRoot || undefined;
   const lines = root.viewportLines || 60;
 
+  /* One request. Everything that knows about the endpoint lives here, so
+     both callers -- the naming source and the summary line -- send exactly
+     the same shape and fail in exactly the same ways. */
+  async function ask(system, user, { maxTokens: budget = maxTokens } = {}) {
+    const key = process.env[keyEnv];
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        signal: controller.signal,
+        headers: {
+          'content-type': 'application/json',
+          ...(key ? { authorization: 'Bearer ' + key } : {}),
+        },
+        body: JSON.stringify({
+          model,
+          // Deterministic enough that the same screen does not produce three
+          // different names and churn the sidebar.
+          temperature: 0,
+          max_tokens: budget,
+          ...(reasoning ? { reasoning } : {}),
+          messages: [
+            { role: 'system', content: system },
+            { role: 'user', content: user },
+          ],
+        }),
+      });
+      if (!res.ok) throw new Error(endpoint + ' returned ' + res.status);
+      const json = await res.json();
+      const choice = json?.choices?.[0];
+      const answer = choice?.message?.content;
+
+      /* An empty answer from a healthy response is the reasoning-model
+         failure, and it is worth naming rather than swallowing. The model
+         spent the completion budget thinking and had nothing left to say
+         out loud, so the source degrades to the title and the person sees
+         a plugin that appears to do nothing. */
+      if (!answer && choice?.finish_reason === 'length') {
+        throw new Error('the model returned no text and stopped at the token'
+          + ' limit -- if it is a reasoning model, raise sources.llm.maxTokens'
+          + ' or set sources.llm.reasoning');
+      }
+      return answer || '';
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   return {
     name: 'llm',
     costly: true,
+    ask,
 
     /* Settles where this is pointing, and removes the source if the answer is
        nowhere. Configured endpoint first; a local runner otherwise. */
@@ -164,7 +214,6 @@ function createLlmSource(cfg = {}, root = {}) {
       if (!body.length) return null;
 
       const screen = body.join('\n').slice(-maxChars);
-      const key = process.env[keyEnv];
 
       /* What the repository is called, which the model otherwise has no way to
          know. Measured across 8 live panes: it never made a label worse, and
@@ -188,48 +237,7 @@ function createLlmSource(cfg = {}, root = {}) {
           + ' what the work is about. Do not put its name in the label.'
         : PROMPT;
 
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), timeoutMs);
-      try {
-        const res = await fetch(endpoint, {
-          method: 'POST',
-          signal: controller.signal,
-          headers: {
-            'content-type': 'application/json',
-            ...(key ? { authorization: 'Bearer ' + key } : {}),
-          },
-          body: JSON.stringify({
-            model,
-            // Deterministic enough that the same screen does not produce three
-            // different names and churn the sidebar.
-            temperature: 0,
-            max_tokens: maxTokens,
-            ...(reasoning ? { reasoning } : {}),
-            messages: [
-              { role: 'system', content: system },
-              { role: 'user', content: screen },
-            ],
-          }),
-        });
-        if (!res.ok) throw new Error(endpoint + ' returned ' + res.status);
-        const json = await res.json();
-        const choice = json?.choices?.[0];
-        const answer = choice?.message?.content;
-
-        /* An empty answer from a healthy response is the reasoning-model
-           failure, and it is worth naming rather than swallowing. The model
-           spent the completion budget thinking and had nothing left to say
-           out loud, so the source degrades to the title and the person sees
-           a plugin that appears to do nothing. */
-        if (!answer && choice?.finish_reason === 'length') {
-          throw new Error('the model returned no text and stopped at the token'
-            + ' limit -- if it is a reasoning model, raise sources.llm.maxTokens'
-            + ' or set sources.llm.reasoning');
-        }
-        return usable(answer) || null;
-      } finally {
-        clearTimeout(timer);
-      }
+      return usable(await ask(system, screen)) || null;
     },
   };
 }

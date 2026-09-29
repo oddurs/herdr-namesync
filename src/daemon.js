@@ -237,7 +237,27 @@ class Daemon {
     }, delay);
   }
 
+  /* One sync at a time. A sync that asks a model for fifteen panes takes
+     half a minute, and an event arriving meanwhile used to start a second
+     one alongside it: both saw no summary yet, both asked, and every pane
+     was paid for twice. A sync requested during another is run once after
+     it, which is all the event needed. */
   async sync() {
+    if (this.inflight) {
+      this.again = true;
+      return this.inflight;
+    }
+    this.inflight = this.#sync().finally(() => {
+      this.inflight = null;
+      if (this.again) {
+        this.again = false;
+        this.schedule(250);
+      }
+    });
+    return this.inflight;
+  }
+
+  async #sync() {
     if (!this.api) return [];
 
     const winner = this.#supersededBy();
@@ -265,6 +285,12 @@ class Daemon {
     const plans = await namer.buildPlans(snapshot);
     const applied = await namer.apply(plans);
     this.renames += applied.length;
+
+    // Before the tokens go out, so the second line carries this sync's answer
+    // rather than the last one's.
+    const summarised = await namer.refreshSummaries(snapshot)
+      .catch((err) => { this.log('warn', 'summary: ' + err.message); return 0; });
+    if (summarised) this.log('info', 'summarised ' + summarised + ' pane(s)');
 
     // Independent of renaming: the project is still worth publishing when the
     // title has not moved.

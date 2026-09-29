@@ -147,7 +147,7 @@ One Rust binary that renders the site and serves it live. No Node, no npm, no to
 
 ## v0.9 — Say true things
 
-`##########` 100% · 10 of 10 done · due 2027-06-01
+`##########` 100% · 11 of 11 done · due 2027-06-01
 
 The positioning claims things the rivals' own READMEs contradict, and the llm source does not say that your screen leaves the machine. Both are credibility problems before they are anything else.
 
@@ -163,4 +163,5 @@ The positioning claims things the rivals' own READMEs contradict, and the llm so
 - [x] `0077` Reconsider the claim that the sidebar is otherwise not navigable <sup>chore · p2</sup>
 - [x] `0079` A model-generated name is reverted by the next sync, forever <sup>bug · p0</sup>
 - [x] `0080` Show uncommitted, unmerged and queued work where the branch and age were <sup>feature · p2</sup>
+- [x] `0081` A second line that says what is happening now <sup>feature · p1</sup>
 

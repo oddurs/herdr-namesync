@@ -31,6 +31,7 @@ rows. All values are strings or absent — never empty strings.
 | `prs` | both | `⇄` followed by the number of pull requests open on the repository, asked of `gh` on a slow clock. Absent at zero, and absent when `gh` is missing or not logged in. | stable |
 | `n` | both | The workspace's number — what `prefix+shift+N` selects. | stable |
 | `intent` | workspace | The agent's live title, before any template is applied. | stable |
+| `summary` | both | What the person last asked for, in a few words. The title of the cairn item or milestone the work refers to when there is one, a model's condensation of the last ask otherwise, when one is configured and its answer is newer than the agent's title; the agent's title failing both. Absent only when nothing says anything. | stable |
 | `since` | both | How long the agent has held its **current state**. Resets on every transition, so it answers "who has been blocked longest". | stable |
 | `age` | both | How long the **current intent** has been current, measured from the last time the title changed. Survives state transitions, so it answers "what has been grinding on the same thing all day". | stable |
 | `locked` | both | The literal string `held` when namesync has been told to leave this name alone. Absent otherwise. | stable |

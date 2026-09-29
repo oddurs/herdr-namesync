@@ -201,6 +201,52 @@ An endpoint that errors or times out is logged and skipped; the title is used
 instead. A source failing is never a reason to stop naming the rest of the
 session.
 
+## The second line
+
+The name on the first line is deliberately slow: debounced, rate limited, held
+when you wrote it. The line under it is the opposite. `$summary` is what you
+last asked for, in a few words: a reminder rather than a name, so no policy
+applies, and a reminder is only worth having while it is current.
+
+It is the ask, not the activity. Scanning twelve panes, the question is "what
+am I asking each of these to do"; what the agent is doing about it is on the
+screen when you get there. So the model is told to condense your request and
+to use the screen only to make sense of it.
+
+A tracked item supersedes the model. If the ask or the screen names a cairn
+item or milestone the repository knows — `do 0042`, `finish v0.3`, an agent
+running `cairn claim 0057` — the line is that item's own title, `0042 Attach
+to a terminal`, read from the item files, and nothing is asked. An item beats
+its milestone, and the last item mentioned on screen is the current one.
+
+Current means a small window, not a long memory. The model is given the last
+thing you asked and the last twenty lines on screen, nothing older:
+
+```
+They asked: dont merge the out binaries
+
+On screen:
+⏺ One render output slipped into tracking: the poster image under web/static/video.
+  Untracking it and ignoring that folder, then merging.
+```
+
+and answers in at most six words — *Keep the binaries out of the merge* —
+which the sidebar shows until either the screen changes and the model answers
+again, or the agent revises its own title, whichever comes last.
+
+It costs nothing while nothing happens. The window is hashed and an unchanged
+screen is never re-asked; a pane is asked at most once per
+`summary.intervalMs`; `summary.maxPerHour` caps every pane together. The
+same endpoint, key and timeout as the naming source, so pointing the `llm`
+source at a model on your own machine keeps this on your machine too. Without
+a usable `llm` source the token is the agent's title, which is what the second
+line showed before.
+
+Enabling the `llm` source also lets it *name* things, once a title has gone
+stale. If you want the second line described and the first line left to the
+agent, set `consultCostlySources: false`: the source stays usable for the
+summary and is never asked for a name.
+
 ## What namesync will not do
 
 herdr can send a prompt to a running agent. namesync could therefore ask an

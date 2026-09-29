@@ -11,6 +11,8 @@ const { Store } = require('../src/state');
 const { Namer, leadAgent, gitInfo, gitCache, gitChanges, trunk, detectProject,
   repoNameFromUrl, manifestName } = require('../src/namer');
 const { openPullRequests, pullCache } = require('../src/github');
+const { createSummarizer, usableSummary } = require('../src/summary');
+const cairn = require('../src/cairn');
 const { planOrder, isClaimed } = require('../src/grouping');
 const { isUselessCwd } = require('../src/namer');
 const setup = require('../src/setup');
@@ -945,6 +947,13 @@ test('the blocks reference only tokens namesync publishes', () => {
     assert.ok(text.includes(t), 'missing ' + t);
   }
   assert.ok(!/\$(state_age|role|foo)/.test(text), 'references a token we do not publish');
+});
+
+test('the second line is the summary on both panels', () => {
+  const text = setup.blocks();
+  assert.strictEqual((text.match(/\[\{ token = "\$summary"/g) || []).length, 2);
+  assert.ok(!text.includes('"terminal_title_stripped"') && !text.includes('{ token = "workspace"'),
+    'the title and the label are what $summary falls back to, not a second copy of it');
 });
 
 test('the top line shows work that has not landed, not the branch and its age', () => {
@@ -1964,6 +1973,237 @@ testAsync('a generated name has no more authority than a title', async () => {
     const ws = plans.find((p) => p.kind === 'workspace');
     assert.strictEqual(ws.verdict.rename, false, 'a hold must survive a paid answer');
   } finally { server.close(); }
+});
+
+process.stdout.write('\nthe second line\n');
+
+test('a summary is a glance, not a sentence', () => {
+  assert.strictEqual(usableSummary('"Keep the binaries out of the merge."'), 'Keep the binaries out of the merge');
+  assert.strictEqual(usableSummary('unknown'), '');
+  assert.strictEqual(usableSummary('It looks like the agent is waiting'), '');
+  assert.strictEqual(usableSummary('one two three four five six seven eight nine'), '', 'nine words is a sentence');
+  assert.strictEqual(usableSummary('Condense the request to six words'), '', 'the prompt read back is not an answer');
+  assert.strictEqual(usableSummary('Summarize the agent screen'), '');
+  assert.strictEqual(usableSummary('expand)'), '', 'a fragment of the window is not an answer');
+  assert.strictEqual(usableSummary('Rename (and lock'), '');
+  assert.strictEqual(usableSummary('fix it'), 'fix it', 'two words can be the whole request');
+  assert.strictEqual(usableSummary('Rendering the 1080p validation pass and then fixing the loop'), '', 'too long to glance at');
+});
+
+/* A model that records what it was asked, so a test can say how often the
+   window was sent and what was in it. */
+function fakeModel(replies) {
+  const asked = [];
+  return {
+    asked,
+    source: { name: 'llm', ask: async (system, user) => { asked.push({ system, user }); return replies.shift() ?? 'unknown'; } },
+  };
+}
+
+testAsync('the window is one ask and a screenful, and nothing older', async () => {
+  const { root, id } = tmpTranscript([said('older ask'), said('the latest ask')]);
+  const { asked, source } = fakeModel(['Fixing the parser test']);
+  const store = freshStore();
+  const s = createSummarizer({ cfg: cfg({ summary: { lines: 2, transcriptRoot: root } }), store, source });
+  const a = agent({ agent_session: { kind: 'id', value: id }, tokens: { project: 'fontina' } });
+  const client = paneClient('line one\nline two\nline three');
+  assert.strictEqual(await s.refresh({ client, agents: [a] }), 1);
+  assert.strictEqual(asked.length, 1);
+  assert.ok(asked[0].user.includes('They asked: the latest ask'));
+  assert.ok(!asked[0].user.includes('older ask'), 'looks back one ask, not the whole session');
+  assert.ok(asked[0].user.includes('line two\nline three') && !asked[0].user.includes('line one'),
+    'only the last `lines` of the screen');
+  assert.ok(asked[0].system.includes('fontina'));
+  assert.strictEqual(store.summary('w1:p1').text, 'Fixing the parser test');
+});
+
+testAsync('an unchanged screen is never re-asked; a changed one waits for the interval', async () => {
+  const { asked, source } = fakeModel(['First answer', 'Second answer']);
+  const store = freshStore();
+  const s = createSummarizer({ cfg: cfg({ summary: { intervalMs: 1000 } }), store, source });
+  const t0 = 1000000;
+  await s.refresh({ client: paneClient('screen A'), agents: [agent()], now: t0 });
+  await s.refresh({ client: paneClient('screen A'), agents: [agent()], now: t0 + 5000 });
+  assert.strictEqual(asked.length, 1, 'same window, no second ask');
+  await s.refresh({ client: paneClient('screen B'), agents: [agent()], now: t0 + 500 });
+  assert.strictEqual(asked.length, 1, 'changed, but inside the interval');
+  assert.strictEqual(await s.refresh({ client: paneClient('screen B'), agents: [agent()], now: t0 + 1500 }), 1);
+  assert.strictEqual(store.summary('w1:p1').text, 'Second answer');
+});
+
+testAsync('the hourly ceiling holds across panes, and a declined ask keeps the old line', async () => {
+  const { asked, source } = fakeModel(['Only one', 'unknown']);
+  const store = freshStore();
+  const s = createSummarizer({ cfg: cfg({ summary: { intervalMs: 0, maxPerHour: 1 } }), store, source });
+  const two = [agent(), agent({ pane_id: 'w1:p2' })];
+  assert.strictEqual(await s.refresh({ client: paneClient('x'), agents: two, now: 5000 }), 1);
+  assert.strictEqual(asked.length, 1, 'the second pane waited for the ceiling');
+  assert.strictEqual(store.summariesWithin(3600000, 5000), 1);
+
+  // Reaching the ceiling is said, once per pass, rather than looking like a feature that stopped.
+  const said = [];
+  const capped = createSummarizer({ cfg: cfg({ summary: { intervalMs: 0, maxPerHour: 1 } }), store, source,
+    log: (l, m) => said.push(l + ' ' + m) });
+  assert.strictEqual(await capped.refresh({ client: paneClient('z'), agents: [agent()], now: 5500 }), 0);
+  assert.strictEqual(asked.length, 1);
+  assert.ok(said.some((m) => /warn summary ceiling reached: 1/.test(m)), said.join('|'));
+
+  const loose = createSummarizer({ cfg: cfg({ summary: { intervalMs: 0, maxPerHour: 0 } }), store, source });
+  assert.strictEqual(await loose.refresh({ client: paneClient('y'), agents: [agent()], now: 6000 }), 0);
+  assert.strictEqual(asked.length, 2);
+  assert.strictEqual(store.summary('w1:p1').text, 'Only one', 'unknown does not blank the line');
+  assert.notStrictEqual(store.summary('w1:p1').hash, undefined);
+  assert.strictEqual(await loose.refresh({ client: paneClient('y'), agents: [agent()], now: 7000 }), 0);
+  assert.strictEqual(asked.length, 2, 'a screen the model declined is not asked about again until it changes');
+});
+
+/* A repository with a small backlog, so a reference can be resolved. */
+function cairnRepo() {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ns-cairn-'));
+  fs.writeFileSync(path.join(root, 'cairn.toml'), '[project]\nname = "x"\ndir = "cairn/items"\n');
+  const dir = path.join(root, 'cairn', 'items');
+  fs.mkdirSync(dir, { recursive: true });
+  const item = (file, fm) => fs.writeFileSync(path.join(dir, file),
+    '---\n' + Object.entries(fm).map(([k, v]) => k + ': ' + v).join('\n') + '\n---\n\nbody\n');
+  item('0042-attach-to-a-terminal.md', { id: 42, title: 'Attach to a terminal', type: 'bug' });
+  item('0050-first-usable-version.md', { id: 50, key: 'v0.1', title: 'First usable version', type: 'milestone' });
+  return root;
+}
+
+test('a cairn reference in the ask or on screen resolves to the item', () => {
+  const root = cairnRepo();
+  cairn.cache.clear();
+  assert.strictEqual(cairn.cairnLine(root, { ask: 'do 0042 next' }), '0042 Attach to a terminal');
+  assert.strictEqual(cairn.cairnLine(root, { ask: 'finish milestone v0.1' }), 'v0.1 First usable version');
+  assert.strictEqual(cairn.cairnLine(root, { screen: 'cairn claim 0050\n...\ncairn claim 0042' }),
+    '0042 Attach to a terminal', 'the last item claimed on screen is the current one');
+  assert.strictEqual(cairn.cairnLine(root, { ask: 'work on v0.1', screen: 'Refs: 0042' }),
+    '0042 Attach to a terminal', 'an item is more specific than its milestone');
+  assert.strictEqual(cairn.cairnLine(root, { ask: 'fix the 0099 bug' }), '', 'an id the backlog does not know is not a reference');
+  assert.strictEqual(cairn.cairnLine(root, { ask: 'rendered 1080 frames at 42 fps' }), '', 'plain numbers are not ids');
+  assert.strictEqual(cairn.cairnLine(root, { screen: 'requires herdr v0.1 or later' }), '',
+    'a version on screen is not a milestone');
+  assert.strictEqual(cairn.cairnLine(root, { screen: 'closing milestone v0.1' }), 'v0.1 First usable version');
+  assert.strictEqual(cairn.cairnLine('/nowhere', { ask: 'do 0042' }), '', 'no repository, no backlog');
+});
+
+testAsync('a tracked item supersedes the model, and costs nothing', async () => {
+  const root = cairnRepo();
+  cairn.cache.clear();
+  const { root: txRoot, id } = tmpTranscript([said('take 0042 and ship it')]);
+  const { asked, source } = fakeModel(['Never used']);
+  const store = freshStore();
+  const s = createSummarizer({ cfg: cfg({ summary: { transcriptRoot: txRoot, intervalMs: 0 } }), store, source });
+  const a = agent({ agent_session: { kind: 'id', value: id } });
+  const roots = new Map([['w1:p1', root]]);
+  assert.strictEqual(await s.refresh({ client: paneClient('working'), agents: [a], roots }), 0);
+  assert.strictEqual(asked.length, 0, 'the item is the answer; the model is not asked');
+  assert.strictEqual(store.summary('w1:p1').text, '0042 Attach to a terminal');
+  assert.strictEqual(store.summariesWithin(3600000), 0, 'nothing was charged');
+
+  // Without a reference in the window, the model is asked as before.
+  const b = agent({ pane_id: 'w1:p2' });
+  assert.strictEqual(await s.refresh({ client: paneClient('just working'), agents: [b], roots }), 1);
+  assert.strictEqual(asked.length, 1);
+});
+
+testAsync('screens are read one pane at a time, and only then is the model asked in parallel', async () => {
+  let reading = 0; let mostReads = 0; let asking = 0; let mostAsks = 0;
+  const client = { request: async (m, { pane_id }) => {
+    reading += 1; mostReads = Math.max(mostReads, reading);
+    await new Promise((r) => setTimeout(r, 5));
+    reading -= 1; return { read: { text: 'screen of ' + pane_id } };
+  } };
+  const source = { name: 'llm', ask: async () => {
+    asking += 1; mostAsks = Math.max(mostAsks, asking);
+    await new Promise((r) => setTimeout(r, 5));
+    asking -= 1; return 'Doing something';
+  } };
+  const s = createSummarizer({ cfg: cfg(), store: freshStore(), source });
+  const four = ['w1:p1', 'w1:p2', 'w1:p3', 'w1:p4'].map((pane_id) => agent({ pane_id }));
+  assert.strictEqual(await s.refresh({ client, agents: four }), 4);
+  assert.strictEqual(mostReads, 1, 'herdr drops writes when several panes are read at once');
+  assert.strictEqual(mostAsks, 3, 'the waiting is on the model, so that part runs a few at a time');
+});
+
+testAsync('$summary is whichever was said last, the model or the agent', async () => {
+  const sent = [];
+  const sink = { name: 'herdr', apply: async () => true,
+    reportMetadata: async (kind, id, tokens) => { sent.push({ kind, id, tokens }); return true; } };
+  const store = freshStore();
+  const n = new Namer({ cfg: cfg(), store, sinks: [sink], pullRequests: async () => 0 });
+  const last = (kind) => sent.filter((x) => x.kind === kind).pop().tokens.summary;
+
+  // No model yet: the title is the description.
+  await n.publishMetadata(snapshot([agent()]));
+  assert.strictEqual(last('workspace'), 'Fix auth middleware');
+  assert.strictEqual(last('pane'), 'Fix auth middleware');
+
+  // The model answered after the title was last seen: it wins.
+  store.setSummary('w1:p1', { hash: 'h', at: Date.now() + 1000, text: 'Rewriting the auth check' });
+  await n.publishMetadata(snapshot([agent()]));
+  assert.strictEqual(last('workspace'), 'Rewriting the auth check');
+
+  // The agent then changes its title: newer, so it wins until the next ask.
+  await new Promise((r) => setTimeout(r, 1100));
+  await n.publishMetadata(snapshot([agent({ terminal_title_stripped: 'Add the login test' })]));
+  assert.strictEqual(last('pane'), 'Add the login test');
+
+  // A title that would never be a name is no description either.
+  store.setSummary('w1:p1', { hash: 'h', at: 1, text: 'Waiting on a permission prompt' });
+  await n.publishMetadata(snapshot([agent({ terminal_title_stripped: 'Claude Code' })]));
+  assert.strictEqual(last('pane'), 'Waiting on a permission prompt');
+});
+
+testAsync('refreshSummaries needs a model and a switch, and forgets a closed pane', async () => {
+  const store = freshStore();
+  const off = new Namer({ cfg: cfg({ summary: { enabled: false } }), store, sinks: [], client: paneClient('x'),
+    sources: [{ name: 'llm', ask: async () => 'Never asked', observe: async () => null }] });
+  assert.strictEqual(await off.refreshSummaries(snapshot([agent()])), 0);
+  const noModel = new Namer({ cfg: cfg(), store, sinks: [], client: paneClient('x') });
+  assert.strictEqual(await noModel.refreshSummaries(snapshot([agent()])), 0);
+  const on = new Namer({ cfg: cfg(), store, sinks: [], client: paneClient('x'),
+    sources: [{ name: 'llm', ask: async () => 'Reading the failing test', observe: async () => null }] });
+  assert.strictEqual(await on.refreshSummaries(snapshot([agent()])), 1);
+  assert.strictEqual(store.summary('w1:p1').text, 'Reading the failing test');
+  store.forget('w1:p1');
+  assert.strictEqual(store.summary('w1:p1'), null);
+});
+
+testAsync('the summary sends the same request shape as the naming source', async () => {
+  const { server, seen, url } = await stubModel('Tidying the fixtures');
+  try {
+    const src = createLlmSource({ enabled: true, endpoint: url, model: 'm', apiKeyEnv: 'NS_TEST_KEY' }, {});
+    process.env.NS_TEST_KEY = 'k';
+    assert.strictEqual(await src.ask('sys', 'usr', { maxTokens: 48 }), 'Tidying the fixtures');
+    assert.strictEqual(seen[0].auth, 'Bearer k');
+    assert.strictEqual(seen[0].body.max_tokens, 48);
+    assert.deepStrictEqual(seen[0].body.messages.map((m) => m.role), ['system', 'user']);
+  } finally { server.close(); delete process.env.NS_TEST_KEY; }
+});
+
+testAsync('two syncs at once become one now and one after', async () => {
+  const { Daemon } = require('../src/daemon');
+  /* A daemon stands down when the pid file names another process, and on a
+     developer's machine it does: the real watcher. Point it at an empty dir. */
+  const stateDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ns-state-'));
+  const hadEnv = process.env.HERDR_PLUGIN_STATE_DIR;
+  process.env.HERDR_PLUGIN_STATE_DIR = stateDir;
+  const d = new Daemon({ logFile: path.join(stateDir, 'daemon.log') });
+  d.store = freshStore();
+  let snapshots = 0;
+  d.api = {
+    snapshot: async () => { snapshots += 1; await new Promise((r) => setTimeout(r, 30)); return { snapshot: { workspaces: [], tabs: [], panes: [], agents: [] } }; },
+    request: async () => ({}),
+    close() {},
+  };
+  await Promise.all([d.sync(), d.sync(), d.sync()]);
+  assert.strictEqual(snapshots, 1, 'overlapping syncs must share one pass');
+  assert.ok(d.timer, 'the event that arrived mid-sync gets its own pass afterwards');
+  await new Promise((r) => setTimeout(r, 400));
+  assert.strictEqual(snapshots, 2, 'exactly one follow-up, however many asked');
+  d.stop();
+  if (hadEnv === undefined) delete process.env.HERDR_PLUGIN_STATE_DIR; else process.env.HERDR_PLUGIN_STATE_DIR = hadEnv;
 });
 
 process.stdout.write('\nwhat the person asked for\n');

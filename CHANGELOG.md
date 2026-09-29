@@ -8,6 +8,16 @@ Notable changes to namesync. The format follows
 
 ### Added
 
+- `$summary`, and the managed rows show it on the second line of both panels.
+  It is what you last asked for, in a few words: with the `llm` source
+  configured, a model condenses the last thing you said to the agent from a
+  small window of the freshest context, that ask and the last twenty lines on
+  screen, using the screen only to make sense of the request; without one,
+  the agent's title. A cairn item or milestone named in the ask or on screen
+  supersedes the model: the line is the item's own title, and nothing is
+  asked. Asked only when the window changes, at most once per
+  `summary.intervalMs` per pane, never past `summary.maxPerHour`. It is a
+  description, not a name, so no policy touches it.
 - `$dirty`, `$unmerged` and `$prs`: uncommitted paths, commits the trunk does
   not have, and pull requests open on the repository. The rows `setup` writes
   show them on the Spaces line where the branch and `$age` used to be, since

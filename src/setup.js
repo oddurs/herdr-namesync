@@ -57,16 +57,18 @@ function blocks({ accent = '#33859d', bright = '#d3ebe9', muted = '#888ba5',
 # $dirty is uncommitted paths, $unmerged is commits the trunk does not have,
 # $prs is pull requests open on the repository -- each absent at zero, so a
 # landed checkout says nothing. $since is time in the current agent state.
+# $summary is what the agent is doing right now: a model's one line from
+# the freshest context when one is configured, the agent's title otherwise.
 [ui.sidebar.agents]
 rows = [
   ["state_icon", { token = "$n", fg = "${accent}", bold = true }, { token = "$project", fg = "${bright}", bold = true }, { token = "$worktree", fg = "${held}" }, { token = "$locked", fg = "${held}" }, { token = "$stale", fg = "${muted}" }, { token = "$dirty", fg = "${warn}" }, { token = "$unmerged", fg = "${accent}" }, { token = "$prs", fg = "${live}" }, { token = "$since", fg = "${muted}" }],
-  [{ token = "terminal_title_stripped", fg = "${live}" }],
+  [{ token = "$summary", fg = "${live}" }],
 ]
 
 [ui.sidebar.spaces]
 rows = [
   ["state_icon", { token = "$n", fg = "${accent}", bold = true }, { token = "$project", fg = "${bright}", bold = true }, { token = "$worktree", fg = "${held}" }, { token = "$locked", fg = "${held}" }, { token = "$stale", fg = "${muted}" }, { token = "$dirty", fg = "${warn}" }, { token = "$unmerged", fg = "${accent}" }, { token = "$prs", fg = "${live}" }],
-  [{ token = "workspace", fg = "${live}" }],
+  [{ token = "$summary", fg = "${live}" }],
 ]
 ${END}
 `;
